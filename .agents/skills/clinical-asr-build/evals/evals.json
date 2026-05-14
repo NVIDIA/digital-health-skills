@@ -1,0 +1,46 @@
+[
+  {
+    "id": "clinical-asr-build-001",
+    "question": "I want to evaluate ASR on oncology dictation. We've seen it mishear chemotherapy drug names. Where do I start?",
+    "expected_skill": "clinical-asr-build",
+    "expected_script": null,
+    "ground_truth": "The agent invokes clinical-asr-build, asks 1-2 specialty-aware clarifying questions, and walks the user through Stage 2 — term curation with entity_category, the inlined LLM sentence-generation prompt, the two-tier IPA tagging pipeline, then QA-mode synthesis before the full Cartesian product. Magpie TTS is called via the inlined NVCF recipe (function ID 877104f7-..., grpc.nvcf.nvidia.com:443). KER is named as the headline metric for Stage 3.",
+    "expected_behavior": [
+      "Read clinical-asr-build/SKILL.md before taking action",
+      "Asked at least one specialty-aware clarifying question",
+      "Proposed candidate terms with entity_category set",
+      "Mentioned the two-tier IPA strategy (override → merriam-webster → magpie_g2p)",
+      "Referenced the Magpie TTS NVCF function ID 877104f7-... or the inlined recipe — NOT a /read-aloud or /riva-tts skill call",
+      "Mentioned the QA-mode approval gate before running the full Cartesian product",
+      "Did NOT route the user to /read-aloud, /riva-tts, or /data-designer"
+    ]
+  },
+  {
+    "id": "clinical-asr-build-002",
+    "question": "Magpie is mispronouncing 'esomeprazole' even with the IPA override. What do I check?",
+    "expected_skill": "clinical-asr-build",
+    "expected_script": null,
+    "ground_truth": "Verify the IPA passes Magpie's en-US phoneme inventory; verify the SSML wrapping is syntactically valid (single-word vs multi-word handling differs — multi-word terms need per-word IPA components with matching word counts). If both check out, it's a Magpie bug — file with the Riva team.",
+    "expected_behavior": [
+      "Read clinical-asr-build/SKILL.md",
+      "Suggested verifying the IPA candidate against Magpie's en-US phoneme inventory",
+      "Mentioned the multi-word IPA word-count match requirement (term-words == ipa-words)",
+      "Acknowledged that persistent mispronunciation despite verified IPA is a Magpie/Riva team bug to file externally",
+      "Did NOT recommend fine-tuning as the fix for a single mispronunciation"
+    ]
+  },
+  {
+    "id": "clinical-asr-build-003",
+    "question": "I don't have an LLM endpoint available. Can I still build a manifest?",
+    "expected_skill": "clinical-asr-build",
+    "expected_script": null,
+    "ground_truth": "Yes — use the template fallback documented in Step 2b. Sentences are canned but the rest of the cycle (IPA tagging, QA, full Cartesian) proceeds normally. Tag rows so a future cycle can regenerate.",
+    "expected_behavior": [
+      "Read clinical-asr-build/SKILL.md",
+      "Recognized that the LLM step has a template fallback (Plan B)",
+      "Showed the user the template fallback approach with mechanical interpolation per context_type",
+      "Mentioned tagging the rows so they can be regenerated later when an LLM is available",
+      "Did NOT route the user to /data-designer"
+    ]
+  }
+]

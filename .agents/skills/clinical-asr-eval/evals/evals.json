@@ -1,0 +1,59 @@
+[
+  {
+    "id": "clinical-asr-eval-001",
+    "question": "I have a manifest.jsonl with about 200 clinical audio rows already. How do I score it?",
+    "expected_skill": "clinical-asr-eval",
+    "expected_script": null,
+    "ground_truth": "The agent recognizes the manifest is already built, skips /clinical-asr-build, and routes through Stage 3: pick the ASR NIM (default Parakeet TDT 0.6B v2 / Nemotron Speech NVCF function), use the inlined gRPC recipe (grpc.nvcf.nvidia.com:443, streaming-only via streaming_response_generator), score WER/CER/KER/SER per row, produce the five-section leaderboard including the by-ipa_source split.",
+    "expected_behavior": [
+      "Read clinical-asr-eval/SKILL.md",
+      "Recognized the user already has a manifest and did NOT route to /clinical-asr-build",
+      "Named the inlined ASR recipe (Parakeet/Nemotron Speech via grpc.nvcf.nvidia.com:443) — NOT a /transcribe-audio or /riva-asr skill call",
+      "Mentioned the streaming-only gotcha (must use streaming_response_generator, NOT offline_recognize)",
+      "Mentioned env-var overrides (ASR_NVCF_FUNCTION_ID, ASR_ENDPOINT, ASR_MODEL_NAME)",
+      "Mentioned scoring four metrics (WER, CER, KER, SER) with breakdowns including KER by ipa_source",
+      "Did NOT route the user to /transcribe-audio or /riva-asr"
+    ]
+  },
+  {
+    "id": "clinical-asr-eval-002",
+    "question": "Eval shows KER 0.05 on rows tagged merriam-webster but 0.40 on rows tagged magpie_g2p. Should I fine-tune?",
+    "expected_skill": "clinical-asr-eval",
+    "expected_script": null,
+    "ground_truth": "No — this is a pronunciation-hint coverage gap, not a model gap. Route the user back to /clinical-asr-build Step 2d (IPA QA review) to append verified IPA to pronunciation_overrides.csv before considering /clinical-asr-finetune.",
+    "expected_behavior": [
+      "Read clinical-asr-eval/SKILL.md",
+      "Diagnosed the merriam-webster vs magpie_g2p delta as a pronunciation-coverage gap, NOT a model gap",
+      "Routed the user back to /clinical-asr-build — specifically the IPA QA review — before recommending /clinical-asr-finetune",
+      "Did NOT recommend fine-tuning as the first action",
+      "Mentioned pronunciation_overrides.csv as the place verified IPA gets appended"
+    ]
+  },
+  {
+    "id": "clinical-asr-eval-003",
+    "question": "Why do you use KER instead of just WER for clinical ASR?",
+    "expected_skill": "clinical-asr-eval",
+    "expected_script": null,
+    "ground_truth": "Aggregate WER is dominated by function words (articles, prepositions); a model can have low WER but still be clinically dangerous if drug names are wrong. KER tracks whether the flagged clinical entity was transcribed correctly per row. Concrete example: WER 0.05 with KER 0.40 is not deployable.",
+    "expected_behavior": [
+      "Read clinical-asr-eval/SKILL.md",
+      "Explained that WER averages over function words and masks clinical-specific failures",
+      "Defined KER as per-entity correctness, with the term-words-must-appear-contiguously check",
+      "Gave a concrete example contrasting low WER with high KER as deployment-blocking",
+      "Did NOT claim KER replaces WER — both are reported, KER is the headline"
+    ]
+  },
+  {
+    "id": "clinical-asr-eval-004",
+    "question": "I got `grpc.RpcError: Unavailable model` from the ASR call. What now?",
+    "expected_skill": "clinical-asr-eval",
+    "expected_script": null,
+    "ground_truth": "The hosted Nemotron Speech NVCF function is streaming-only — calling offline_recognize() returns Unavailable. The recipe must use streaming_response_generator() and send the whole file as one chunk. The inlined ASR recipe in clinical-asr-eval already does this; double-check the user isn't on a different recipe.",
+    "expected_behavior": [
+      "Read clinical-asr-eval/SKILL.md",
+      "Diagnosed the error as the streaming-only NVCF gotcha",
+      "Pointed at streaming_response_generator() as the correct method",
+      "Did NOT suggest switching to a different ASR model as the first fix"
+    ]
+  }
+]

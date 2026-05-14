@@ -1,0 +1,60 @@
+[
+  {
+    "id": "clinical-asr-finetune-001",
+    "question": "Our drug KER came back at 0.42. We have 130 manifest rows. Should we fine-tune?",
+    "expected_skill": "clinical-asr-finetune",
+    "expected_script": null,
+    "ground_truth": "Yes — KER > 0.3 and manifest ≥ 100 rows satisfies the Stage 4 gate. The agent recommends nvidia/parakeet-tdt-0.6b-v2 as the base (verified KER 0.513 → 0.128 in 3 epochs), warns against fine-tuning the streaming Nemotron Speech base, and describes the term-aware stratified split + stock NeMo SFT + cycle N+1 offline re-eval. The full SFT recipe is inlined — no /finetune-asr or /riva-asr-custom call.",
+    "expected_behavior": [
+      "Read clinical-asr-finetune/SKILL.md",
+      "Confirmed KER > 0.3 and manifest size ≥ 100 satisfies the Stage 4 fine-tune gate",
+      "Recommended nvidia/parakeet-tdt-0.6b-v2 as the default base model (and named the verified empirical result of -75% relative KER)",
+      "Warned that SFT on nvidia/nemotron-speech-streaming-en-0.6b is currently broken (UNK collapse) if the user asks about it",
+      "Described the term-aware stratified train/val split and the cycle N+1 offline eval close-loop",
+      "Mentioned the stock NeMo SFT recipe (speech_to_text_finetune.py in nvcr.io/nvidia/nemo:25.11.01) — referenced the inlined recipe, NOT /finetune-asr or /riva-asr-custom"
+    ]
+  },
+  {
+    "id": "clinical-asr-finetune-002",
+    "question": "Can I fine-tune nvidia/nemotron-speech-streaming-en-0.6b on my clinical manifest?",
+    "expected_skill": "clinical-asr-finetune",
+    "expected_script": null,
+    "ground_truth": "No — SFT on the streaming Nemotron Speech base is currently broken (UNK collapse on validation after the first training step). The agent recommends nvidia/parakeet-tdt-0.6b-v2 as the substitute. If the user needs streaming serving, Riva can chunk a non-streaming base — base model doesn't have to be streaming-native.",
+    "expected_behavior": [
+      "Read clinical-asr-finetune/SKILL.md",
+      "Warned that SFT on nemotron-speech-streaming-en-0.6b is currently broken",
+      "Described the failure mode (UNK collapse on validation after first training step)",
+      "Recommended nvidia/parakeet-tdt-0.6b-v2 as the substitute for fine-tuning",
+      "Mentioned that Riva chunking can serve a non-streaming base for streaming use cases",
+      "Did NOT suggest the user try the streaming base anyway or recommend hyperparameter workarounds"
+    ]
+  },
+  {
+    "id": "clinical-asr-finetune-003",
+    "question": "My cycle 2 KER hit 0.12 — how do I deploy this as a NIM?",
+    "expected_skill": "clinical-asr-finetune",
+    "expected_script": null,
+    "ground_truth": "Use the inlined Step 4e deploy recipe: riva-build speech_recognition with --decoder=nemo for a TDT-source .nemo, riva-deploy into a model repository, run the matching parakeet-tdt-* NIM container. Validate by re-running /clinical-asr-eval with ASR_ENDPOINT=localhost:50051.",
+    "expected_behavior": [
+      "Read clinical-asr-finetune/SKILL.md",
+      "Walked the user through riva-build + riva-deploy as two steps",
+      "Mentioned the decoder → NIM container family mapping (TDT → --decoder=nemo + parakeet-tdt-* image)",
+      "Mentioned validating the deployment with /clinical-asr-eval against localhost:50051",
+      "Did NOT route the user to /riva-asr-custom"
+    ]
+  },
+  {
+    "id": "clinical-asr-finetune-004",
+    "question": "Cycle 2 KER barely moved compared to cycle 1. What now?",
+    "expected_skill": "clinical-asr-finetune",
+    "expected_script": null,
+    "ground_truth": "Bail to /clinical-asr-build and grow the manifest. Tiny manifests rarely benefit from hyperparameter sweeps; signal density beats LR tweaks. Verify category coverage and noise diversity before retraining. If the magpie_g2p rows are bad and merriam-webster rows are good, the real gap is pronunciation-hint coverage, not model capacity.",
+    "expected_behavior": [
+      "Read clinical-asr-finetune/SKILL.md",
+      "Recommended growing the manifest (back to /clinical-asr-build) over running a hyperparameter sweep",
+      "Mentioned that tiny manifests overfit fast and that signal density matters more than LR tweaks",
+      "Mentioned the merriam-webster vs magpie_g2p delta as a diagnostic to check (pronunciation-coverage gap, not model gap)",
+      "Did NOT recommend a hyperparameter sweep on the same manifest"
+    ]
+  }
+]

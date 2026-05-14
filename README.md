@@ -1,154 +1,70 @@
-# __NVIDIA_OSS__ Standard Repo Template
+# NVIDIA Digital Health Examples
 
-This README file is from the NVIDIA_OSS standard repo template of [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file). It provides a list of files in the PLC-OSS-Template and guidelines on how to use (clone and customize) them.
+Agent skills and worked examples for healthcare AI workflows from NVIDIA Digital Health.
 
-**Upon completing the customization for the project repo, the repo admin should replace this README template with the project specific README file.**
+This repository hosts **agent skills** — markdown-based workflow guides consumable by AI coding assistants (Claude Code, Cursor, GitHub Copilot, and any client that supports the [agentskills.io specification](https://agentskills.io/specification)).
 
-- Files (org-wide templates in the NVIDIA .github org repo; per-repo overrides allowed) in [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file)
+The first set covers a **clinical ASR (automatic speech recognition) evaluation workflow**: term curation, synthetic clinical-speech benchmark generation, KER (Keyword Error Rate) / entity-level scoring, and fine-tune guidance.
 
-   - Root 
-     - README.md skeleton (CTA + Quickstart + Support/Security/Governance links) 
-     - LICENSE (Apache 2.0 by default)
-        - For other licenses, see the [Confluence page](https://confluence.nvidia.com/pages/viewpage.action?pageId=788418816) for other licenses
-        - CLA.md file (delete if not using MIT or BSD licenses)
-     - CODE_OF_CONDUCT.md 
-     - SECURITY.md (vuln reporting path) 
-     - CONTRIBUTING.md (base; repo can add specifics)
-     - SUPPORT.md (Support levels/channels)
-     - GOVERNANCE.md (baseline; repo may extend)
-     - CITATION.md (for projects that need citation)
+These skills are **docs-only workflow guides**. They do not ship companion runtime code; an agent following them will use the user's own environment and any required NVIDIA APIs (NIMs at `build.nvidia.com`, NeMo containers, etc.).
 
-   - .github/ 
-     - ISSUE_TEMPLATE/ (<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository>)
-       - bug.yml, feature.yml, task.yml, config.yml 
-     - PULL_REQUEST_TEMPLATE.md (<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository>)
-     - workflows/
-     - Note: workflow-templates/ for starter workflows should live in the org-level .github repo, not per-repo
+## Skills in this repo
 
-   - Repo-specific (not org-template, maintained by the team)
-     - CODEOWNERS (place at .github/CODEOWNERS or repo root)
-     - CHANGELOG.md (or RELEASE.md) 
-     - ROADMAP.md 
-     - MAINTAINERS.md 
-     - NOTICE or THIRD_PARTY_NOTICES / THIRD_PARTY_LICENSES (dependency specific)
-     - Build/package files (CMake, pyproject, Dockerfile, etc.)
+| Skill | Stage | What it guides |
+|-------|-------|----------------|
+| [`clinical-asr-setup`](.agents/skills/clinical-asr-setup/) | 1 | Verify `NVIDIA_API_KEY`, install Python deps, set up NGC + Docker for the NeMo training container, smoke-test the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. |
+| [`clinical-asr-build`](.agents/skills/clinical-asr-build/) | 2 | Specialty interview, term curation, two-tier IPA tagging, NeMo-format manifest synthesis. Inlines a Magpie TTS NVCF recipe. |
+| [`clinical-asr-eval`](.agents/skills/clinical-asr-eval/) | 3 | Transcribe a NeMo manifest via Parakeet/Nemotron ASR, score WER/CER/KER/SER, produce a five-section leaderboard, route via the post-eval decision tree. |
+| [`clinical-asr-finetune`](.agents/skills/clinical-asr-finetune/) | 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. |
 
-   - Recommended structure and hygiene
-     - docs/
-     - examples/
-     - tests/
-     - scripts/
-     - Container/dev env: Dockerfile, docker/, .devcontainer/ (optional)
-     - Build/package (language-specific):
-       - Python: pyproject.toml, setup.cfg/setup.py, requirements.txt, environment.yml
-       - C++: CMakeLists.txt, cmake/, vcpkg.json
-     - Repo hygiene: .gitignore, .gitattributes, .editorconfig, .pre-commit-config.yaml, .clang-format
+Each skill folder contains `SKILL.md` (the workflow guide), optional `references/*.md` (deeper detail loaded on demand), and `evals/evals.json` (trigger / behavior / boundary test cases).
 
+## Getting started
 
-## Usage of [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file) for NEW NVIDIA OSS repos
+Skills are loaded by your agent's skill loader. For Claude Code:
 
-1. Clone the [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file)
-2. Find/replace all in the clone of `___PROJECT___` and `__PROJECT_NAME__` with the name of the specific project.
-3. Inspect all files to make sure all replacements work and update text as needed
-
-
-**What you can reuse immediately**
-- CODE_OF_CONDUCT.md
-- SECURITY.md
-- CONTRIBUTING.md (base)
-- .github/ISSUE_TEMPLATE/.yml (bug/feature/task + config.yml)
-- .github/PULL_REQUEST_TEMPLATE.md
-- Reusable workflows 
-
-**What you must customize per repo**
-- README.md: copy the skeleton and fill in product-specific details (Quickstart, Requirements, Usage, Support level, links)
-- LICENSE: check file is correct, update year, consult Confluence for alternatives https://confluence.nvidia.com/pages/viewpage.action?pageId=788418816, add CLA.md only if your license/process requires it
-- CODEOWNERS: replace <TEAM> with your GitHub team handle(s). Place at .github/CODEOWNERS (or repo root)
-- MAINTAINERS.md: list maintainers names/roles, escalation path
-- CHANGELOG.md (or RELEASE.md): track releases/changes
-- SUPPORT.md: Update for your project
-- ROADMAP.md (optional): upcoming milestones
-- NOTICE / THIRD_PARTY_NOTICES (if you ship third‑party content)
-- Build/package files (CMake/pyproject/Dockerfile/etc.), tests/, docs/, examples/, scripts/ as appropriate
-- Workflows: Edit if you need custom behavior 
-
-
-4. Change git origin to point to new repo and push
-5. Remove the line break below and everything above it
-
-## Usage for existing NVIDIA OSS repos
-
-1. Follow the steps above, but add the files to your existing repo and merge
-
-<!-- REMOVE THE LINE BELOW AND EVERYTHING ABOVE -->
------------------------------------------
-# [Project Title]
-One-sentence value proposition for users. Who is it for, and why it matters. 
-
-# Overview
-What the project does? Why the project is useful?
-Provide a brief overview, highlighting key features or problem-solving capabilities.
-
-# Getting Started
-Guide users on how they can get started with the project. This should include basic installation step, quick-start examples 
 ```bash
-# Option A: Package manager (pip/conda/npm/etc.)
-<copy-paste install>
+git clone git@github.com:NVIDIA/digital-health-examples.git
+cd digital-health-examples
 
-# Option B: Container
-docker run <image> <args>
-
-# Verify (hello world)
-<one-liner or ~10-line example>
+# Either symlink or copy the four skill folders into your Claude Code skills dir:
+mkdir -p ~/.claude/skills
+ln -s "$(pwd)/.agents/skills/clinical-asr-setup"    ~/.claude/skills/
+ln -s "$(pwd)/.agents/skills/clinical-asr-build"    ~/.claude/skills/
+ln -s "$(pwd)/.agents/skills/clinical-asr-eval"     ~/.claude/skills/
+ln -s "$(pwd)/.agents/skills/clinical-asr-finetune" ~/.claude/skills/
 ```
-# Requirements
-Include a list of pre-requisites. 
-- OS/Arch: <summary or link to full matrix>
-- Runtime/Compiler: <versions>
-- GPU/Drivers (if applicable): CUDA <ver>, driver <ver>, etc.
 
-# Usage
-```bash
-# Minimal runnable snippet (≤20 lines)
-<code>
-```
-- More examples/tutorials: <link>
-- API reference: <link>
+Then invoke them from your agent: `/clinical-asr-setup`, `/clinical-asr-build`, `/clinical-asr-eval`, `/clinical-asr-finetune`.
 
-# Performance (Optional)
-Summary of benchmarks; link to detailed results and hardware used.
+The skills walk the agent through each stage and hand off to the next. Start with `/clinical-asr-setup`.
 
-## Releases & Roadmap 
-- Releases/Changelog: <link>
-- (Optional) Next milestones or link to `ROADMAP.md`.
-  
-# Contribution Guidelines
-- Start here: `CONTRIBUTING.md`
-- Code of Conduct: `CODE_OF_CONDUCT.md`
-- Development quickstart (build/test):
-```bash
-<clone> && <deps> && <build/test>
-```
-## Governance & Maintainers
-- Governance: `GOVERNANCE.md`
-- Maintainers: <team/handles>
-- Labeling/triage policy: <link>
+## Requirements
 
-## Security
-- Vulnerability disclosure: `SECURITY.md`
-- Do not file public issues for security reports.
+To use the skills end-to-end you will need:
+
+- An `NVIDIA_API_KEY` from [build.nvidia.com](https://build.nvidia.com) — for hosted Magpie TTS + Parakeet/Nemotron ASR via NVCF (free tier is sufficient).
+- An `NGC_API_KEY` from [ngc.nvidia.com](https://ngc.nvidia.com) — only needed for Stage 4 (fine-tune), to pull the NeMo training container.
+- Python 3.10+ for client-side scripting (the agent installs deps via your skill of choice).
+- A CUDA host with the NeMo container (`nvcr.io/nvidia/nemo:25.11.01`) for Stage 4. Brev cloud GPUs supported.
+
+## Companion software
+
+A more comprehensive Clinical Speech Evaluation Flywheel — with deterministic scoring scripts, leaderboard tooling, and an end-to-end CI harness — lives in a separate internal NVIDIA repository. It is not redistributed here. The skills in this repo are intentionally self-contained so an agent can guide the workflow without that companion code; for end-to-end automation, contact the maintainers (see below).
 
 ## Support
-- Level: <Experimental | Maintained | Stable>
-- How to get help: Issues/Discussions/<channel link>
-- Response expectations (if any).
 
-# Community
-Provide the channel for community communications.
+- **Level:** Experimental — the skills are new and evolving; expect rough edges.
+- **Issues:** Use this repository's [Issues](../../issues) for bug reports and feature requests. Do **not** file security issues there (see `SECURITY.md`).
 
-# References
-Provide a list of related references
+## Contributing
 
-# License
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
-- License: <link>
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). All contributions require DCO sign-off (`git commit -s`).
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the NVIDIA vulnerability disclosure process. Report security issues to `psirt@nvidia.com`, not via GitHub.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
