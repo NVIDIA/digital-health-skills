@@ -34,18 +34,18 @@ You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's env
 
 The flywheel measures and closes the gap between general-purpose ASR and the clinical terms a clinician actually says. The headline metric across all four stages is **KER (keyword error rate)** on flagged entities — drugs, procedures, anatomy, conditions, labs, roles. Aggregate WER hides what matters clinically.
 
-## ⚠️ Data leaves your environment — disclose this to the user before proceeding
+## Data leaves your environment — disclose this to the user before proceeding
 
 This flywheel sends data to two external services. **Surface this to the user up front** so they can confirm it's acceptable under their organization's data-governance policy before any clinical term list, audio, or text leaves the local machine:
 
 | Service | What gets sent | When | Hosted by |
 |---|---|---|---|
 | **NVIDIA NVCF** (`grpc.nvcf.nvidia.com`) | The clinical sentences you synthesize (text), and the WAV files you transcribe (audio) | Every Stage 2 TTS call and every Stage 3 ASR call | NVIDIA, governed by build.nvidia.com terms |
-| **Merriam-Webster Medical Dictionary API** (`dictionaryapi.com`) | Individual clinical terms (drug names, anatomy, procedures), one term per HTTP request | Stage 2 IPA tagging, *only if* `DICTIONARY_API_KEY` is set | Merriam-Webster, governed by their API terms |
+| **Merriam-Webster** (`dictionaryapi.com` JSON API **or** the public `merriam-webster.com` HTML site) | Individual clinical terms (drug names, anatomy, procedures), one HTTP request per term | Stage 2 IPA tagging — see "Two MW paths" below for which endpoint applies | Merriam-Webster, governed by their API or site terms |
 
 Both endpoints carry **non-PHI synthetic data** by design — the flywheel generates sentences and audio from a term list the user curates, not from real patient encounters. **Do not pass real patient transcripts, real ASR audio, or any PHI through these skills.** If the user's term list itself is sensitive (proprietary drug-codename list, unreleased product names), they should review their organization's external-API policy before continuing. Both APIs can be skipped:
 
-- **No MW API**: leave `DICTIONARY_API_KEY` unset. Stage 2 falls through to Magpie G2P; the pipeline still works.
+- **No MW at all**: leave `DICTIONARY_API_KEY` unset and don't run a scraper. Stage 2 falls through to Magpie G2P; the pipeline still works with reduced coverage on long-tail clinical terms.
 - **No NVCF**: this flywheel cannot run without it — Magpie TTS + Parakeet/Nemotron ASR are the workload. If NVCF is off-limits, this skill family is the wrong tool; use a self-hosted ASR/TTS pipeline instead.
 
 A version of this notice belongs in the workspace `README.md` your user maintains — surface it on first invocation if you don't see it already there.
@@ -81,7 +81,7 @@ Do **not** activate when:
 | `NVIDIA_API_KEY` (`nvapi-…`) | **Required** | Hosted Magpie TTS + Parakeet/Nemotron ASR via NVCF | Issue at <https://build.nvidia.com>; `export NVIDIA_API_KEY=...` in shell |
 | Python ≥ 3.10 | **Required** | NeMo client, scoring, manifest tools | `python3 --version` |
 | `nvidia-riva-client`, `pandas`, `soundfile`, `requests` | **Required** | TTS + ASR clients, manifest I/O, MW lookup | `pip install nvidia-riva-client pandas soundfile requests` |
-| `DICTIONARY_API_KEY` | Optional | Merriam-Webster Medical Dictionary lookup (Stage 2 IPA pipeline) | Free key at <https://dictionaryapi.com>; without it, IPA pipeline falls through to Magpie G2P |
+| `DICTIONARY_API_KEY` | Optional | Merriam-Webster Medical Dictionary lookup via the JSON API (Path A in the build skill — recommended for standalone use) | Free key at <https://dictionaryapi.com>. Skip if you're running the `voice-eval-flywheel` companion repo — its `flywheel/data/ipa_extractor.py` uses HTML scraping (Path B, no key) and already produces `merriam-webster`-tagged manifest rows. Without either path, Stage 2 falls through to Magpie G2P. |
 | `jiwer` | Optional | Reference WER/CER against the inlined Levenshtein implementation | `pip install jiwer` — the eval skill includes a pure-Python fallback |
 | (Stage 4 only) `NGC_API_KEY` + CUDA host + NeMo container | Optional, deferred | Fine-tune workload | Set up inside `/clinical-flywheel-finetune`; defer until the eval shows KER > 0.3 |
 
@@ -176,16 +176,29 @@ If the transcript matches the input within ~1 token, the hosted stack is reachab
 - `RESOURCE_EXHAUSTED` → NVCF rate limit. Retry after 30 seconds; this is normal under load.
 - Network/TLS errors → corporate proxy or DNS issue. Test `curl https://build.nvidia.com` first.
 
-### 1d. (Optional) Verify Merriam-Webster lookup if a key is configured
+### 1d. (Optional) Verify Merriam-Webster lookup
 
-If the user wants high-quality IPA tagging in Stage 2 (not just Magpie G2P fall-through), confirm the optional `DICTIONARY_API_KEY` works:
+Two paths produce a `merriam-webster`-tagged manifest row in Stage 2. Pick one (or neither — Magpie G2P fall-through is a valid posture):
 
-```bash
-test -n "$DICTIONARY_API_KEY" && echo "DICTIONARY_API_KEY len=${#DICTIONARY_API_KEY}" \
-  || echo "DICTIONARY_API_KEY not set — Stage 2 will skip MW and use Magpie G2P only (still works)"
-```
+- **Path A — JSON API + key.** Recommended for standalone use of this skill. Check the key is set:
 
-A free key issues instantly at <https://dictionaryapi.com>. Optional but recommended for clinical corpora — MW Medical Dictionary covers most generic drug, anatomy, and procedure names. Remember the data-disclosure note at the top: when MW is enabled, each clinical term in your seed list goes out as an HTTP request to dictionaryapi.com.
+  ```bash
+  test -n "$DICTIONARY_API_KEY" && echo "DICTIONARY_API_KEY len=${#DICTIONARY_API_KEY}" \
+    || echo "DICTIONARY_API_KEY not set — Path A is off"
+  ```
+
+  Free key issues instantly at <https://dictionaryapi.com>.
+
+- **Path B — HTML scraping.** What the `voice-eval-flywheel` companion repo's `flywheel/data/ipa_extractor.py` already does. No key needed; reachability is the only prerequisite:
+
+  ```bash
+  curl -fsS -o /dev/null -w "merriam-webster.com reachable, HTTP %{http_code}\n" \
+    https://www.merriam-webster.com/medical/cefazolin
+  ```
+
+  If you don't have that companion script and don't want to write a scraper, use Path A.
+
+Remember the data-disclosure note at the top: under either path, each clinical term in your seed list goes out as an HTTP request to a Merriam-Webster endpoint.
 
 ## Examples
 

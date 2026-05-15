@@ -2,6 +2,93 @@
 
 Full Merriam-Webster respelling → IPA mapping table and SSML wrapping rules for the `clinical-flywheel-build` two-tier IPA pipeline.
 
+## Two MW implementation paths
+
+Both end up tagging the manifest row `merriam-webster`; pick the one that fits your context:
+
+### Path A — `dictionaryapi.com` JSON API (recommended for standalone use)
+
+Stable, ToS-clean, requires a free key from <https://dictionaryapi.com> exported as `DICTIONARY_API_KEY`. The lookup returns MW respelling in `data[0].hwi.prs[0].mw`; feed it to the mapping table below via `_respelling_to_ipa()`.
+
+```python
+import requests
+from typing import Optional
+
+MW_BASE = "https://www.dictionaryapi.com/api/v3/references/medical/json"
+
+# Compact MW-respelling → IPA glyph map. See the full mapping tables below
+# for combining marks and edge-case vowels.
+_MW_TO_IPA = {
+    "sh": "ʃ", "ch": "tʃ", "th": "θ", "zh": "ʒ", "ng": "ŋ",
+    "ə": "ə", "a": "æ",   "ä": "ɑː", "ā": "eɪ",
+    "e": "ɛ", "ē": "iː",  "i": "ɪ",  "ī": "aɪ",
+    "o": "ɑ", "ō": "oʊ",  "ȯ": "ɔ",  "u": "ʌ", "ü": "uː",
+    "ˈ": "ˈ", "ˌ": "ˌ",
+}
+
+def mw_lookup_ipa(term: str, api_key: Optional[str]) -> Optional[str]:
+    """Return IPA for `term` from MW Medical Dictionary, or None if unavailable.
+    Pass `None` for api_key to skip MW lookup (caller decides whether the
+    DICTIONARY_API_KEY env var is set; this code never reads the environment)."""
+    if not api_key:
+        return None
+    r = requests.get(f"{MW_BASE}/{term}", params={"key": api_key}, timeout=10)
+    if r.status_code != 200:
+        return None
+    data = r.json()
+    if not data or not isinstance(data[0], dict):
+        return None  # MW returned spelling suggestions, not an entry
+    prs = data[0].get("hwi", {}).get("prs", [])
+    if not prs or "mw" not in prs[0]:
+        return None
+    return _respelling_to_ipa(prs[0]["mw"])
+
+def _respelling_to_ipa(respelling: str) -> str:
+    """MW respelling → IPA. Digraphs (sh, ch, th, zh, ng) match before single chars.
+    Syllable dots are dropped; stress marks are preserved."""
+    s = respelling.replace("-", "")
+    out, i = [], 0
+    while i < len(s):
+        if i + 1 < len(s) and s[i:i+2] in _MW_TO_IPA:
+            out.append(_MW_TO_IPA[s[i:i+2]]); i += 2; continue
+        out.append(_MW_TO_IPA.get(s[i], s[i])); i += 1
+    return "".join(out)
+```
+
+### Path B — HTML scrape of `merriam-webster.com`
+
+What the `voice-eval-flywheel` companion repo's `flywheel/data/ipa_extractor.py:83-113` uses. No key, but brittle to MW site HTML changes; only use this if you control your deployment context. Feed the returned string into the same `_respelling_to_ipa()` helper as Path A. Sketch:
+
+  ```python
+  import re, requests
+  from bs4 import BeautifulSoup
+  from typing import Optional
+  from urllib.parse import quote
+
+  UA = "voice-eval-flywheel/0.1 (clinical-asr eval)"
+
+  def scrape_mw_respelling(term: str, timeout: float = 15.0) -> Optional[str]:
+      """Path B: parse the public MW website for the term's respelling.
+      Returns None if the page has no pronunciation block."""
+      s = requests.Session()
+      s.headers.update({"User-Agent": UA})
+      slug = quote(term.strip().replace(" ", "-"))
+      for path in (f"medical/{slug}", f"dictionary/{slug}"):
+          r = s.get(f"https://www.merriam-webster.com/{path}", timeout=timeout)
+          if r.status_code != 200:
+              continue
+          soup = BeautifulSoup(r.text, "html.parser")
+          a = soup.find("a", class_=re.compile(r"\bplay-pron-v2\b"))
+          if not a:
+              continue
+          raw = a.decode_contents().split("<svg", 1)[0]
+          text = BeautifulSoup(raw, "html.parser").get_text() \
+                   .replace("\xa0", " ").strip().strip(" -")
+          if text:
+              return text  # feed this to _respelling_to_ipa() above
+      return None
+  ```
+
 ## MW respelling glyph → IPA mapping
 
 The Merriam-Webster Medical Dictionary API returns pronunciation in a respelling notation (e.g. `se-fə-ˈzō-lən`). This table maps each respelling glyph to its IPA equivalent.

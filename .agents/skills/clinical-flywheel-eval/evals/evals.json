@@ -4,14 +4,12 @@
     "question": "I have a manifest.jsonl with about 200 clinical audio rows already, with term and entity_category fields. How do I score it?",
     "expected_skill": "clinical-flywheel-eval",
     "expected_script": null,
-    "ground_truth": "The agent recognizes the manifest is already built, skips /clinical-flywheel-build, and routes through Stage 3: pick the ASR NIM (default parakeet-tdt-0.6b-v2), brief /transcribe-audio, score WER/CER/KER/SER per row, produce the five-section leaderboard including the by-ipa_source split.",
+    "ground_truth": "The agent recognizes the manifest is already built and proceeds to Stage 3 scoring without rebuilding. It names an ASR model (Parakeet TDT v2 is the documented default, but any reasonable NVIDIA ASR choice is acceptable) and acknowledges the model is configurable. Either route the audio-to-text call to /transcribe-audio or describe the inline NVCF/Riva client recipe — both are acceptable since the skill ships inline scoring. The response covers the four metrics (WER/CER/KER/SER) and treats KER as the headline clinical signal.",
     "expected_behavior": [
-      "Read clinical-flywheel-eval/SKILL.md",
-      "Recognized the user already has a manifest and did NOT route to /clinical-flywheel-build",
-      "Picked or named the default ASR NIM (nvidia/parakeet-tdt-0.6b-v2) and mentioned env-var overrides (ASR_NVCF_FUNCTION_ID, ASR_ENDPOINT, ASR_MODEL_NAME)",
-      "Deferred actual ASR transcription mechanics to /transcribe-audio (or /riva-asr)",
-      "Mentioned scoring four metrics (WER, CER, KER, SER) with breakdowns including KER by ipa_source",
-      "Mentioned KER as the headline clinical metric"
+      "Recognized the manifest is already built and proceeded with Stage 3 scoring",
+      "Named an ASR model and acknowledged the choice is configurable (env-var overrides or any equivalent reference is fine)",
+      "Covered the four scoring metrics (WER/CER/KER/SER) and treated KER as the headline clinical signal",
+      "Mentioned at least one leaderboard breakdown (KER by ipa_source is the documented headline, but any of the five sections counts)"
     ]
   },
   {
@@ -19,13 +17,11 @@
     "question": "Eval shows KER 0.05 on rows tagged merriam-webster but 0.40 on rows tagged magpie_g2p. Should I fine-tune?",
     "expected_skill": "clinical-flywheel-eval",
     "expected_script": null,
-    "ground_truth": "No — this is a pronunciation-hint coverage gap, not a model gap. Route the user back to /clinical-flywheel-build Step 2d (IPA QA review) to append verified IPA to pronunciation_overrides.csv before considering /clinical-flywheel-finetune.",
+    "ground_truth": "No — this is a pronunciation-hint coverage gap, not a model gap. The right move is to route back to /clinical-flywheel-build (specifically the IPA QA step) to append verified IPA to pronunciation_overrides.csv. Reconsider /clinical-flywheel-finetune only after that rebuild, if the gap persists.",
     "expected_behavior": [
-      "Read clinical-flywheel-eval/SKILL.md",
-      "Diagnosed the merriam-webster vs magpie_g2p delta as a pronunciation-coverage gap, NOT a model gap",
-      "Routed the user back to /clinical-flywheel-build — specifically the IPA QA review — before recommending /clinical-flywheel-finetune",
-      "Did NOT recommend fine-tuning as the first action",
-      "Mentioned pronunciation_overrides.csv as the place verified IPA gets appended"
+      "Diagnosed the merriam-webster vs magpie_g2p delta as a pronunciation-coverage gap rather than a model-capacity gap",
+      "Routed back to the IPA QA / pronunciation-override loop in /clinical-flywheel-build before considering fine-tuning",
+      "Made clear fine-tuning is the wrong first move for this specific signal shape"
     ]
   },
   {
@@ -33,13 +29,11 @@
     "question": "Why do you use KER instead of just WER for clinical ASR?",
     "expected_skill": "clinical-flywheel-eval",
     "expected_script": null,
-    "ground_truth": "Aggregate WER is dominated by function words (articles, prepositions); a model can have low WER but still be clinically dangerous if drug names are wrong. KER tracks whether the flagged clinical entity was transcribed correctly per row. Concrete example: WER 0.05 with KER 0.40 is not deployable.",
+    "ground_truth": "Aggregate WER is dominated by function words (articles, prepositions) and masks clinical-specific failures — a model can have low WER but still mis-transcribe drug names. KER tracks whether the flagged clinical entity was transcribed correctly per row, with a contiguous term-match check. Both metrics are reported; KER is the deployment-gate headline.",
     "expected_behavior": [
-      "Read clinical-flywheel-eval/SKILL.md",
-      "Explained that WER averages over function words and masks clinical-specific failures",
-      "Defined KER as per-entity correctness, with the term-words-must-appear-contiguously check",
-      "Gave a concrete example contrasting low WER with high KER as deployment-blocking",
-      "Did NOT claim KER replaces WER — both are reported, KER is the headline"
+      "Explained that aggregate WER is dominated by function words and can hide clinical-term errors",
+      "Defined KER as per-entity correctness (any phrasing of the contiguous term-match check is fine)",
+      "Framed KER as a complement to WER (the headline for clinical decisions), not a replacement"
     ]
   },
   {
@@ -47,11 +41,10 @@
     "question": "How do I authenticate with the Riva ASR gRPC endpoint?",
     "expected_skill": null,
     "expected_script": null,
-    "ground_truth": "This is general /transcribe-audio (or /riva-asr) territory — auth, gRPC, protocol details. The agent does NOT invoke clinical-flywheel-eval and instead routes to /transcribe-audio or /riva-asr.",
+    "ground_truth": "This is general /transcribe-audio (or /riva-asr) territory — auth, gRPC, protocol details. The agent treats it as out-of-scope for this skill and routes to the ASR-specific skill or otherwise stays at a conversational level without engaging the eval workflow.",
     "expected_behavior": [
-      "Did NOT invoke clinical-flywheel-eval",
-      "Routed the user to /transcribe-audio or /riva-asr for ASR auth and protocol details",
-      "Stayed conversational, did not run skill-specific scripts"
+      "Treated the question as out-of-scope for clinical-flywheel-eval and did not start a scoring workflow",
+      "Routed to /transcribe-audio or /riva-asr (or otherwise pointed the user at the ASR-skill family for auth/protocol details)"
     ]
   }
 ]

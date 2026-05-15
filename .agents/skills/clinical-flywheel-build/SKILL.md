@@ -39,18 +39,18 @@ You are the **curate-and-synthesize** stage. The user arrives from `/clinical-fl
 
 Be conversational. This is the warmest, most domain-aware step in the flywheel: you're asking a clinician (or someone who works with them) which terms hurt today and shaping a benchmark around their reality. Ask short, focused questions. Show the user what's being added. Don't lecture.
 
-## ⚠️ Data leaves your environment — disclose this to the user before any term is sent
+## Data leaves your environment — disclose this to the user before any term is sent
 
 This stage transmits user-curated content to two external services. Surface this to the user before invoking either call:
 
 | Service | What gets sent | When |
 |---|---|---|
-| **Merriam-Webster Medical Dictionary** (`dictionaryapi.com`) | One HTTP request per clinical term in the seed list — the term string itself goes in the URL path | Step 2c, **only if** `DICTIONARY_API_KEY` is set |
+| **Merriam-Webster** (`dictionaryapi.com` API or `merriam-webster.com` public site) | One HTTP request per term in the seed list — term goes in URL path | Step 2c — see MW path bullets below |
 | **NVIDIA NVCF Magpie TTS** (`grpc.nvcf.nvidia.com`) | Each generated clinical sentence (text, plus any SSML IPA wrappers) | Steps 2d and 2e, every synthesis call |
 
 Both endpoints expect **non-PHI synthetic content** — the term list you curate, the sentences `/data-designer` (or your fallback templates) generates from it. **Do not pass real patient records, real ASR transcripts, or any PHI through this skill.** If the term list itself is sensitive (proprietary drug codenames, unreleased product names, customer-confidential indications), confirm with the user that external-API transmission is acceptable under their organization's data-governance policy before proceeding.
 
-If MW transmission is not acceptable: leave `DICTIONARY_API_KEY` unset. The IPA pipeline falls through to Magpie G2P and the workflow still produces a valid benchmark.
+If no MW transmission is acceptable: take Path C below (skip MW; pipeline falls through to Magpie G2P with reduced coverage on long-tail terms).
 
 ## Purpose
 
@@ -146,54 +146,7 @@ Every term passes through a 3-tier pipeline, in order:
 
 Every manifest row carries the `ipa_source` tag (`override | merriam-webster | magpie_g2p`). The delta between `merriam-webster` and `magpie_g2p` rows in the Stage 3 leaderboard **is the proof** the pronunciation strategy is working — call it out explicitly when you produce the leaderboard.
 
-**Inline MW lookup recipe** (self-contained, no sibling skill required). Requires `DICTIONARY_API_KEY` env var (free tier at <https://dictionaryapi.com>). If unset, return `None` and let the pipeline fall through to `magpie_g2p` — this is correct behavior, not an error.
-
-The agent harness loads the `DICTIONARY_API_KEY` shell variable and passes it as an explicit function argument. The recipe code itself does not read environment variables — pass `None` for `api_key` to skip MW and fall through to `magpie_g2p`.
-
-```python
-import requests
-from typing import Optional
-
-MW_BASE = "https://www.dictionaryapi.com/api/v3/references/medical/json"
-
-# Compact MW-respelling → IPA glyph map. See references/pronunciation-pipeline.md
-# for the complete table covering combining marks and edge-case vowels.
-_MW_TO_IPA = {
-    "sh": "ʃ", "ch": "tʃ", "th": "θ", "zh": "ʒ", "ng": "ŋ",
-    "ə": "ə", "a": "æ",   "ä": "ɑː", "ā": "eɪ",
-    "e": "ɛ", "ē": "iː",  "i": "ɪ",  "ī": "aɪ",
-    "o": "ɑ", "ō": "oʊ",  "ȯ": "ɔ",  "u": "ʌ", "ü": "uː",
-    "ˈ": "ˈ", "ˌ": "ˌ",
-}
-
-def mw_lookup_ipa(term: str, api_key: Optional[str]) -> Optional[str]:
-    """Return IPA for `term` from MW Medical Dictionary, or None if unavailable.
-    Pass `None` for api_key to skip MW lookup (caller decides whether the
-    DICTIONARY_API_KEY env var is set; this code never reads the environment)."""
-    if not api_key:
-        return None
-    r = requests.get(f"{MW_BASE}/{term}", params={"key": api_key}, timeout=10)
-    if r.status_code != 200:
-        return None
-    data = r.json()
-    if not data or not isinstance(data[0], dict):
-        return None  # MW returned spelling suggestions, not an entry
-    prs = data[0].get("hwi", {}).get("prs", [])
-    if not prs or "mw" not in prs[0]:
-        return None
-    return _respelling_to_ipa(prs[0]["mw"])
-
-def _respelling_to_ipa(respelling: str) -> str:
-    """MW respelling → IPA. Digraphs (sh, ch, th, zh, ng) match before single chars.
-    Syllable dots are dropped; stress marks are preserved."""
-    s = respelling.replace("-", "")
-    out, i = [], 0
-    while i < len(s):
-        if i + 1 < len(s) and s[i:i+2] in _MW_TO_IPA:
-            out.append(_MW_TO_IPA[s[i:i+2]]); i += 2; continue
-        out.append(_MW_TO_IPA.get(s[i], s[i])); i += 1
-    return "".join(out)
-```
+**Three MW lookup choices** — all tag `merriam-webster`. **A**: `dictionaryapi.com` JSON API + `DICTIONARY_API_KEY` (free at dictionaryapi.com) — recommended for standalone. **B**: HTML scrape of `merriam-webster.com` — no key, brittle; what `voice-eval-flywheel`'s `flywheel/data/ipa_extractor.py` uses. **C**: skip MW, fall through to Magpie G2P with weaker long-tail coverage. Both recipes + the full respelling→IPA table live in `references/pronunciation-pipeline.md`. The Path A function takes `api_key` as an arg (never reads `os.environ`); pass `None` to skip MW.
 
 `pronunciation_overrides.csv` schema:
 
@@ -349,7 +302,7 @@ Full SSML wrapping rules (multi-word terms, punctuation edge cases, fallback ren
 ## Troubleshooting
 
 - **TTS rate-limit drops (`RESOURCE_EXHAUSTED`)** on >100-row generation → expected on Magpie NVCF. Confirm exponential backoff is active in `/read-aloud`; expect ~5–10% drops on big runs and re-run for the gaps.
-- **All `ipa_source` rows tagged `magpie_g2p`** → MW lookup is failing across the board, or every candidate IPA is failing phoneme validation. Check `MW_API_KEY` env var (if your `/read-aloud` flow uses MW); verify candidate IPAs against the Magpie en-US phoneme inventory before assuming they'll be accepted.
+- **All `ipa_source` rows tagged `magpie_g2p`** → MW lookup is failing across the board, or candidate IPAs are failing phoneme validation. Re-verify whichever MW path you configured (`DICTIONARY_API_KEY` for A; HTTPS reachability + parser for B), then check candidates against Magpie's en-US phoneme inventory.
 - **Magpie mispronounces a term even with the IPA override** → first verify the IPA is in the Magpie en-US phoneme inventory and the SSML wrapping is syntactically valid. If both check out, the underlying TTS bug is owned by `/read-aloud` (`/riva-tts`) — route there for diagnosis. This skill provides the override mechanism but does not own the neural G2P or SSML parser.
 - **Sentence variants from `/data-designer` are bland / template-like** → check the brief; the schema-only prompt sometimes produces stereotyped output. Add 1–2 in-context examples to the brief and re-run.
 - **Audio files exist but `manifest.jsonl` is short** → manifest writer skipped rows whose synthesis returned a NVCF error. Re-run the build with only the missing rows.
