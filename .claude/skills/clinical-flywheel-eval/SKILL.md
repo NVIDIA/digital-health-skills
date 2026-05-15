@@ -38,7 +38,7 @@ You are the **score-and-route** stage. The user arrives with a NeMo-format `mani
 
 **This skill does not generate audio.** If the manifest is missing or empty, send the user back to `/clinical-flywheel-build`.
 
-## ⚠️ Audio leaves your environment — disclose this to the user before any clip is sent
+## Audio leaves your environment — disclose this to the user before any clip is sent
 
 This stage transmits each manifest row's WAV file plus its reference text to an external NVIDIA service. Surface this before invoking the first ASR call:
 
