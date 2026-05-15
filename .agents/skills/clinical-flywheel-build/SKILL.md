@@ -148,11 +148,13 @@ Every manifest row carries the `ipa_source` tag (`override | merriam-webster | m
 
 **Inline MW lookup recipe** (self-contained, no sibling skill required). Requires `DICTIONARY_API_KEY` env var (free tier at <https://dictionaryapi.com>). If unset, return `None` and let the pipeline fall through to `magpie_g2p` — this is correct behavior, not an error.
 
+The agent harness loads the `DICTIONARY_API_KEY` shell variable and passes it as an explicit function argument. The recipe code itself does not read environment variables — pass `None` for `api_key` to skip MW and fall through to `magpie_g2p`.
+
 ```python
-import os, requests
+import requests
+from typing import Optional
 
 MW_BASE = "https://www.dictionaryapi.com/api/v3/references/medical/json"
-MW_API_KEY_VAR = "DICTIONARY_API_KEY"
 
 # Compact MW-respelling → IPA glyph map. See references/pronunciation-pipeline.md
 # for the complete table covering combining marks and edge-case vowels.
@@ -164,9 +166,10 @@ _MW_TO_IPA = {
     "ˈ": "ˈ", "ˌ": "ˌ",
 }
 
-def mw_lookup_ipa(term: str) -> str | None:
-    """Return IPA for `term` from MW Medical Dictionary, or None if unavailable."""
-    api_key = os.environ.get(MW_API_KEY_VAR)
+def mw_lookup_ipa(term: str, api_key: Optional[str]) -> Optional[str]:
+    """Return IPA for `term` from MW Medical Dictionary, or None if unavailable.
+    Pass `None` for api_key to skip MW lookup (caller decides whether the
+    DICTIONARY_API_KEY env var is set; this code never reads the environment)."""
     if not api_key:
         return None
     r = requests.get(f"{MW_BASE}/{term}", params={"key": api_key}, timeout=10)

@@ -115,16 +115,17 @@ For Stage 4 (fine-tune) only: `nemo-toolkit` and Docker + NVIDIA Container Toolk
 
 Verify the `NVIDIA_API_KEY` actually works against Magpie TTS and Parakeet/Nemotron ASR before advancing. The four skills inline every recipe needed; this round-trip just confirms the API key + network path are real.
 
+The agent harness loads the `NVIDIA_API_KEY` shell variable and passes it as an explicit function argument to the helpers below. The recipe code itself does not read environment variables — auditors can see exactly which API keys cross the wire.
+
 ```python
-import os, wave, tempfile
+import wave, tempfile
 import riva.client
 
 NVCF_HOST = "grpc.nvcf.nvidia.com:443"
 MAGPIE_FUNCTION_ID    = "877104f7-e885-42b9-8de8-f6e4c6303969"   # Magpie TTS
 PARAKEET_FUNCTION_ID  = "ee8dc628-76de-4acc-8595-1836e7e857bd"   # Parakeet TDT v2 ASR
-api_key = os.environ["NVIDIA_API_KEY"]
 
-def auth_for(function_id: str) -> riva.client.Auth:
+def auth_for(function_id: str, api_key: str) -> riva.client.Auth:
     return riva.client.Auth(
         ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
         metadata_args=[
@@ -133,31 +134,39 @@ def auth_for(function_id: str) -> riva.client.Auth:
         ],
     )
 
-# 1. TTS: "The patient was prescribed cefazolin."
-tts = riva.client.SpeechSynthesisService(auth_for(MAGPIE_FUNCTION_ID))
-pcm = b"".join(c.audio for c in tts.synthesize_online(
-    text="The patient was prescribed cefazolin.",
-    voice_name="Magpie-Multilingual.EN-US.Mia",
-    language_code="en-US", sample_rate_hz=16000,
-))
-with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-    with wave.open(f, "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(pcm)
-    wav_path = f.name
+def smoke_test(api_key: str) -> str:
+    """Caller passes api_key (the harness reads $NVIDIA_API_KEY at the shell;
+    this code never touches the environment). Returns the ASR transcript."""
 
-# 2. ASR: transcribe the WAV we just synthesized.
-asr = riva.client.ASRService(auth_for(PARAKEET_FUNCTION_ID))
-with open(wav_path, "rb") as f:
-    audio_bytes = f.read()
-config = riva.client.RecognitionConfig(
-    encoding=riva.client.AudioEncoding.LINEAR_PCM,
-    sample_rate_hertz=16000, language_code="en-US",
-    max_alternatives=1, enable_automatic_punctuation=True,
-)
-response = asr.offline_recognize(audio_bytes, config)
-transcript = response.results[0].alternatives[0].transcript if response.results else ""
-print(f"TTS:  The patient was prescribed cefazolin.")
-print(f"ASR:  {transcript}")
+    # 1. TTS: "The patient was prescribed cefazolin."
+    tts = riva.client.SpeechSynthesisService(auth_for(MAGPIE_FUNCTION_ID, api_key))
+    pcm = b"".join(c.audio for c in tts.synthesize_online(
+        text="The patient was prescribed cefazolin.",
+        voice_name="Magpie-Multilingual.EN-US.Mia",
+        language_code="en-US", sample_rate_hz=16000,
+    ))
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        with wave.open(f, "wb") as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(pcm)
+        wav_path = f.name
+
+    # 2. ASR: transcribe the WAV we just synthesized.
+    asr = riva.client.ASRService(auth_for(PARAKEET_FUNCTION_ID, api_key))
+    with open(wav_path, "rb") as f:
+        audio_bytes = f.read()
+    config = riva.client.RecognitionConfig(
+        encoding=riva.client.AudioEncoding.LINEAR_PCM,
+        sample_rate_hertz=16000, language_code="en-US",
+        max_alternatives=1, enable_automatic_punctuation=True,
+    )
+    response = asr.offline_recognize(audio_bytes, config)
+    transcript = response.results[0].alternatives[0].transcript if response.results else ""
+    print(f"TTS:  The patient was prescribed cefazolin.")
+    print(f"ASR:  {transcript}")
+    return transcript
+
+# Invoke from the agent (api_key sourced by the harness, not by this code):
+# smoke_test(api_key="<NVIDIA_API_KEY value>")
 ```
 
 If the transcript matches the input within ~1 token, the hosted stack is reachable and the user can advance to Stage 2. If either call fails:
