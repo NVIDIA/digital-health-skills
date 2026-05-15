@@ -216,39 +216,18 @@ Call this once per candidate IPA before showing it to the user. On user approval
 
 ### 2e. Full benchmark generation
 
-After pronunciations are locked, generate the full **Cartesian product**:
+After pronunciations are locked, generate the full Cartesian product `|terms| × |voices| × |noise_levels| × |context_types|`. Defaults: 2–4 Magpie en-US voices (Mia/Jason/Ray), `[clean, snr_15db, snr_5db]`, `[dictation, handoff, chart_note, history]`.
 
-```
-manifest rows = |terms| × |voices| × |noise_levels| × |context_types|
-```
-
-Common defaults:
-
-- **Voices**: 2–4 Magpie en-US voices (e.g. `Magpie-Multilingual.EN-US.Mia`, `Jason`, `Ray`)
-- **Noise levels**: `[clean, snr_15db, snr_5db]`
-- **Context types**: `[dictation, handoff, chart_note, history]`
-
-**Self-contained synthesis path** (no `/read-aloud` skill required). Reuse the `riva.client` SDK set up in `/clinical-flywheel-setup`:
+Self-contained synthesis (no `/read-aloud` required). SSML wrap helpers and edge-case rules live in `references/pronunciation-pipeline.md`; this block focuses on the synthesis call:
 
 ```python
-import re, json, os
+import re
 from pathlib import Path
 import riva.client
+# from .pronunciation_pipeline import render_with_overrides  # see references/
 
 NVCF_HOST = "grpc.nvcf.nvidia.com:443"
 MAGPIE_FUNCTION_ID = "877104f7-e885-42b9-8de8-f6e4c6303969"
-
-def wrap_with_ipa(term: str, ipa: str) -> str:
-    """Single-token SSML phoneme wrap. Use wrap_multiword() for terms with spaces."""
-    if " " in term:
-        return f'<sub alias="{ipa}"><phoneme alphabet="ipa" ph="{ipa}">{term}</phoneme></sub>'
-    return f'<phoneme alphabet="ipa" ph="{ipa}">{term}</phoneme>'
-
-def render_with_overrides(sentence: str, term: str, ipa: str | None) -> str:
-    """Replace `term` in `sentence` with its SSML wrap when ipa is provided."""
-    if not ipa:
-        return sentence
-    return re.sub(rf'\b{re.escape(term)}\b', wrap_with_ipa(term, ipa), sentence)
 
 def synthesize_row(row: dict, out_dir: Path, api_key: str) -> Path:
     """Synthesize one manifest row to <out_dir>/audio/<slug>.wav. Returns the path."""
@@ -263,28 +242,36 @@ def synthesize_row(row: dict, out_dir: Path, api_key: str) -> Path:
     text = row["text"]
     if row["ipa_source"] in ("override", "merriam-webster"):
         text = f"<speak>{render_with_overrides(text, row['term'], row['ipa'])}</speak>"
-    slug = f"{row['term']}_{row['context_type']}_{row['voice_id']}_{row['noise_level']}"
-    slug = re.sub(r'[^a-z0-9]+', '_', slug.lower())
+    slug = re.sub(r'[^a-z0-9]+', '_',
+                  f"{row['term']}_{row['context_type']}_{row['voice_id']}_{row['noise_level']}".lower())
     audio_path = out_dir / "audio" / f"{slug}.wav"
     audio_path.parent.mkdir(parents=True, exist_ok=True)
     pcm = b"".join(c.audio for c in tts.synthesize_online(
         text=text, voice_name=row["voice_id"],
         language_code="en-US", sample_rate_hz=16000,
     ))
-    # PCM → WAV (16-bit mono, 16 kHz).
     import wave
     with wave.open(str(audio_path), "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(pcm)
     return audio_path
 ```
 
-For the noise-injection step (clean → snr_15db → snr_5db variants), see `references/manifest-schema.md` for the SNR-mixing formula. Apply it after synthesis to the clean WAV.
+Noise-injection (clean → `snr_15db` → `snr_5db`) and the manifest schema (NeMo canonical fields + clinical extension, plus pre-flight schema and audio-existence checks) all live in `references/manifest-schema.md` — see the References section below for the canonical pointer.
 
-Full SSML wrapping rules (multi-word terms, punctuation edge cases, fallback rendering) live in `references/pronunciation-pipeline.md`.
+**Warn when product > 100 rows.** Magpie NVCF rate-limits with ~5–10% `RESOURCE_EXHAUSTED` drops on big runs. Re-run the dropped rows.
 
-**Warn when product > 100 rows.** Magpie NVCF rate-limits with ~5–10% `RESOURCE_EXHAUSTED` drops on big runs. Exponential backoff in `/read-aloud` handles most, but expect a re-run pass for the gaps.
+### Stage 2 completion checklist
 
-**Manifest schema** (NeMo canonical + clinical extension) is in `references/manifest-schema.md`. Both pre-flight checks (schema + audio existence) live there.
+Don't consider Stage 2 done until all five sub-steps ran. Agents commonly stop after 2a or 2b; the goal is a synthesized manifest plus a hand-off:
+
+- **2a** — `term_seed.csv`, 4–10 terms, `entity_category ∈ {drug, procedure, anatomy, condition, lab, role}`
+- **2b** — 3–5 `context_type` sentence variants per term
+- **2c** — every term tagged `ipa_source ∈ {override, merriam-webster, magpie_g2p}`
+- **2d** — QA wavs auditioned, IPA overrides locked with explicit user approval
+- **2e** — `manifest.jsonl` + per-row audio for the Cartesian product
+- **Hand-off** — name `/clinical-flywheel-eval` as the next skill and **KER** as its headline metric
+
+Writes go only into the user-chosen `$EVAL_DIR/cycle<N>/`. Don't write elsewhere, modify env, or install packages — those belong to `/clinical-flywheel-setup`.
 
 ## Examples
 

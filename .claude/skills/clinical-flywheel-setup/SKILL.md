@@ -87,6 +87,8 @@ Do **not** activate when:
 
 ## Instructions
 
+**Scope.** This skill performs **read-only environment checks**: confirming a key is exported (length-only), the Python version, that libraries import, and that the hosted NVCF stack responds to a single smoke-test round-trip. It does **not** install system packages, modify shell rc files, write to disk outside an explicit `.venv/`, or attempt to authenticate with the real key value. Validate; never mutate without explicit user direction.
+
 ### 1a. Verify `NVIDIA_API_KEY` (length-only — never echo the value)
 
 ```bash
