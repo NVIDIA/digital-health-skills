@@ -8,7 +8,7 @@ The Clinical ASR Flywheel manifest is **NeMo-format JSONL** with a small clinica
 |---|---|---|
 | `audio_filepath` | string | **Absolute path** to the WAV. Use absolute paths so the manifest is portable across cwd. |
 | `text` | string | Reference transcript. Lowercased by most NeMo configs downstream. |
-| `duration` | float \| null | Audio length in seconds. Write `null` — NeMo loaders fill via librosa. Some Stage 4 training configs (`speech_to_text_finetune.py` variants) require it pre-populated; if you hit that, populate via `soundfile.read(...).shape[0] / sample_rate` at manifest-write time. |
+| `duration` | float \| null | Audio length in seconds. Write `null` — NeMo loaders fill via librosa. Some training configs require it pre-populated; check `/riva-asr-custom`. |
 
 ## Clinical extension fields (load-bearing for eval breakdowns)
 

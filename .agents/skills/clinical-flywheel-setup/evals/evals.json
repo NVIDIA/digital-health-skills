@@ -1,0 +1,42 @@
+[
+  {
+    "id": "clinical-flywheel-setup-001",
+    "question": "I want to start the Clinical ASR Flywheel — what do I need installed?",
+    "expected_skill": "clinical-flywheel-setup",
+    "expected_script": null,
+    "ground_truth": "The agent invokes clinical-flywheel-setup, walks the user through the four prerequisites: NVIDIA_API_KEY (length-only check), Python ≥3.10 + libraries, the six upstream skills, and points the user to /clinical-flywheel-build as the next stop.",
+    "expected_behavior": [
+      "Read clinical-flywheel-setup/SKILL.md before taking action",
+      "Asked about (or verified) NVIDIA_API_KEY presence without echoing the key",
+      "Listed the six upstream skills (/read-aloud or /riva-tts, /transcribe-audio or /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer)",
+      "Mentioned KER as the flywheel's headline metric (for downstream framing)",
+      "Recommended /clinical-flywheel-build as the next skill"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-setup-002",
+    "question": "What scripts come with this skill?",
+    "expected_skill": "clinical-flywheel-setup",
+    "expected_script": null,
+    "ground_truth": "The skill family is standalone — methodology + recipes, no runnable scripts ship inside the skill. The companion software lives in the (internal) voice-eval-flywheel repo. The intended pattern is composition of /data-designer + /read-aloud + /transcribe-audio + /riva-asr-custom.",
+    "expected_behavior": [
+      "Read clinical-flywheel-setup/SKILL.md",
+      "Clarified that this skill family ships methodology + recipes, NOT runnable scripts",
+      "Mentioned the composition pattern with /data-designer, /read-aloud, /transcribe-audio, /riva-asr-custom",
+      "Pointed at the companion voice-eval-flywheel repo as the runnable-code distribution",
+      "Did NOT claim to ship scripts/generate_eval_set.py or scripts/run_eval.py inside the skill itself"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-setup-neg-001",
+    "question": "What is the capital of France?",
+    "expected_skill": null,
+    "expected_script": null,
+    "ground_truth": "Paris. The agent answers directly without invoking any skill — this is a general-knowledge question, not a clinical-ASR workflow.",
+    "expected_behavior": [
+      "Did NOT invoke clinical-flywheel-setup",
+      "Did NOT invoke any other skill",
+      "Answered conversationally with the correct fact (Paris)"
+    ]
+  }
+]

@@ -1,0 +1,295 @@
+---
+name: "clinical-flywheel-eval"
+description: "Stage 3 of the Clinical ASR Flywheel. Use when scoring a NeMo manifest for clinical-term accuracy (KER) and producing the leaderboard. NOT for ASR auth/protocol (use /transcribe-audio)."
+version: "1.0.0"
+author: "Ben Randoing <brandoing@nvidia.com>"
+tags:
+  - clinical-asr
+  - eval
+  - ker
+  - leaderboard
+  - flywheel
+tools:
+  - Read
+  - Write
+  - Bash
+  - Skill
+license: Apache-2.0
+compatibility: "Requires the transcribe-audio (or riva-asr) skill installed alongside this one. NVIDIA_API_KEY for hosted ASR NIMs. A NeMo-format manifest produced by /clinical-flywheel-build (or an externally-provided manifest carrying the clinical-extension fields)."
+metadata:
+  author: "Ben Randoing <brandoing@nvidia.com>"
+  tags:
+    - clinical-asr
+    - flywheel
+    - eval
+    - ker
+    - leaderboard
+  team: healthcare-tme
+  domain: ai-ml
+  stage: 3
+  companion_software: "voice-eval-flywheel (internal, optional)"
+  previous_skill: clinical-flywheel-build
+  next_skill: clinical-flywheel-finetune
+---
+
+# Clinical ASR Flywheel — Stage 3 (Eval)
+
+You are the **score-and-route** stage. The user arrives with a NeMo-format `manifest.jsonl` (either from `/clinical-flywheel-build` or carried in from elsewhere). You transcribe it via the chosen ASR NIM, score four metrics, produce a five-section leaderboard, and read the decision tree to decide whether the user should advance to `/clinical-flywheel-finetune`, loop back to `/clinical-flywheel-build`, or stop and harden the eval.
+
+**This skill does not generate audio.** If the manifest is missing or empty, send the user back to `/clinical-flywheel-build`.
+
+## Critical workflow rules (apply on every activation)
+
+Surface these facts in any response, even if the user asks a narrow question:
+
+1. **Off-ramp first.** If the user is asking about ASR auth, the gRPC protocol, streaming mechanics, model-catalog comparison, NIM deploy, or Riva configuration — this is the **wrong skill**. Reply with a one-line route to `/transcribe-audio` (hosted ASR) or `/riva-asr` (self-hosted protocol) and stop. Do not run any scoring workflow.
+2. **Default ASR NIM is `nvidia/parakeet-tdt-0.6b-v2`** via HTTP REST. Env-var overrides: `ASR_MODEL_NAME` (leaderboard display name), `ASR_NVCF_FUNCTION_ID` (fine-tuned NIM on NVCF), `ASR_ENDPOINT` (self-hosted gRPC; takes precedence). Echo the chosen NIM and overrides back before spending API credits.
+3. **Defer all ASR transcription mechanics — auth, gRPC, chunking, retries, streaming — to `/transcribe-audio` (or `/riva-asr` for self-hosted protocol details).** Do **not** describe transcription inline; brief the upstream skill instead.
+4. **KER is the headline.** Per-row check: the flagged `term` words must appear *in order, contiguous, adjacent* in the normalized hypothesis. `cefazolin → cefa zolin` is a miss. Aggregate WER hides clinically dangerous failures; both are reported, KER is the gate.
+5. **The by-`ipa_source` split is the most informative single number** in the leaderboard. The `merriam-webster` vs `magpie_g2p` delta proves the SSML override pipeline is doing real work. Read it aloud to the user.
+6. **Special-case routing.** `merriam-webster` rows good, `magpie_g2p` rows bad → pronunciation-coverage gap, **not** a model gap. Route back to `/clinical-flywheel-build` Step 2d. **Do NOT recommend `/clinical-flywheel-finetune`** as a first response.
+7. **Five-section leaderboard order.** Headline (WER/CER/KER/SER) → KER by `entity_category` → KER by `ipa_source` → KER by `noise_level` → Per-term KER worst-first. The by-`ipa_source` section is mandatory; it is the proof the SSML pipeline works.
+
+## Purpose
+
+Score a clinical-ASR manifest with four metrics:
+
+- **WER** — Word error rate (industry-standard, blunt for clinical)
+- **CER** — Character error rate (catches near-misses on long compound names)
+- **KER** ★ — Keyword error rate: did the flagged `term` appear in the hypothesis? **Headline clinical signal.**
+- **SER** — Sentence error rate (1 if any wrong, 0 if perfect; sanity bound)
+
+…then produce a five-section leaderboard whose **by-`ipa_source`** split is the most informative single number in the entire flywheel, and route the user using the post-eval decision tree.
+
+## When to use this skill
+
+Activate on user phrases like:
+
+- "Score my ASR manifest"
+- "What's the KER on Parakeet TDT v2?"
+- "Run the eval on cycle-N"
+- "Compare two ASR models on the clinical benchmark"
+- "Generate the leaderboard"
+- "I have a manifest.jsonl, how do I score it?"
+- "Why is KER 0.4 when WER is 0.07?"
+- "Should we fine-tune?" *(this is the eval-side question — the post-eval decision tree lives in this skill)*
+
+Do **not** activate when (per Critical Workflow Rule #1, route immediately and stop):
+
+- The user doesn't have a manifest yet → `/clinical-flywheel-build`
+- The user wants to fine-tune *now* with a known KER → `/clinical-flywheel-finetune`
+- The user asks about ASR **auth** (API keys, bearer tokens, function IDs) → `/transcribe-audio` (hosted) or `/riva-asr` (self-hosted)
+- The user asks about the ASR **gRPC protocol**, streaming, batching, chunking, or transcription retries → `/transcribe-audio` or `/riva-asr`
+- The user asks about ASR **model catalog selection** (which model is best, model comparison, vendor differences) → `/transcribe-audio`
+- The user asks about **NIM deploy** or `riva-build` / `riva-deploy` flags → `/riva-asr-custom`
+- The user asks about **NGC / Docker / NVIDIA Container Toolkit** → `/riva-nim-setup`
+
+## Prerequisites
+
+- **A NeMo-format manifest** with the clinical extension fields (`term`, `entity_category`, `ipa_source`, `voice_id`, `noise_level`, `context_type`). The schema is documented in the build skill's `references/manifest-schema.md`.
+- **`NVIDIA_API_KEY`** exported (Stage 1 prerequisite still applies).
+- **`/transcribe-audio`** (or `/riva-asr`) reachable. Hosted via NVCF by default; self-hosted NIMs work too.
+- **Audio files actually present on disk** — run the audio-existence pre-flight from the manifest-schema reference before spending API credits.
+
+## Instructions
+
+### 3a. Pick the ASR NIM
+
+**Default**: `nvidia/parakeet-tdt-0.6b-v2` via the HTTP REST endpoint
+(`https://integrate.api.nvidia.com/v1/audio/transcriptions`). This is
+NVIDIA's current English ASR recommendation per `/transcribe-audio` —
+fastest and cheapest in the catalog, supported in NeMo's stock SFT recipe
+so the Stage 3 baseline and a Stage 4 fine-tune ride the same model
+family.
+
+Override via env vars:
+
+| Variable | Use when |
+|---|---|
+| `ASR_MODEL_NAME` | Leaderboard display name (e.g. `parakeet-tdt-0.6b-v2-mycycle1`) |
+| `ASR_NVCF_FUNCTION_ID` | A fine-tuned NIM hosted on NVCF |
+| `ASR_ENDPOINT` | Self-hosted gRPC (e.g. `localhost:50051`); takes precedence over hosted REST |
+
+**Other catalog options** (delegate to `/transcribe-audio`):
+
+- `nvidia/parakeet-tdt-1.1b` — higher accuracy, larger model; pick when WER matters more than cost.
+- `nvidia/parakeet-ctc-0.6b-v2` — CTC decoder; simpler Riva export path.
+- `nvidia/nemotron-speech-streaming-en-0.6b` — for real-time partial transcripts via `/riva-asr`. **Eval-only**; do not pair with `/clinical-flywheel-finetune` (the SFT path is unreliable).
+- `whisper-large-v3` — cross-vendor baseline.
+
+Echo the chosen NIM and any env-var overrides to the user **before** spending API credits. A 200-row manifest on hosted Parakeet TDT v2 is cheap; an accidental run against `parakeet-tdt-1.1b` × 4 voices on a 1,000-row manifest is not.
+
+### 3b. Transcribe via `/transcribe-audio`
+
+Brief `/transcribe-audio`:
+
+> For each row in `manifest.jsonl`, transcribe `audio_filepath` via the configured ASR NIM. Resample to 16 kHz mono if needed. Treat the whole file as one chunk (sentences are ≤ 30 s). Write per-row results to `per_sample.json` with this shape:
+>
+> ```json
+> {
+>   "audio_filepath": "...",
+>   "ref": "<row.text>",
+>   "hyp": "<asr output>",
+>   "term": "<row.term>",
+>   "entity_category": "<row.entity_category>",
+>   "ipa_source": "<row.ipa_source>",
+>   "voice_id": "<row.voice_id>",
+>   "noise_level": "<row.noise_level>",
+>   "context_type": "<row.context_type>"
+> }
+> ```
+
+`/transcribe-audio` handles auth, retries, chunking, and any protocol-level concerns. This skill is hands-off after the brief.
+
+### 3c. Score four metrics
+
+For every row, compute:
+
+| Metric | What it measures | Why we keep it |
+|---|---|---|
+| **WER** | Word error rate (Levenshtein on tokens, after normalization) | Industry standard; blunt instrument for clinical |
+| **CER** | Character error rate | Catches near-misses on long compound names |
+| **KER** ★ | Keyword error rate — did the flagged `term` appear in the hypothesis (normalized, **contiguous** match)? | **Headline clinical signal** |
+| **SER** | Sentence error rate (1 if any wrong, 0 if perfect) | Sanity bound; what the doctor experiences |
+
+**Normalization (apply to both `ref` and `hyp` before all four metrics):**
+
+1. Lowercase.
+2. NFKD-normalize (smart quotes → ASCII, etc.).
+3. Strip punctuation **except hyphen**.
+4. Collapse whitespace runs to a single space.
+
+**Inline scoring recipes** (self-contained, no `jiwer` dependency required). `jiwer` is fine if installed; the pure-Python below is the standalone fallback:
+
+```python
+import re, unicodedata
+
+def normalize(s: str) -> str:
+    s = unicodedata.normalize("NFKD", s).lower()
+    # Strip punctuation except hyphen; collapse whitespace.
+    s = re.sub(r"[^\w\s\-]", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+def edit_distance(ref, hyp) -> int:
+    """O(n*m) Levenshtein on any sequence (list of tokens or list of chars)."""
+    n, m = len(ref), len(hyp)
+    if n == 0: return m
+    if m == 0: return n
+    dp = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n + 1): dp[i][0] = i
+    for j in range(m + 1): dp[0][j] = j
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            cost = 0 if ref[i-1] == hyp[j-1] else 1
+            dp[i][j] = min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + cost)
+    return dp[n][m]
+
+def wer(ref: str, hyp: str) -> float:
+    r, h = normalize(ref).split(), normalize(hyp).split()
+    return edit_distance(r, h) / max(len(r), 1)
+
+def cer(ref: str, hyp: str) -> float:
+    r, h = list(normalize(ref)), list(normalize(hyp))
+    return edit_distance(r, h) / max(len(r), 1)
+
+def ker(hyp: str, term: str) -> int:
+    """Strict KER per row: 1 = miss, 0 = hit.
+    Term words must appear in order, adjacent, in the normalized hypothesis."""
+    norm_hyp = normalize(hyp).split()
+    norm_term = normalize(term).split()
+    for i in range(len(norm_hyp) - len(norm_term) + 1):
+        if norm_hyp[i:i + len(norm_term)] == norm_term:
+            return 0  # hit
+    return 1  # miss
+
+def ser(ref: str, hyp: str) -> int:
+    """Sentence error rate per row: 1 if any difference (post-normalize), 0 if exact."""
+    return 0 if normalize(ref) == normalize(hyp) else 1
+```
+
+Aggregate across rows: `mean(per-row score)` for each metric.
+
+**Strict KER** — term words must appear *in order, adjacent* in the normalized hypothesis. This is conservative: `cefazolin → cefa zolin` counts as a miss. That's the right call clinically — a downstream pharmacy lookup will fail on the misspelled token.
+
+KER does **not** punish surrounding errors. A row where the term is correct and the rest of the sentence is garbage still scores KER=0; the WER on that row will surface the broader problem separately.
+
+### 3d. Breakdowns + leaderboard
+
+Write a five-section markdown leaderboard, **in this order**:
+
+1. **Headline** — overall WER, CER, KER, SER for the chosen model.
+2. **KER by `entity_category`** — drug vs procedure vs anatomy vs ... This is what the user actually cares about for deployment.
+3. **KER by `ipa_source`** — **the most informative single number in the leaderboard.** The delta between `merriam-webster` and `magpie_g2p` rows is the proof the SSML override pipeline is doing real work. *Read this section aloud to the user.*
+4. **KER by `noise_level`** — clinical environments are loud. `snr_5db` rows are closer to reality than `clean`.
+5. **Per-term KER** (worst first) — these are your Stage 4 fine-tune targets.
+
+A representative `ipa_source` split looks like:
+
+```
+ipa_source           KER     n
+merriam-webster      0.05    420
+magpie_g2p           0.41    180   ← these are the pronunciation-coverage gap
+override             0.03     45
+```
+
+The 0.05 vs 0.41 delta tells the deployment story. If the user sees this gap and asks "should we fine-tune?" — the answer is *not yet*. Route them back to `/clinical-flywheel-build`'s IPA QA pipeline (Stage 2d). See the decision tree below.
+
+## Decision tree (after eval)
+
+Read the **priority-category KER** (drug KER for most clinical workflows, procedure KER for surgical workflows) and route:
+
+| KER on priority category | Recommend |
+|---|---|
+| **> 0.3** | `/clinical-flywheel-finetune`. Manifest is already NeMo-format-ready. Note: rows ≥ 100 is the minimum for a believable fine-tune signal; if the manifest is smaller, grow it first via `/clinical-flywheel-build`. |
+| **0.1 – 0.3** | Either expand the term list (back to `/clinical-flywheel-build` with new domain terms — usually surfaces more failures cheaper than tuning) **or** fine-tune. On a *first* eval, expand. On a *later* eval where you've already grown the manifest, tune. |
+| **< 0.1** | Strong baseline. Don't tune yet — you'd be optimizing against a saturated metric. Push the eval harder: add voices, noise levels, contexts, adversarial terms. Loop back to `/clinical-flywheel-build`. |
+
+**Special case — `merriam-webster` rows score well but `magpie_g2p` rows are bad.** That's a pronunciation-hint coverage gap, **not a model gap**. Route back to `/clinical-flywheel-build` Step 2d (IPA QA review), not to `/clinical-flywheel-finetune`. Fine-tuning over a TTS-pronunciation gap teaches the model to mis-recognize the model's own mistakes — the wrong fix.
+
+## Examples
+
+**Scenario A — first eval on a fresh cycle-1 manifest.** User: *"I have `manifest.jsonl` with 200 clinical audio rows already, with `term` and `entity_category` fields. How do I score it?"* → Skip Stage 2 entirely. Run the audio-existence pre-flight. Pick `parakeet-tdt-0.6b-v2` (default) and echo the choice. Brief `/transcribe-audio`. Score the four metrics. Produce the five-section leaderboard. Read the by-`ipa_source` split to the user. Apply the decision tree against drug KER.
+
+**Scenario B — interpreting a mixed result.** User: *"Eval shows KER 0.05 on rows tagged `merriam-webster` but 0.40 on rows tagged `magpie_g2p`. Should I fine-tune?"* → No — this is the special case. The model is fine; the pronunciation hints aren't covering the long-tail terms. Route the user back to `/clinical-flywheel-build` Step 2d to audition the `magpie_g2p` rows and append verified IPA to `pronunciation_overrides.csv`. Re-run Stage 3 after the rebuild before reconsidering Stage 4.
+
+**Scenario C — why-KER question.** User: *"Why do you use KER instead of just WER for clinical ASR?"* → Explain: aggregate WER is dominated by function words (articles, prepositions); a model can have low WER but still be clinically dangerous if drug names are wrong. KER tracks whether the flagged clinical entity was transcribed correctly per row. Concrete example: WER 0.05 with drug KER 0.40 is not deployable. Both metrics are reported; KER is the headline.
+
+## Artifacts produced
+
+- `per_sample.json` — per-row transcription results with all clinical-extension fields preserved (the ASR `hyp` joined to the manifest's `ref` and metadata)
+- `results.csv` — per-row WER/CER/KER/SER scores
+- `leaderboard_cycle<N>.md` — five-section markdown report
+
+(The exact file names are user-chosen; the companion software uses these names by default.)
+
+## Troubleshooting
+
+- **"No manifest found"** → the user skipped Stage 2 or pointed at the wrong directory. Route to `/clinical-flywheel-build`, or confirm `$MANIFEST_PATH`.
+- **All rows score KER=1** → check normalization. If `ref` and `hyp` are normalized differently (one lowercased, one not; one with punctuation, one without), every contiguous match will fail. Apply the four normalization steps to both sides.
+- **All rows score KER=0** but WER is high → KER is finding the term *somewhere* but the rest of the sentence is wrong. Sanity-check by reading a few `(ref, hyp)` pairs by hand. Often this surfaces a misaligned manifest (audio belongs to a different row).
+- **`merriam-webster` KER and `magpie_g2p` KER are both high** → not a pronunciation-coverage issue; the ASR model genuinely can't transcribe these terms. Stage 4 is the right route, assuming the manifest has ≥ 100 rows.
+- **`merriam-webster` KER low, `magpie_g2p` KER high** → pronunciation-coverage gap. Route to `/clinical-flywheel-build` Step 2d. **Do not fine-tune** as a first response — the model isn't the problem.
+- **WER is fine on `clean` rows but balloons on `snr_5db`** → robustness gap, not a vocabulary gap. Expand the eval set with more diverse noise via `/clinical-flywheel-build`, or accept the limit and document the deployment-noise floor.
+- **ASR results diverge between Riva NIM and offline NeMo `transcribe()`** → the gap is in Riva preprocessing or `riva-build` flags, not the model. Route to `/riva-asr-custom`.
+- **Hosted ASR rate-limits** on large manifests → `/transcribe-audio` handles backoff; if drops persist, slice the manifest and re-run the dropped rows.
+
+For anything not in this list, identify which upstream skill is implicated. ASR-side issues belong to `/transcribe-audio`; scoring-side issues belong here.
+
+## Limitations
+
+- **English-only by default.** Tokenization + normalization assume Latin script and en-US lexicon.
+- **Strict-contiguous KER is conservative.** A near-miss like `cefa zolin` counts as a miss. That's intentional — pharmacy lookups fail on near-misses. Users wanting "soft" matching can switch to phoneme-level edit distance, which is a methodology extension, not a config tweak.
+- **One model per eval run.** Comparing two models means running the eval twice and diffing leaderboards. The companion software's `leaderboard.md` shape supports multi-model rows; the skill-only path produces one model per file.
+- **Hosted-only paths assumed.** Self-hosted NIMs work but require `/riva-nim-setup` first.
+
+## Companion software
+
+Runnable scripts that implement this stage live in the (currently internal) **`voice-eval-flywheel`** repo: `scripts/run_eval.py` drives `/transcribe-audio` + scoring + leaderboard end-to-end; `flywheel/leaderboard.py` carries the five-section renderer. You **do not need** the repo to complete this stage — composing `/transcribe-audio` with the recipes above is sufficient.
+
+## Next steps
+
+- **Forward (KER > 0.3, manifest ≥ 100 rows):** `/clinical-flywheel-finetune`.
+- **Back to build (KER 0.1–0.3 on first eval, or `magpie_g2p` gap):** `/clinical-flywheel-build`.
+- **Stop (KER < 0.1):** the eval is saturated. Harden it before declaring victory.
+- **Lateral** for ASR protocol / auth / streaming details: `/transcribe-audio` (or `/riva-asr`).
