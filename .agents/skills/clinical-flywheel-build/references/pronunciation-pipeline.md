@@ -57,7 +57,7 @@ def _respelling_to_ipa(respelling: str) -> str:
 
 ### Path B — HTML scrape of `merriam-webster.com`
 
-What the `voice-eval-flywheel` companion repo's `flywheel/data/ipa_extractor.py:83-113` uses. No key, but brittle to MW site HTML changes; only use this if you control your deployment context. Feed the returned string into the same `_respelling_to_ipa()` helper as Path A. Sketch:
+No API key needed, but brittle to MW site HTML changes; only use this if you control your deployment context (so you can fix it when the site moves). Feed the returned string into the same `_respelling_to_ipa()` helper as Path A. Sketch:
 
   ```python
   import re, requests
@@ -65,7 +65,7 @@ What the `voice-eval-flywheel` companion repo's `flywheel/data/ipa_extractor.py:
   from typing import Optional
   from urllib.parse import quote
 
-  UA = "voice-eval-flywheel/0.1 (clinical-asr eval)"
+  UA = "clinical-flywheel-build/1.0 (mw scrape, change me if you redistribute)"
 
   def scrape_mw_respelling(term: str, timeout: float = 15.0) -> Optional[str]:
       """Path B: parse the public MW website for the term's respelling.
@@ -110,7 +110,7 @@ The Merriam-Webster Medical Dictionary API returns pronunciation in a respelling
 | `n` | `n` | `not` → `nɑt` |
 | `ng` | `ŋ` | `siŋ` → `sɪŋ` |
 | `p` | `p` | `pet` → `pɛt` |
-| `r` | `r` | `red` → `rɛd` |
+| `r` | `ɹ` | `red` → `ɹɛd` (alveolar approximant — see note below) |
 | `s` | `s` | `sat` → `sæt` |
 | `sh` | `ʃ` | `shōt` → `ʃoʊt` |
 | `t` | `t` | `top` → `tɑp` |
@@ -144,6 +144,8 @@ The Merriam-Webster Medical Dictionary API returns pronunciation in a respelling
 | `ü` | `uː` | `boot` → `buːt` |
 | `aü` | `aʊ` | `out` → `aʊt` |
 | `yü` | `juː` | `cute` → `kjuːt` |
+
+**Note on `r` (alveolar approximant `ɹ`, not trill `r`).** The IPA glyph `r` is technically the alveolar trill (Spanish, Italian, Scottish English). American English uses `ɹ`, the alveolar approximant. Magpie's en-US voices will *accept* a `<phoneme>` SSML payload containing trill `r` (it doesn't error out — phoneme-set validation passes), but the trill is not in the en-US articulation inventory, so the synthesizer silently reduces or drops it. The symptom is an r-shaped hole in the audio: `əˈnæstrəˌzoʊl` ("anastrozole") rendered as `əˈnæstəˌzoʊl` — no audible r between `t` and the schwa. Use `ɹ` for every r in en-US IPA; the mapping table above already does this. If you're inheriting a hand-curated override from another source, sweep `r → ɹ` before committing or you'll get the same r-drop.
 
 ### Stress and syllabification
 

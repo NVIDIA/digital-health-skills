@@ -35,7 +35,7 @@ for line in sys.stdin:
 " '$HOME/repo' '/workspace' < manifest.jsonl > manifest.rewritten.jsonl
 ```
 
-Both options work. The companion software (`voice-eval-flywheel`) uses (b) with auto-detection: it finds the rightmost path component that resolves under `/workspace/` and rewrites the prefix.
+Both options work. For long-lived cycle directories, (a) is simpler — pick a path that's the same on the host and inside the container, and you never have to rewrite. For ad-hoc runs, (b) is more flexible.
 
 ## Verify before training
 

@@ -51,10 +51,6 @@ ln -s "$(pwd)/.agents/skills/clinical-flywheel-finetune" ~/.claude/skills/
 
 Skills hand off explicitly. Start with `/clinical-flywheel-setup`; each stage tells you which skill comes next.
 
-## Companion software
-
-A more comprehensive Clinical Speech Evaluation Flywheel — with deterministic scoring scripts, leaderboard tooling, and an end-to-end CI harness — lives in a separate internal NVIDIA repository (`voice-eval-flywheel`). It is not redistributed here. These skills are intentionally self-sufficient so you can run the workflow without that companion.
-
 ## When NOT to use these skills
 
 - Generic ASR work (no clinical vocabulary) → use upstream ASR skills directly, not these

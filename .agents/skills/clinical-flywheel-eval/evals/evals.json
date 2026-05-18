@@ -40,10 +40,10 @@
     "question": "How do I authenticate with the Riva ASR gRPC endpoint?",
     "expected_skill": null,
     "expected_script": null,
-    "ground_truth": "This is general /transcribe-audio (or /riva-asr) territory — auth, gRPC, protocol details. The agent treats it as out-of-scope for this skill and routes to the ASR-specific skill family or otherwise stays at a conversational level without engaging the eval workflow.",
+    "ground_truth": "This is general /riva-asr territory — auth, gRPC, protocol details. The agent treats it as out-of-scope for the eval skill (which inlines only the simplest offline call shape) and routes to /riva-asr, or otherwise stays at a conversational level without engaging the scoring workflow.",
     "expected_behavior": [
       "Treated the question as out-of-scope for clinical-flywheel-eval and did not start a scoring workflow",
-      "Routed to /transcribe-audio or /riva-asr (or otherwise pointed the user at the ASR-skill family for auth/protocol details)"
+      "Routed to /riva-asr (the canonical owner of ASR protocol/auth/streaming details), or otherwise pointed the user at the ASR-skill family"
     ]
   }
 ]
