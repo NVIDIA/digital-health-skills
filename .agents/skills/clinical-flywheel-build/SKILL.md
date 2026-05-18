@@ -172,44 +172,9 @@ For every term tagged `magpie_g2p`, propose an IPA candidate using clinical suff
 | `-cillin` | …ˈsɪlɪn (amoxicillin, piperacillin) |
 | `-parin` | …ˈpɛərɪn (enoxaparin, heparin) |
 
-**Inline phoneme-validation recipe** — live-probe Magpie's en-US neural G2P with a candidate IPA. If Magpie accepts the SSML, the IPA is in its inventory. Use the suffix patterns above as a *pre-filter* (cheap heuristic) and the live probe to confirm before committing to an override.
+**Phoneme-validation pattern** — live-probe Magpie's en-US neural G2P with a candidate IPA. If Magpie accepts the SSML, the IPA is in its inventory. Use the suffix patterns above as a *pre-filter* (cheap heuristic) and the live probe to confirm before committing to an override. The `magpie_validates_ipa(ipa, api_key, voice_id)` recipe — a minimal NVCF gRPC synthesis call that returns `True`/`False` fail-closed — is in `references/pronunciation-pipeline.md`.
 
-```python
-import grpc
-import riva.client  # pip install nvidia-riva-client
-
-NVCF_HOST = "grpc.nvcf.nvidia.com:443"
-MAGPIE_FUNCTION_ID = "877104f7-e885-42b9-8de8-f6e4c6303969"
-
-def magpie_validates_ipa(ipa: str, api_key: str,
-                         voice_id: str = "Magpie-Multilingual.EN-US.Mia") -> bool:
-    """Return True if Magpie accepts the IPA via SSML <phoneme>.
-
-    Sends a minimal synthesis request and consumes the audio stream.
-    InvalidArgument (or any "phoneme" error) → False. Network/auth errors
-    also return False (fail-closed)."""
-    ssml = f'<speak><phoneme alphabet="ipa" ph="{ipa}">test</phoneme></speak>'
-    try:
-        auth = riva.client.Auth(
-            ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
-            metadata_args=[
-                ["function-id", MAGPIE_FUNCTION_ID],
-                ["authorization", f"Bearer {api_key}"],
-            ],
-        )
-        tts = riva.client.SpeechSynthesisService(auth)
-        # Consume the audio stream to surface any phoneme-rejection error.
-        for _chunk in tts.synthesize_online(
-            text=ssml, voice_name=voice_id,
-            language_code="en-US", sample_rate_hz=16000,
-        ):
-            pass
-        return True
-    except grpc.RpcError:
-        return False
-```
-
-Call this once per candidate IPA before showing it to the user. On user approval, append the verified IPA to `pronunciation_overrides.csv`. The row's `ipa_source` flips from `magpie_g2p` to `override` on the next manifest generation.
+Call it once per candidate IPA before showing it to the user. On user approval, append the verified IPA to `pronunciation_overrides.csv`. The row's `ipa_source` flips from `magpie_g2p` to `override` on the next manifest generation.
 
 **HITL audition gate before Step 2e — fail-closed.** Do not synthesize the full Cartesian product, do not promote any staged IPA candidate to `pronunciation_overrides.csv`, and do not advance to Stage 3 until **one of the following has happened explicitly in conversation**:
 
@@ -222,63 +187,9 @@ Magpie NVCF rate-limits aggressively on >100-row jobs, and a do-over costs both 
 
 After pronunciations are locked, generate the full Cartesian product `|terms| × |voices| × |noise_levels| × |context_types|`. Defaults: 2–4 Magpie en-US voices (Mia/Jason/Ray), `[clean, snr_15db, snr_5db]`, `[dictation, handoff, chart_note, history]`.
 
-Self-contained synthesis (no `/read-aloud` required). SSML wrap helpers and edge-case rules live in `references/pronunciation-pipeline.md`; this block focuses on the synthesis call:
+Self-contained synthesis — no `/read-aloud` required. The `synthesize_row(row, all_overrides, out_dir, api_key)` recipe — opens an NVCF gRPC stream, wraps overrides into SSML via `render_sentence_with_overrides`, writes 16-bit mono PCM to `<out_dir>/audio/<slug>.wav` — is in `references/pronunciation-pipeline.md` (§Synthesis call). Key invariant: `all_overrides` carries *every* entry from `pronunciation_overrides.csv` (including context-word overrides like `intravenously`) so the renderer wraps any override whose verbatim text appears in `row['text']`. Wrapping only `row['term']` silently drops context-word overrides.
 
-```python
-import re
-from pathlib import Path
-import riva.client
-# from .pronunciation_pipeline import render_with_overrides  # see references/
-
-NVCF_HOST = "grpc.nvcf.nvidia.com:443"
-MAGPIE_FUNCTION_ID = "877104f7-e885-42b9-8de8-f6e4c6303969"
-
-def synthesize_row(row: dict, all_overrides: dict[str, str],
-                   out_dir: Path, api_key: str) -> Path:
-    """Synthesize one manifest row to <out_dir>/audio/<slug>.wav. Returns the path.
-
-    `all_overrides` is a {term: ipa} dict containing *every* entry from
-    `pronunciation_overrides.csv` — including context-word overrides like
-    `intravenously` that are not benchmarked terms themselves. The renderer
-    wraps each one whose verbatim text appears in `row['text']`.
-
-    The row's own MW IPA (when `ipa_source=='merriam-webster'`) is merged into
-    `all_overrides` for the duration of this call so MW-tagged rows still get
-    their term wrapped. Manual `override` rows are already in the dict by
-    construction.
-    """
-    auth = riva.client.Auth(
-        ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
-        metadata_args=[
-            ["function-id", MAGPIE_FUNCTION_ID],
-            ["authorization", f"Bearer {api_key}"],
-        ],
-    )
-    tts = riva.client.SpeechSynthesisService(auth)
-    text = row["text"]
-    overrides_for_row = dict(all_overrides)
-    if row["ipa_source"] == "merriam-webster" and row.get("ipa"):
-        overrides_for_row[row["term"]] = row["ipa"]
-    if overrides_for_row:
-        # render_sentence_with_overrides wraps EVERY override found in the
-        # sentence — see references/pronunciation-pipeline.md. Wrapping only
-        # row['term'] means context-word overrides are silently dropped.
-        text = f"<speak>{render_sentence_with_overrides(text, overrides_for_row)}</speak>"
-    slug = re.sub(r'[^a-z0-9]+', '_',
-                  f"{row['term']}_{row['context_type']}_{row['voice_id']}_{row['noise_level']}".lower())
-    audio_path = out_dir / "audio" / f"{slug}.wav"
-    audio_path.parent.mkdir(parents=True, exist_ok=True)
-    pcm = b"".join(c.audio for c in tts.synthesize_online(
-        text=text, voice_name=row["voice_id"],
-        language_code="en-US", sample_rate_hz=16000,
-    ))
-    import wave
-    with wave.open(str(audio_path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(pcm)
-    return audio_path
-```
-
-Noise-injection (clean → `snr_15db` → `snr_5db`) and the manifest schema (NeMo canonical fields + clinical extension, plus pre-flight schema and audio-existence checks) all live in `references/manifest-schema.md` — see the References section below for the canonical pointer.
+Noise-injection (clean → `snr_15db` → `snr_5db`) and the manifest schema (NeMo canonical fields + clinical extension, plus pre-flight schema and audio-existence checks) all live in `references/manifest-schema.md`.
 
 **Warn when product > 100 rows.** Magpie NVCF rate-limits with ~5–10% `RESOURCE_EXHAUSTED` drops on big runs. Re-run the dropped rows.
 

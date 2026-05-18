@@ -97,33 +97,23 @@ Do **not** activate when (per Critical Workflow Rule #1, route immediately and s
 
 ### 3a. Pick the ASR NIM
 
-**Default**: `nvidia/parakeet-tdt-0.6b-v2` via NVCF gRPC (offline), function-id
-`d3fe9151-442b-4204-a70d-5fcc597fd610`. NVIDIA's current English ASR recommendation —
-fastest and cheapest in the catalog, supported in NeMo's stock SFT recipe so the Stage 3
-baseline and a Stage 4 fine-tune ride the same model family.
+**Default**: `nvidia/parakeet-tdt-0.6b-v2` via NVCF gRPC (offline), function-id `d3fe9151-442b-4204-a70d-5fcc597fd610`. NVIDIA's current English ASR recommendation — fastest/cheapest in the catalog, and supported in NeMo's stock SFT recipe so the Stage 3 baseline and a Stage 4 fine-tune ride the same model family.
 
 Override via env vars (all read at runtime by the Step 3b recipe):
 
 | Variable | Use when |
 |---|---|
-| `ASR_MODEL_NAME` | Leaderboard display name (e.g. `parakeet-tdt-0.6b-v2-mycycle1`). Default: `parakeet-tdt-0.6b-v2`. |
-| `ASR_NVCF_FUNCTION_ID` | Swap to a different hosted NIM — a fine-tuned NIM on NVCF, or one of the catalog options below, or Whisper Large v3 while Parakeet's NVCF backend is faulting. Default: `d3fe9151-442b-4204-a70d-5fcc597fd610` (Parakeet TDT v2). |
-| `ASR_ENDPOINT` | Self-hosted gRPC (e.g. `localhost:50051`). Takes precedence — when set, the recipe skips NVCF entirely and connects to your local Riva NIM. |
+| `ASR_MODEL_NAME` | Leaderboard display name (e.g. `parakeet-tdt-0.6b-v2-mycycle1`). |
+| `ASR_NVCF_FUNCTION_ID` | Swap to a different hosted NIM — a fine-tuned NIM, or Whisper Large v3 (`b702f636-…`) while Parakeet's NVCF backend is faulting. Catalog table in `references/offline-asr-recipe.md`. |
+| `ASR_ENDPOINT` | Self-hosted gRPC (e.g. `localhost:50051`). Takes precedence over NVCF when set. |
 
-**Other catalog options** (swap by setting `ASR_NVCF_FUNCTION_ID`; function IDs sourced from `/riva-asr`'s catalog table):
-
-- `nvidia/parakeet-tdt-1.1b-rnnt-multilingual` (`71203149-d3b7-4460-8231-1be2543a1fca`) — higher accuracy, larger model; pick when WER matters more than cost. *Streaming-shaped; pass `language_code="multi"`.*
-- `nvidia/parakeet-ctc-1.1b-asr` (`1598d209-5e27-4d3c-8079-4751568b1081`) — CTC decoder, English; simpler Riva export path. *Streaming-shaped.*
-- `openai/whisper-large-v3` (`b702f636-f60c-4a3d-a6f4-f3568c13bd7d`) — cross-vendor baseline; **offline**, drop-in for the Parakeet recipe. Pass `language_code="en"` (not `"en-US"`). The pragmatic fallback while the Parakeet NVCF backend is faulting.
-- `nvidia/nemotron-asr-streaming` (`bb0837de-8c7b-481f-9ec8-ef5663e9c1fa`) — streaming-only. **Eval-only**; do not pair with `/clinical-flywheel-finetune` (the SFT path is unreliable). Use `/riva-asr` Option A's `transcribe_file.py` for the streaming call shape.
-
-Note: Whisper Large v3 is **offline** like Parakeet TDT v2 and works with the Step 3b recipe unchanged (only `language_code` differs). The streaming-shaped models (Parakeet 1.1B RNNT, Parakeet CTC, Nemotron streaming) need a different call shape — see `/riva-asr` for the streaming recipe.
+Full alternate-NIM catalog (Parakeet TDT 1.1B, Parakeet CTC 1.1B, Whisper Large v3, Nemotron streaming) with function IDs and call-shape notes: `references/offline-asr-recipe.md`.
 
 Echo the chosen NIM, the resolved function-id, and any env-var overrides to the user **before** spending API credits. A 200-row manifest on hosted Parakeet TDT v2 is cheap; an accidental run against the wrong model on a 1,000-row manifest is not.
 
-### 3b. Transcribe (inlined NVCF gRPC recipe)
+### 3b. Transcribe
 
-For each row in `manifest.jsonl`, transcribe `audio_filepath` and write `per_sample.json` with this shape (one JSON object per row, JSONL or a JSON array — caller's choice):
+For each row in `manifest.jsonl`, transcribe `audio_filepath` and write `per_sample.json` (one JSON object per row, JSONL or a JSON array — caller's choice):
 
 ```json
 {
@@ -139,104 +129,19 @@ For each row in `manifest.jsonl`, transcribe `audio_filepath` and write `per_sam
 }
 ```
 
-**Recipe** — same `auth_for` shape as the Stage 1 setup smoke test. The agent harness passes `api_key` as an explicit argument; the recipe itself reads the three optional env-var overrides (`ASR_NVCF_FUNCTION_ID`, `ASR_MODEL_NAME`, `ASR_ENDPOINT`) at the top so auditors can see the knobs from one place.
+**Recipe** (full Python in `references/offline-asr-recipe.md`): `transcribe_manifest(api_key, manifest_path, out_path, language_code="en-US")` opens an offline gRPC stream to NVCF (or to `ASR_ENDPOINT` if set for self-hosted Riva), calls `riva.client.ASRService.offline_recognize` per row — sentences in a clinical manifest are ≤ 30 s so no streaming/batching needed — and writes the JSONL above. Same `auth_for` shape as the Stage 1 setup smoke test. The agent harness passes `api_key` explicitly; the recipe reads the three env-var overrides (`ASR_NVCF_FUNCTION_ID`, `ASR_MODEL_NAME`, `ASR_ENDPOINT`) at the top so auditors see the knobs in one place.
 
-```python
-import json, os, wave
-from pathlib import Path
-import riva.client
-
-NVCF_HOST = "grpc.nvcf.nvidia.com:443"
-
-DEFAULT_FUNCTION_ID = "d3fe9151-442b-4204-a70d-5fcc597fd610"  # Parakeet TDT 0.6B v2 (offline)
-DEFAULT_MODEL_NAME  = "parakeet-tdt-0.6b-v2"
-
-def resolve_asr_config():
-    """Read env-var overrides once; returns (model_name, function_id, endpoint).
-    endpoint=None means use hosted NVCF; otherwise use self-hosted gRPC."""
-    return (
-        os.environ.get("ASR_MODEL_NAME", DEFAULT_MODEL_NAME),
-        os.environ.get("ASR_NVCF_FUNCTION_ID", DEFAULT_FUNCTION_ID),
-        os.environ.get("ASR_ENDPOINT"),  # e.g. "localhost:50051"
-    )
-
-def build_asr_auth(api_key: str, function_id: str, endpoint: str | None):
-    """Build a riva.client.Auth pointed at either NVCF (hosted) or a self-hosted gRPC URI."""
-    if endpoint:
-        # Self-hosted Riva NIM: no NVCF function-id, no NVCF bearer.
-        return riva.client.Auth(use_ssl=False, uri=endpoint)
-    return riva.client.Auth(
-        use_ssl=True, uri=NVCF_HOST,
-        metadata_args=[
-            ["function-id", function_id],
-            ["authorization", f"Bearer {api_key}"],
-        ],
-    )
-
-def transcribe_row(asr_service, wav_path: str, language_code: str = "en-US") -> str:
-    """One-shot offline transcription. Sentences in a clinical manifest are ≤ 30 s,
-    so we treat the whole file as one chunk — no streaming or batching needed."""
-    with wave.open(wav_path, "rb") as w:
-        sr = w.getframerate()
-        if w.getnchannels() != 1 or w.getsampwidth() != 2:
-            raise ValueError(f"{wav_path}: expected 16-bit mono PCM (got {w.getnchannels()}ch / {w.getsampwidth()*8}-bit)")
-        audio_bytes = w.readframes(w.getnframes())
-    cfg = riva.client.RecognitionConfig(
-        encoding=riva.client.AudioEncoding.LINEAR_PCM,
-        sample_rate_hertz=sr, language_code=language_code,
-        max_alternatives=1, enable_automatic_punctuation=True,
-    )
-    resp = asr_service.offline_recognize(audio_bytes, cfg)
-    return resp.results[0].alternatives[0].transcript if resp.results else ""
-
-def transcribe_manifest(api_key: str, manifest_path: str, out_path: str,
-                        language_code: str = "en-US") -> str:
-    """Iterate manifest.jsonl, write per_sample.json. Returns the resolved model name
-    for downstream leaderboard labelling."""
-    model_name, function_id, endpoint = resolve_asr_config()
-    target = endpoint if endpoint else f"NVCF function-id {function_id}"
-    print(f"ASR target: {model_name} -> {target}")  # pre-flight echo (rule #2)
-
-    auth = build_asr_auth(api_key, function_id, endpoint)
-    asr = riva.client.ASRService(auth)
-
-    n_done = 0
-    with open(manifest_path) as f_in, open(out_path, "w") as f_out:
-        for line in f_in:
-            row = json.loads(line)
-            wav = row["audio_filepath"]
-            hyp = transcribe_row(asr, wav, language_code=language_code)
-            f_out.write(json.dumps({
-                "audio_filepath":  wav,
-                "ref":             row["text"],
-                "hyp":             hyp,
-                "term":            row.get("term"),
-                "entity_category": row.get("entity_category"),
-                "ipa_source":      row.get("ipa_source"),
-                "voice_id":        row.get("voice_id"),
-                "noise_level":     row.get("noise_level"),
-                "context_type":    row.get("context_type"),
-            }) + "\n")
-            n_done += 1
-    print(f"Wrote {n_done} rows -> {out_path}")
-    return model_name
-
-# Invoke from the agent (api_key sourced by the harness, not by this code):
-# transcribe_manifest(api_key=<NVIDIA_API_KEY>, manifest_path="cycle1/manifest.jsonl",
-#                     out_path="cycle1/per_sample.json")
-```
-
-**Whisper fallback for the Parakeet NVCF outage.** Whisper Large v3 is also offline; the recipe runs unchanged with two env-var nudges:
+**Whisper fallback** when Parakeet's NVCF backend is faulting (CUDA illegal-memory-access from Triton):
 
 ```bash
 export ASR_NVCF_FUNCTION_ID=b702f636-f60c-4a3d-a6f4-f3568c13bd7d
 export ASR_MODEL_NAME=whisper-large-v3
-# Then call transcribe_manifest(..., language_code="en") instead of "en-US".
+# Then call transcribe_manifest(..., language_code="en")  # not "en-US"
 ```
 
-**Self-hosted Riva NIM.** Set `ASR_ENDPOINT=<host:port>` (e.g. `localhost:50051`); the recipe builds a non-SSL `Auth` and skips NVCF entirely. See `/riva-asr` Option B for deploying a self-hosted NIM.
+**Self-hosted Riva NIM**: `export ASR_ENDPOINT=localhost:50051` — the recipe builds a non-SSL `Auth` and skips NVCF. See `/riva-asr` Option B.
 
-**Resilience knobs deferred to the user.** If NVCF returns `RESOURCE_EXHAUSTED` mid-batch, the loop will raise on that row; re-run from the failing row or slice the manifest. Streaming/batching/retry-with-backoff are out of scope for this skill — see `/riva-asr` if you need them.
+**Resilience knobs deferred to the user.** If NVCF returns `RESOURCE_EXHAUSTED` mid-batch, the loop raises on that row; re-run from the failing row. Streaming/batching/retry-with-backoff are out of scope — see `/riva-asr`.
 
 ### 3c. Score four metrics
 
@@ -388,3 +293,7 @@ For anything not in this list, identify which upstream skill is implicated. ASR-
 - **Back to build (KER 0.1–0.3 on first eval, or `magpie_g2p` gap):** `/clinical-flywheel-build`.
 - **Stop (KER < 0.1):** the eval is saturated. Harden it before declaring victory.
 - **Lateral** for ASR protocol / auth / streaming / self-hosted NIM details: `/riva-asr`.
+
+## References
+
+- [`references/offline-asr-recipe.md`](references/offline-asr-recipe.md) — full Step 3b Python recipe (`transcribe_manifest`, `resolve_asr_config`, `build_asr_auth`), function-ID catalog with call-shape notes, Whisper fallback, self-hosted Riva NIM setup

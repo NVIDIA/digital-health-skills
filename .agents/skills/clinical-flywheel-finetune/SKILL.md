@@ -89,81 +89,22 @@ Do **not** activate when:
 
 ### 4a. Provision a GPU host (skip if you already have one)
 
-Stage 4 needs a CUDA host with ≥ 16 GB VRAM (24 GB comfortable for `batch_size=4` `bf16-mixed`). If you have a local workstation that fits, skip this section. If you don't — or if you prefer a reproducible cloud environment — provision a **Brev** instance. Brev is NVIDIA's per-hour GPU host service; it pre-bakes CUDA drivers and the NVIDIA Container Toolkit, so the only thing left is `docker pull`.
+Stage 4 needs a CUDA host with ≥ 16 GB VRAM (24 GB comfortable). If you have a local one that fits, skip this section. If not, use **Brev** — NVIDIA's per-second-billed GPU host service. Recommended SKU: L40S 48 GB. A 3-epoch SFT run on a 100-row manifest typically costs a few dollars; disclose this to the user before spinning anything up. Full setup walkthrough — CLI install (download-then-run, not curl-pipe), SKU choice, disk sizing, SSH config — is in `references/stage4-finetune.md` (§Brev provisioning).
 
-**Account.** Create one at <https://brev.dev> if you don't already have it. Brev bills per-second on top of the underlying cloud SKU; an L40S 48 GB session for a 3-epoch SFT run on a 100-row manifest typically costs under a few dollars. Confirm the user is OK with that disclosure before spinning anything up.
-
-**1. Install the Brev CLI.**
+Short happy-path once the CLI is installed:
 
 ```bash
-# macOS — Homebrew
-brew install brevdev/homebrew-brev/brev
-
-# Linux — install script (curl-pipe; review the script first if your org policy requires it)
-curl -fsSL https://raw.githubusercontent.com/brevdev/brev-cli/main/bin/install-latest.sh | sh
-```
-
-For the current install command and platform support: <https://docs.brev.dev/cli/install>.
-
-**2. Log in.**
-
-```bash
-brev login
-# Opens a browser window, you sign in, the CLI receives a token and returns to the shell.
-```
-
-Verify with `brev ls` — you should see your account's instances (empty list is fine for a fresh account).
-
-**3. Create an L40S 48 GB instance.**
-
-```bash
+brev login                                  # browser auth
 brev create clinical-flywheel-sft \
-  --gpu l40s:1 \
-  --image ubuntu-22-04-cuda-12-4 \
-  --disk 200gi
-# Provisioning typically takes 2–5 minutes.
+  --gpu l40s:1 --image ubuntu-22-04-cuda-12-4 --disk 200gi
+brev ssh-config                             # writes ~/.ssh/config entries
+rsync -avz ./cycle1/ clinical-flywheel-sft:~/cycle1/
+brev shell clinical-flywheel-sft            # drops into the instance
+nvidia-smi                                  # confirm GPU
+docker pull nvcr.io/nvidia/nemo:25.11.01    # ~12 GB, once per instance
 ```
 
-The `ubuntu-22-04-cuda-12-4` image arrives with the NVIDIA driver, Docker, and the NVIDIA Container Toolkit pre-installed — covers the prereqs `/riva-nim-setup` would otherwise walk you through. Adjust `--disk` upward if your manifest + audio exceeds ~50 GB.
-
-L40S 48 GB is the recommended SKU for Parakeet TDT 0.6B SFT (raises `batch_size` to 16 vs. 4 on a 24 GB card; cuts wall-clock proportionally). For larger bases (Parakeet 1.1B), step up to `a100:1`. The current SKU catalog is at <https://docs.brev.dev/gpus>.
-
-**4. Drop into the instance.**
-
-```bash
-brev shell clinical-flywheel-sft
-# You are now `ubuntu@<instance>` with a CUDA-ready GPU. Confirm:
-nvidia-smi
-```
-
-You should see one L40S listed. If you don't, the image didn't bake the driver — re-create with `ubuntu-22-04-cuda-12-4` rather than a vanilla Ubuntu image.
-
-**5. Copy the manifest and audio over.**
-
-Brev exposes the instance over SSH; `brev ssh-config` writes a Host entry into `~/.ssh/config` named `<instance>`. Once that's done, `rsync` works exactly like any other SSH target:
-
-```bash
-brev ssh-config            # one-time: writes ~/.ssh/config entries
-rsync -avz --progress \
-  ./cycle1/ clinical-flywheel-sft:~/cycle1/
-```
-
-For the path-rewriting between laptop → Brev → NeMo container that the SFT recipe expects, see [`references/container-paths.md`](references/container-paths.md).
-
-**6. Pull the NeMo container inside the Brev shell.**
-
-```bash
-docker pull nvcr.io/nvidia/nemo:25.11.01
-# ~12 GB; runs once per instance lifetime.
-```
-
-You're now ready for Step 4b (train/val split) and Step 4d (stock SFT). When done, **always stop the instance** to halt billing:
-
-```bash
-exit                           # leave the brev shell
-brev stop clinical-flywheel-sft
-# Or, if you don't need to keep the disk: brev delete clinical-flywheel-sft
-```
+When done, **always halt billing**: `brev stop clinical-flywheel-sft` (keeps disk) or `brev delete clinical-flywheel-sft` (frees it). For path rewriting laptop → Brev → NeMo container, see `references/container-paths.md`.
 
 ### 4b. Term-aware train/val split
 
