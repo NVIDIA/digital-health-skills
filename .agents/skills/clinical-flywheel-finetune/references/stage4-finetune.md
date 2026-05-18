@@ -39,6 +39,66 @@ A multi-cycle loop has natural stopping points. After cycle N+1, evaluate:
 - **You're past 30 epochs without improvement.** TDT bases plateau by ~30 epochs on manifests under ~5,000 rows. Larger manifests merit larger budgets — but verify scaling laws empirically; don't extrapolate from the 3-epoch smoke run.
 - **Validation WER trends upward while training loss drops.** Classic overfit. Bail to `/clinical-flywheel-build` and grow the manifest, or add early-stopping (`patience=3` on validation WER).
 
+## Brev provisioning (full walkthrough)
+
+The condensed Brev recipe in `SKILL.md` §4a is enough for the happy path. This section covers the *why* and the corners — disk sizing, SKU selection, install-script verification, and the SSH-config step that trips first-time users.
+
+### Account + cost shape
+
+Create an account at <https://brev.dev>. Brev bills per-second on top of the underlying cloud's SKU rate, so the cost shape is: *(SKU $/hr) × (provision time + active time + idle time before stop)*. The L40S 48 GB SKU runs about $1.50/hr at the time of writing; a 3-epoch SFT run on a ~100-row manifest finishes in 15–30 minutes, so the run itself is under a dollar. The trap is **forgetting to stop the instance** after the run — overnight idle on an L40S is ~$36. Set a calendar reminder, or wrap the whole flow in a script that ends with `brev stop`.
+
+### Verifying the Linux install script
+
+The Brev install script is hosted on `raw.githubusercontent.com/brevdev/brev-cli/main/bin/install-latest.sh`. The `curl | sh` antipattern hands arbitrary code execution to whoever controls that URL (Brev's GitHub repo + GitHub's CDN). Mitigations:
+
+1. **Download first, run second** (the SKILL.md §4a recipe). `curl -o install-brev.sh` separates fetch from execute; `shasum -a 256` and `less` let you verify before running.
+2. **Pin to a release** if your org policy requires reproducibility. The script's URL with `main` follows HEAD; replacing `main` with a tag (`v0.6.420` or whatever's current) freezes the binary. Find the current tag at <https://github.com/brevdev/brev-cli/releases>.
+3. **Use Homebrew on macOS.** Homebrew installs from a tap with package-level integrity guarantees; prefer it over the curl path on Mac.
+
+### SKU selection
+
+L40S 48 GB is the right default for Parakeet TDT 0.6B SFT — raises `batch_size` to 16 (vs. 4 on a 24 GB card) and cuts wall-clock proportionally. Step up when:
+
+| When | SKU |
+|---|---|
+| Parakeet TDT 0.6B, default recipe | `l40s:1` (48 GB) — recommended |
+| Parakeet TDT 0.6B, ultra-cheap smoke run | `a10g:1` (24 GB) — drops `batch_size` to 4, longer wall-clock |
+| Parakeet 1.1B base | `a100:1` (40 GB or 80 GB) |
+| Multi-GPU DDP (rare at this scale) | `a100:2` or `h100:1` |
+
+The current SKU catalog: <https://docs.brev.dev/gpus>.
+
+### Disk sizing
+
+`--disk 200gi` is enough for: NeMo container (~12 GB), 1–2 cycles of audio (~5 GB each at 16 kHz mono on ~200-row manifests), the base `.nemo` (~2 GB), and the trained `.nemo` (~2 GB). Bump to 400 GB if you're keeping multiple cycles on the instance, or if your audio is 48 kHz.
+
+### Image choice
+
+`--image ubuntu-22-04-cuda-12-4` is the only image you should pick for this flywheel. It pre-bakes:
+- NVIDIA driver compatible with CUDA 12.4
+- Docker + NVIDIA Container Toolkit (covers `/riva-nim-setup` prereqs)
+- `nvidia-smi` works out of the box
+
+Vanilla Ubuntu images need driver + toolkit install before `nvcr.io/nvidia/nemo:25.11.01` can use the GPU — solvable, but wasted setup time at $1.50/hr.
+
+### SSH-config + rsync (the step that trips first-timers)
+
+Brev exposes each instance over SSH, but the connection details aren't in `~/.ssh/config` by default. The fix is one command:
+
+```bash
+brev ssh-config            # writes Host entries to ~/.ssh/config
+ssh clinical-flywheel-sft  # or: rsync -avz ./cycle1/ clinical-flywheel-sft:~/cycle1/
+```
+
+After `brev ssh-config`, the instance name works as a standard SSH host. Skip this command and `rsync` will fail with `ssh: Could not resolve hostname clinical-flywheel-sft`.
+
+### Stopping vs deleting
+
+- `brev stop <name>` — halts billing for compute, **keeps the disk** (and its $0.10/GB-month storage cost). Use between training sessions on the same cycle.
+- `brev delete <name>` — frees everything. Use when you're done with a cycle and have rsync'd the artifacts back to your laptop.
+
+If you have a recurring training cadence (e.g. one cycle a week), `stop` between sessions saves you the `docker pull` + re-rsync each time. If cycles are one-offs, `delete` is cleaner.
+
 ## Related references
 
 - Base-model selection table → `SKILL.md` §4c

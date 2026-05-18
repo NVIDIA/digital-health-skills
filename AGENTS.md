@@ -34,8 +34,8 @@ Set these before invoking the skills:
 ## How to invoke (Claude Code example)
 
 ```bash
-git clone -b main https://github.com/NVIDIA/digital-health-examples.git
-cd digital-health-examples
+git clone -b main https://github.com/NVIDIA/digital-health-skills.git
+cd digital-health-skills
 
 # Optional: symlink the skills into Claude Code's skills dir if your launcher
 # doesn't auto-discover .agents/skills/ from the working directory.

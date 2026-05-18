@@ -206,6 +206,92 @@ def render_sentence_with_overrides(sentence: str, overrides: dict[str, str]) -> 
 - **IPA that contains quotes**: shouldn't occur with the MW mapping above, but if a hand-curated override does, replace `"` with `&quot;` inside the SSML attribute.
 - **Capitalized term in mid-sentence** (`Cefazolin`): use `re.IGNORECASE` if you want case-insensitive matching, but preserve the original casing in the wrap's display text.
 
+## Phoneme validation — live-probe Magpie's neural G2P
+
+Used by Step 2d's QA-mode synthesis loop. Sends a minimal SSML `<phoneme>` request to Magpie's NVCF function; if Magpie accepts it, the IPA is in the en-US phoneme inventory. **Fail-closed**: network/auth errors return `False` just like phoneme-rejection errors.
+
+```python
+import grpc
+import riva.client  # pip install nvidia-riva-client
+
+NVCF_HOST = "grpc.nvcf.nvidia.com:443"
+MAGPIE_FUNCTION_ID = "877104f7-e885-42b9-8de8-f6e4c6303969"
+
+def magpie_validates_ipa(ipa: str, api_key: str,
+                         voice_id: str = "Magpie-Multilingual.EN-US.Mia") -> bool:
+    """Return True if Magpie accepts the IPA via SSML <phoneme>.
+
+    Sends a minimal synthesis request and consumes the audio stream.
+    InvalidArgument (or any "phoneme" error) → False. Network/auth errors
+    also return False (fail-closed)."""
+    ssml = f'<speak><phoneme alphabet="ipa" ph="{ipa}">test</phoneme></speak>'
+    try:
+        auth = riva.client.Auth(
+            ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
+            metadata_args=[
+                ["function-id", MAGPIE_FUNCTION_ID],
+                ["authorization", f"Bearer {api_key}"],
+            ],
+        )
+        tts = riva.client.SpeechSynthesisService(auth)
+        for _chunk in tts.synthesize_online(
+            text=ssml, voice_name=voice_id,
+            language_code="en-US", sample_rate_hz=16000,
+        ):
+            pass
+        return True
+    except grpc.RpcError:
+        return False
+```
+
+Call once per candidate IPA before showing it to the user. On user approval, append the verified IPA to `pronunciation_overrides.csv` — the row's `ipa_source` flips from `magpie_g2p` to `override` on the next manifest generation.
+
+## Synthesis call
+
+Used by Step 2e's full-Cartesian generation. One synthesized WAV per manifest row. `all_overrides` must carry every entry from `pronunciation_overrides.csv` — including context-word overrides like `intravenously` that aren't benchmarked terms themselves — so the renderer wraps any override whose verbatim text appears in the row's sentence. Wrapping only `row['term']` silently drops context-word overrides.
+
+The row's own MW IPA (when `ipa_source == 'merriam-webster'`) is merged into `all_overrides` for the duration of the call so MW-tagged rows still get their term wrapped. Manual `override` rows are already in the dict by construction.
+
+```python
+import re
+from pathlib import Path
+import riva.client
+# Re-use render_sentence_with_overrides from this same file (above).
+
+NVCF_HOST = "grpc.nvcf.nvidia.com:443"
+MAGPIE_FUNCTION_ID = "877104f7-e885-42b9-8de8-f6e4c6303969"
+
+def synthesize_row(row: dict, all_overrides: dict[str, str],
+                   out_dir: Path, api_key: str) -> Path:
+    """Synthesize one manifest row to <out_dir>/audio/<slug>.wav. Returns the path."""
+    auth = riva.client.Auth(
+        ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
+        metadata_args=[
+            ["function-id", MAGPIE_FUNCTION_ID],
+            ["authorization", f"Bearer {api_key}"],
+        ],
+    )
+    tts = riva.client.SpeechSynthesisService(auth)
+    text = row["text"]
+    overrides_for_row = dict(all_overrides)
+    if row["ipa_source"] == "merriam-webster" and row.get("ipa"):
+        overrides_for_row[row["term"]] = row["ipa"]
+    if overrides_for_row:
+        text = f"<speak>{render_sentence_with_overrides(text, overrides_for_row)}</speak>"
+    slug = re.sub(r'[^a-z0-9]+', '_',
+                  f"{row['term']}_{row['context_type']}_{row['voice_id']}_{row['noise_level']}".lower())
+    audio_path = out_dir / "audio" / f"{slug}.wav"
+    audio_path.parent.mkdir(parents=True, exist_ok=True)
+    pcm = b"".join(c.audio for c in tts.synthesize_online(
+        text=text, voice_name=row["voice_id"],
+        language_code="en-US", sample_rate_hz=16000,
+    ))
+    import wave
+    with wave.open(str(audio_path), "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(pcm)
+    return audio_path
+```
+
 ## Notes
 
 - MW Medical Dictionary's free tier is 1000 queries/day with a registered API key. Cache successful lookups in `pronunciation_overrides.csv` so re-runs of the build pipeline don't re-query.

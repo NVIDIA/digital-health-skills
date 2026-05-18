@@ -24,8 +24,8 @@ Each skill folder contains `SKILL.md` (the workflow guide), optional `references
 Skills are loaded by your agent's skill loader. For Claude Code:
 
 ```bash
-git clone git@github.com:NVIDIA/digital-health-examples.git
-cd digital-health-examples
+git clone git@github.com:NVIDIA/digital-health-skills.git
+cd digital-health-skills
 
 # Either symlink or copy the four skill folders into your Claude Code skills dir:
 mkdir -p ~/.claude/skills
@@ -55,7 +55,7 @@ To use the skills end-to-end you will need:
 
 ## Contributing
 
-PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). All contributions require DCO sign-off (`git commit -s`).
+This is a reference samples repo maintained by the NVIDIA Digital Health team — **external pull requests are not accepted**. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full policy and what to do if you found a bug (open an [Issue](../../issues)) or want to adapt the skills for your own use (fork under the Apache 2.0 license).
 
 ## Security
 
