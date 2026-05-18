@@ -48,10 +48,6 @@ To use the skills end-to-end you will need:
 - Python 3.10+ for client-side scripting (the agent installs deps via your skill of choice).
 - A CUDA host with the NeMo container (`nvcr.io/nvidia/nemo:25.11.01`) for Stage 4. Brev cloud GPUs supported.
 
-## Companion software
-
-A more comprehensive Clinical Speech Evaluation Flywheel — with deterministic scoring scripts, leaderboard tooling, and an end-to-end CI harness — lives in a separate internal NVIDIA repository. It is not redistributed here. The skills in this repo are intentionally self-contained so an agent can guide the workflow without that companion code; for end-to-end automation, contact the maintainers (see below).
-
 ## Support
 
 - **Level:** Experimental — the skills are new and evolving; expect rough edges.

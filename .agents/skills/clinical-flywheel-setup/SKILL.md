@@ -81,7 +81,7 @@ Do **not** activate when:
 | `NVIDIA_API_KEY` (`nvapi-…`) | **Required** | Hosted Magpie TTS + Parakeet/Nemotron ASR via NVCF | Issue at <https://build.nvidia.com>; `export NVIDIA_API_KEY=...` in shell |
 | Python ≥ 3.10 | **Required** | NeMo client, scoring, manifest tools | `python3 --version` |
 | `nvidia-riva-client`, `pandas`, `soundfile`, `requests` | **Required** | TTS + ASR clients, manifest I/O, MW lookup | `pip install nvidia-riva-client pandas soundfile requests` |
-| `DICTIONARY_API_KEY` | Optional | Merriam-Webster Medical Dictionary lookup via the JSON API (Path A in the build skill — recommended for standalone use) | Free key at <https://dictionaryapi.com>. Skip if you're running the `voice-eval-flywheel` companion repo — its `flywheel/data/ipa_extractor.py` uses HTML scraping (Path B, no key) and already produces `merriam-webster`-tagged manifest rows. Without either path, Stage 2 falls through to Magpie G2P. |
+| `DICTIONARY_API_KEY` | Optional | Merriam-Webster Medical Dictionary lookup via the JSON API (Path A in the build skill — recommended) | Free key at <https://dictionaryapi.com>. Path B (HTML scrape of `merriam-webster.com`, no key, brittle) is also documented in the build skill if you can't get a key. Without either path, Stage 2 falls through to Magpie G2P with weaker long-tail coverage. |
 | `jiwer` | Optional | Reference WER/CER against the inlined Levenshtein implementation | `pip install jiwer` — the eval skill includes a pure-Python fallback |
 | (Stage 4 only) `NGC_API_KEY` + CUDA host + NeMo container | Optional, deferred | Fine-tune workload | Set up inside `/clinical-flywheel-finetune`; defer until the eval shows KER > 0.3 |
 
@@ -125,11 +125,11 @@ import riva.client
 
 NVCF_HOST = "grpc.nvcf.nvidia.com:443"
 MAGPIE_FUNCTION_ID    = "877104f7-e885-42b9-8de8-f6e4c6303969"   # Magpie TTS
-PARAKEET_FUNCTION_ID  = "ee8dc628-76de-4acc-8595-1836e7e857bd"   # Parakeet TDT v2 ASR
+PARAKEET_FUNCTION_ID  = "d3fe9151-442b-4204-a70d-5fcc597fd610"   # Parakeet TDT 0.6B v2 (offline ASR)
 
 def auth_for(function_id: str, api_key: str) -> riva.client.Auth:
     return riva.client.Auth(
-        ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
+        use_ssl=True, uri=NVCF_HOST,
         metadata_args=[
             ["function-id", function_id],
             ["authorization", f"Bearer {api_key}"],
@@ -191,14 +191,14 @@ Two paths produce a `merriam-webster`-tagged manifest row in Stage 2. Pick one (
 
   Free key issues instantly at <https://dictionaryapi.com>.
 
-- **Path B — HTML scraping.** What the `voice-eval-flywheel` companion repo's `flywheel/data/ipa_extractor.py` already does. No key needed; reachability is the only prerequisite:
+- **Path B — HTML scraping.** No API key needed; reachability is the only prerequisite. Brittle to MW site HTML changes; recipe inlined in the build skill's `references/pronunciation-pipeline.md`.
 
   ```bash
   curl -fsS -o /dev/null -w "merriam-webster.com reachable, HTTP %{http_code}\n" \
     https://www.merriam-webster.com/medical/cefazolin
   ```
 
-  If you don't have that companion script and don't want to write a scraper, use Path A.
+  If you don't want to maintain a scraper, use Path A instead.
 
 Remember the data-disclosure note at the top: under either path, each clinical term in your seed list goes out as an HTTP request to a Merriam-Webster endpoint.
 
@@ -221,7 +221,9 @@ No manifest, audio, or model artifact is produced at this stage — those come a
 - **Length check shows nothing or `len=0`** → `NVIDIA_API_KEY` isn't exported in this shell. Run `export NVIDIA_API_KEY=nvapi-...` and re-check.
 - **Variable is set in one shell but not another** → exports don't persist across sessions. Add the `export` line to your shell rc (`~/.bashrc`, `~/.zshrc`), or use a per-directory loader like `direnv`.
 - **`401 Unauthorized` on the smoke test** → key value is wrong or expired. Re-issue at <https://build.nvidia.com>.
-- **`grpc.RpcError: function not found`** → the inlined function IDs need updating against the current NVCF catalog. Check <https://build.nvidia.com> and edit the constants in 1c.
+- **`grpc.RpcError: function not found`** → the inlined function IDs need updating against the current NVCF catalog. Check <https://build.nvidia.com> and edit the constants in 1c. The eval skill (`/clinical-flywheel-eval`) provides a catalog of current function IDs in its Step 3a "Other catalog options" list.
+- **`StatusCode.INVALID_ARGUMENT` with `CUDA error: an illegal memory access was encountered`** → NVCF-side backend fault on this specific function ID (Triton/PyTorch on NVCF, not your env). Either retry later or temporarily point at a different offline ASR NIM — Whisper Large v3 function-id `b702f636-f60c-4a3d-a6f4-f3568c13bd7d` is the closest drop-in (also offline; pass `language_code="en"` instead of `"en-US"`). For routine eval cycles, prefer to wait for the Parakeet backend to recover so Stage 3 baseline and Stage 4 SFT base stay aligned.
+- **`TypeError: Auth.__init__() got an unexpected keyword argument 'ssl_cert'`** → you're on `nvidia-riva-client >= 2.x` where the kwarg was renamed to `ssl_root_cert` (and is no longer needed for hosted NVCF). Drop the `ssl_cert=None,` line from your local copy of the recipe.
 - **`ModuleNotFoundError: riva.client`** → step 1b was skipped or the venv isn't activated. `source .venv/bin/activate && pip install nvidia-riva-client`.
 
 ## Limitations
@@ -230,10 +232,6 @@ No manifest, audio, or model artifact is produced at this stage — those come a
 - **English-only by default.** Magpie's en-US phoneme inventory drives Stage 2 IPA validation. Other locales require a different upstream phoneme set.
 - **Hosted-only paths assumed.** Self-hosted NIMs work but require additional setup (covered inside `/clinical-flywheel-finetune` Stage 4d).
 - **Non-PHI data only.** This skill family is designed for synthetic clinical-vocabulary benchmarks generated from a term list. Do not pass real patient transcripts or audio through any stage.
-
-## Companion software
-
-A more comprehensive Clinical Speech Evaluation Flywheel — with deterministic scoring scripts, leaderboard tooling, and a CI harness — lives in a separate NVIDIA repository. It is not redistributed here. The four `clinical-flywheel-*` skills are intentionally self-sufficient so an agent can run the workflow without that companion.
 
 ## Next steps
 

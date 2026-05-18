@@ -4,11 +4,12 @@
     "question": "I want to start the Clinical ASR Flywheel — what do I need installed?",
     "expected_skill": "clinical-flywheel-setup",
     "expected_script": null,
-    "ground_truth": "The agent invokes clinical-flywheel-setup, walks the user through the four prerequisites: NVIDIA_API_KEY (length-only check), Python ≥3.10 + libraries, the six upstream skills, and points the user to /clinical-flywheel-build as the next stop.",
+    "ground_truth": "The agent invokes clinical-flywheel-setup, walks the user through the prerequisites: NVIDIA_API_KEY (length-only check), Python ≥3.10 + libraries, surfaces the data-disclosure block (NVCF + MW), runs the inlined TTS→ASR smoke test, and points the user to /clinical-flywheel-build as the next stop. The five external skills (/riva-tts, /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer) are referenced for context but not required to run the flywheel — the four clinical-flywheel-* skills inline every recipe.",
     "expected_behavior": [
       "Read clinical-flywheel-setup/SKILL.md before taking action",
       "Asked about (or verified) NVIDIA_API_KEY presence without echoing the key",
-      "Listed the six upstream skills (/read-aloud or /riva-tts, /transcribe-audio or /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer)",
+      "Surfaced the data-disclosure block (NVCF + Merriam-Webster destinations)",
+      "Listed or referenced the five external skills (/riva-tts, /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer) as the upstream owners",
       "Mentioned KER as the flywheel's headline metric (for downstream framing)",
       "Recommended /clinical-flywheel-build as the next skill"
     ]
@@ -18,13 +19,13 @@
     "question": "What scripts come with this skill?",
     "expected_skill": "clinical-flywheel-setup",
     "expected_script": null,
-    "ground_truth": "The skill family is standalone — methodology + recipes, no runnable scripts ship inside the skill. The companion software lives in the (internal) voice-eval-flywheel repo. The intended pattern is composition of /data-designer + /read-aloud + /transcribe-audio + /riva-asr-custom.",
+    "ground_truth": "The skill family is standalone — methodology + inlined recipes, no runnable scripts ship inside the skill. Every TTS, ASR, IPA-tagging, and scoring recipe is inlined inside the four clinical-flywheel-* skills. The intended pattern is composition of /data-designer + /riva-tts + the inlined Stage 3 ASR recipe + /riva-asr-custom for optional deploy.",
     "expected_behavior": [
       "Read clinical-flywheel-setup/SKILL.md",
-      "Clarified that this skill family ships methodology + recipes, NOT runnable scripts",
-      "Mentioned the composition pattern with /data-designer, /read-aloud, /transcribe-audio, /riva-asr-custom",
-      "Pointed at the companion voice-eval-flywheel repo as the runnable-code distribution",
-      "Did NOT claim to ship scripts/generate_eval_set.py or scripts/run_eval.py inside the skill itself"
+      "Clarified that this skill family ships methodology + inlined recipes, NOT runnable scripts",
+      "Mentioned the composition pattern with /data-designer, /riva-tts, the inlined Stage 3 ASR recipe, and /riva-asr-custom for deploy",
+      "Did NOT claim that any external/internal companion repo is required",
+      "Did NOT invent script paths inside the skill itself"
     ]
   },
   {
