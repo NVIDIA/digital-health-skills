@@ -1,0 +1,46 @@
+[
+  {
+    "id": "clinical-flywheel-build-001",
+    "question": "I want to evaluate Nemotron Speech on oncology dictation. We've seen it mishear chemotherapy drug names. Where do I start?",
+    "expected_skill": "clinical-flywheel-build",
+    "expected_script": null,
+    "ground_truth": "The agent invokes clinical-flywheel-build, asks 1-2 specialty-aware clarifying questions, and walks the user through Stage 2 — term curation with entity_category, then the two-tier IPA tagging pipeline, then QA-mode synthesis before the full Cartesian. KER is named as the headline metric the user will see in Stage 3.",
+    "expected_behavior": [
+      "Read clinical-flywheel-build/SKILL.md before taking action",
+      "Asked at least one specialty-aware clarifying question (which drugs, common failure modes, common vs hard terms)",
+      "Proposed candidate terms with entity_category set to 'drug'",
+      "Mentioned the two-tier IPA strategy (override → merriam-webster → magpie_g2p) and that the by-ipa_source split is the most informative leaderboard signal",
+      "Mentioned the QA-mode approval gate before running the full Cartesian product",
+      "Named KER as the eventual headline metric (for Stage 3 framing)"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-build-002",
+    "question": "Magpie is mispronouncing 'esomeprazole' even with the IPA override. What do I do?",
+    "expected_skill": "clinical-flywheel-build",
+    "acceptable_skills": ["read-aloud", "riva-tts"],
+    "expected_script": null,
+    "ground_truth": "Verify the IPA passes Magpie's en-US phoneme inventory and that the SSML wrapping is syntactically valid. If those check out, the underlying TTS bug is owned by /read-aloud (/riva-tts) — route there for diagnosis. This skill provides the override mechanism but does not own the neural G2P or SSML parser.",
+    "expected_behavior": [
+      "Read clinical-flywheel-build/SKILL.md",
+      "Suggested verifying the IPA candidate against Magpie's en-US phoneme inventory before escalating",
+      "Routed the underlying TTS pronunciation bug to /read-aloud or /riva-tts",
+      "Did NOT claim ownership of the neural G2P or SSML parser",
+      "Did NOT recommend fine-tuning as the fix for a single mispronunciation"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-build-003",
+    "question": "I want to add 'pertrochanteric' and 'femoroacetabular impingement' to my existing cycle-1 manifest. How?",
+    "expected_skill": "clinical-flywheel-build",
+    "expected_script": null,
+    "ground_truth": "Run only the additive path of Stage 2 — interview + sentence gen + IPA pipeline + QA + synthesis for the new terms only, then append to the existing manifest.jsonl. Do not regenerate audio for existing terms; cycle isolation is intentional so leaderboards diff cycle-N vs cycle-N+1 cleanly.",
+    "expected_behavior": [
+      "Read clinical-flywheel-build/SKILL.md",
+      "Recognized this is an additive build, not a full rebuild",
+      "Described running Steps 2a-2e for the new terms only",
+      "Mentioned appending to the existing manifest.jsonl rather than regenerating",
+      "Warned against regenerating audio for existing rows (cycle isolation is a feature)"
+    ]
+  }
+]

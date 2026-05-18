@@ -1,0 +1,43 @@
+[
+  {
+    "id": "clinical-flywheel-setup-001",
+    "question": "I want to start the Clinical ASR Flywheel — what do I need installed?",
+    "expected_skill": "clinical-flywheel-setup",
+    "expected_script": null,
+    "ground_truth": "The agent invokes clinical-flywheel-setup, walks the user through the prerequisites: NVIDIA_API_KEY (length-only check), Python ≥3.10 + libraries, surfaces the data-disclosure block (NVCF + MW), runs the inlined TTS→ASR smoke test, and points the user to /clinical-flywheel-build as the next stop. The five external skills (/riva-tts, /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer) are referenced for context but not required to run the flywheel — the four clinical-flywheel-* skills inline every recipe.",
+    "expected_behavior": [
+      "Read clinical-flywheel-setup/SKILL.md before taking action",
+      "Asked about (or verified) NVIDIA_API_KEY presence without echoing the key",
+      "Surfaced the data-disclosure block (NVCF + Merriam-Webster destinations)",
+      "Listed or referenced the five external skills (/riva-tts, /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer) as the upstream owners",
+      "Mentioned KER as the flywheel's headline metric (for downstream framing)",
+      "Recommended /clinical-flywheel-build as the next skill"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-setup-002",
+    "question": "What scripts come with this skill?",
+    "expected_skill": "clinical-flywheel-setup",
+    "expected_script": null,
+    "ground_truth": "The skill family is standalone — methodology + inlined recipes, no runnable scripts ship inside the skill. Every TTS, ASR, IPA-tagging, and scoring recipe is inlined inside the four clinical-flywheel-* skills. The intended pattern is composition of /data-designer + /riva-tts + the inlined Stage 3 ASR recipe + /riva-asr-custom for optional deploy.",
+    "expected_behavior": [
+      "Read clinical-flywheel-setup/SKILL.md",
+      "Clarified that this skill family ships methodology + inlined recipes, NOT runnable scripts",
+      "Mentioned the composition pattern with /data-designer, /riva-tts, the inlined Stage 3 ASR recipe, and /riva-asr-custom for deploy",
+      "Did NOT claim that any external/internal companion repo is required",
+      "Did NOT invent script paths inside the skill itself"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-setup-neg-001",
+    "question": "What is the capital of France?",
+    "expected_skill": null,
+    "expected_script": null,
+    "ground_truth": "Paris. The agent answers directly without invoking any skill — this is a general-knowledge question, not a clinical-ASR workflow.",
+    "expected_behavior": [
+      "Did NOT invoke clinical-flywheel-setup",
+      "Did NOT invoke any other skill",
+      "Answered conversationally with the correct fact (Paris)"
+    ]
+  }
+]
