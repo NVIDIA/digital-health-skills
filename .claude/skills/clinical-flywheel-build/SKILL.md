@@ -28,7 +28,6 @@ metadata:
   team: healthcare-tme
   domain: ai-ml
   stage: 2
-  companion_software: "voice-eval-flywheel (optional)"
   previous_skill: clinical-flywheel-setup
   next_skill: clinical-flywheel-eval
 ---
@@ -66,7 +65,7 @@ $EVAL_DIR/cycle<N>/
 └── pronunciation_overrides.csv   appendable across cycles
 ```
 
-(`$EVAL_DIR` is the user's own choice — this skill does not impose a layout. The structure above is a recommendation that works well with the companion software when the user later opts into it.)
+(`$EVAL_DIR` is the user's own choice — this skill does not impose a layout. The structure above is a recommendation, not a requirement.)
 
 ## When to use this skill
 
@@ -132,7 +131,7 @@ Brief `/data-designer` with:
 
 > For each row in `term_seed.csv`, generate one or more natural English sentences embedding `term` in a way that fits the row's `entity_category`. Output schema: `{term, entity_category, sentence, context_type}`. Generate 3–5 `context_type` variants per term. Initial `context_type` vocabulary: `dictation`, `handoff`, `chart_note`, `history`. Sentence length 10–30 words.
 
-The output of this step is a per-term sentence variants file. The companion software writes it as `term_seed_with_sentences.csv`; skill-only users can use any name.
+The output of this step is a per-term sentence variants file. Any filename is fine — pick one and use it consistently across the cycle directory.
 
 **Template fallback.** If `/data-designer` is unavailable, use a 4-template fallback (one per `context_type`) and substitute `term` mechanically. Tag those rows in the manifest (`context_type` is set, the sentence is just less natural) so a future cycle can regenerate.
 
@@ -146,7 +145,7 @@ Every term passes through a 3-tier pipeline, in order:
 
 Every manifest row carries the `ipa_source` tag (`override | merriam-webster | magpie_g2p`). The delta between `merriam-webster` and `magpie_g2p` rows in the Stage 3 leaderboard **is the proof** the pronunciation strategy is working — call it out explicitly when you produce the leaderboard.
 
-**Three MW lookup choices** — all tag `merriam-webster`. **A**: `dictionaryapi.com` JSON API + `DICTIONARY_API_KEY` (free at dictionaryapi.com) — recommended for standalone. **B**: HTML scrape of `merriam-webster.com` — no key, brittle; what `voice-eval-flywheel`'s `flywheel/data/ipa_extractor.py` uses. **C**: skip MW, fall through to Magpie G2P with weaker long-tail coverage. Both recipes + the full respelling→IPA table live in `references/pronunciation-pipeline.md`. The Path A function takes `api_key` as an arg (never reads `os.environ`); pass `None` to skip MW.
+**Three MW lookup choices** — all tag `merriam-webster`. **A**: `dictionaryapi.com` JSON API + `DICTIONARY_API_KEY` (free at dictionaryapi.com) — recommended for standalone use. **B**: HTML scrape of `merriam-webster.com` — no key, brittle to site HTML changes; recipe inlined in `references/pronunciation-pipeline.md`. **C**: skip MW, fall through to Magpie G2P with weaker long-tail coverage. Both recipes + the full respelling→IPA table live in `references/pronunciation-pipeline.md`. The Path A function takes `api_key` as an arg (never reads `os.environ`); pass `None` to skip MW.
 
 `pronunciation_overrides.csv` schema:
 
@@ -212,7 +211,12 @@ def magpie_validates_ipa(ipa: str, api_key: str,
 
 Call this once per candidate IPA before showing it to the user. On user approval, append the verified IPA to `pronunciation_overrides.csv`. The row's `ipa_source` flips from `magpie_g2p` to `override` on the next manifest generation.
 
-**Approval gate before Step 2e.** Do not synthesize the full Cartesian product until the user has explicitly approved the IPA overrides. Magpie NVCF rate-limits aggressively on >100-row jobs, and a do-over costs both API credits and clock time.
+**HITL audition gate before Step 2e — fail-closed.** Do not synthesize the full Cartesian product, do not promote any staged IPA candidate to `pronunciation_overrides.csv`, and do not advance to Stage 3 until **one of the following has happened explicitly in conversation**:
+
+1. **The user confirms they have auditioned the QA clips** and reports their verdict per clip (or per bucket: "the MW set sounds fine", "fix `pembrolizumab`", etc.). Provide the `afplay` (macOS) or `paplay`/`aplay` (Linux) commands so the user can play them — then **halt and wait for their reply after listening**. Paper-only approval via an AskUserQuestion prompt — clicking "Promote all" or "Lock in" without auditioning — **does not satisfy this gate**. Magpie-validating an IPA proves it's in the phoneme inventory; it does not prove it matches the *intended* pronunciation. Only the user's ears do that.
+2. **The user explicitly opts to skip audition for this cycle**, in deliberate language (e.g. *"skip audition, accept the risk that mispronunciations may dilute the Stage 3 KER signal — log it as a cycle-N caveat"*), not as a side-effect of a single click-through. Record the skip in a cycle-level note (e.g. `eval/cycle<N>/cycle_notes.md`) so a future operator can see the audition was deferred.
+
+Magpie NVCF rate-limits aggressively on >100-row jobs, and a do-over costs both API credits and clock time — but the larger risk is shipping a manifest with mispronounced reference audio that quietly corrupts the Stage 3 KER signal. Time spent auditioning is cheaper than re-running the cycle.
 
 ### 2e. Full benchmark generation
 
@@ -229,8 +233,20 @@ import riva.client
 NVCF_HOST = "grpc.nvcf.nvidia.com:443"
 MAGPIE_FUNCTION_ID = "877104f7-e885-42b9-8de8-f6e4c6303969"
 
-def synthesize_row(row: dict, out_dir: Path, api_key: str) -> Path:
-    """Synthesize one manifest row to <out_dir>/audio/<slug>.wav. Returns the path."""
+def synthesize_row(row: dict, all_overrides: dict[str, str],
+                   out_dir: Path, api_key: str) -> Path:
+    """Synthesize one manifest row to <out_dir>/audio/<slug>.wav. Returns the path.
+
+    `all_overrides` is a {term: ipa} dict containing *every* entry from
+    `pronunciation_overrides.csv` — including context-word overrides like
+    `intravenously` that are not benchmarked terms themselves. The renderer
+    wraps each one whose verbatim text appears in `row['text']`.
+
+    The row's own MW IPA (when `ipa_source=='merriam-webster'`) is merged into
+    `all_overrides` for the duration of this call so MW-tagged rows still get
+    their term wrapped. Manual `override` rows are already in the dict by
+    construction.
+    """
     auth = riva.client.Auth(
         ssl_cert=None, use_ssl=True, uri=NVCF_HOST,
         metadata_args=[
@@ -240,8 +256,14 @@ def synthesize_row(row: dict, out_dir: Path, api_key: str) -> Path:
     )
     tts = riva.client.SpeechSynthesisService(auth)
     text = row["text"]
-    if row["ipa_source"] in ("override", "merriam-webster"):
-        text = f"<speak>{render_with_overrides(text, row['term'], row['ipa'])}</speak>"
+    overrides_for_row = dict(all_overrides)
+    if row["ipa_source"] == "merriam-webster" and row.get("ipa"):
+        overrides_for_row[row["term"]] = row["ipa"]
+    if overrides_for_row:
+        # render_sentence_with_overrides wraps EVERY override found in the
+        # sentence — see references/pronunciation-pipeline.md. Wrapping only
+        # row['term'] means context-word overrides are silently dropped.
+        text = f"<speak>{render_sentence_with_overrides(text, overrides_for_row)}</speak>"
     slug = re.sub(r'[^a-z0-9]+', '_',
                   f"{row['term']}_{row['context_type']}_{row['voice_id']}_{row['noise_level']}".lower())
     audio_path = out_dir / "audio" / f"{slug}.wav"
@@ -302,10 +324,6 @@ For anything not in this list, identify which upstream skill is implicated and r
 - **Six fixed entity categories.** Extending `entity_category` is a deliberate methodology change, not a one-off tweak — KER breakdowns, leaderboard sections, and downstream finetune scripts all key off the vocabulary.
 - **Tiny first cycles.** Below ~20 terms, the by-`ipa_source` leaderboard split won't have enough rows in each bucket to be statistically meaningful. Build a meaningful cycle even if it costs a session.
 - **Magpie NVCF rate-limits.** ~5–10% drops on large jobs; budget a re-run pass.
-
-## Companion software
-
-Runnable scripts that implement this stage live in the (currently internal) **`voice-eval-flywheel`** repo: `scripts/generate_eval_set.py` drives DataDesigner + Magpie end-to-end with retry logic; `pronunciation_overrides.csv` ships with a curated starter set; `config/eval.yaml` carries an opinionated cycle layout. You **do not need** the repo to complete this stage — composing `/data-designer` + `/read-aloud` with the recipes above is sufficient.
 
 ## Next steps
 

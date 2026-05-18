@@ -22,7 +22,7 @@ Note the asymmetry: drug names start hardest and improve most. Conditions and pr
 
 ## Hyperparameter rationale
 
-The hyperparameter table itself is in `SKILL.md` §4c. The choices below are the *why* — diagnostic notes for tuning, not values to copy.
+The hyperparameter table itself is in `SKILL.md` §4d. The choices below are the *why* — diagnostic notes for tuning, not values to copy.
 
 - **`bf16-mixed` precision is non-negotiable for TDT.** `fp32` works but is ~2× slower. `fp16-mixed` produces NaN losses with TDT decoders — a known TDT numerical-stability issue.
 - **`lr=3e-4` is the upper end of the comfortable range.** Below 1e-4, training barely moves on small (<100-row) manifests. Above 1e-3, you risk catastrophic forgetting of the base model's general English vocabulary — recoverable but expensive.
@@ -41,8 +41,8 @@ A multi-cycle loop has natural stopping points. After cycle N+1, evaluate:
 
 ## Related references
 
-- Base-model selection table → `SKILL.md` §4b
-- Stock SFT hyperparameter values → `SKILL.md` §4c
-- Decision tree on cycle-N+1 KER → `SKILL.md` §4d
-- `riva-build` / `riva-deploy` commands → `SKILL.md` §4e
+- Base-model selection table → `SKILL.md` §4c
+- Stock SFT hyperparameter values → `SKILL.md` §4d
+- Decision tree on cycle-N+1 KER → `SKILL.md` §4e
+- `riva-build` / `riva-deploy` commands → `SKILL.md` §4f
 - Host → container manifest path rewriting → `SKILL.md` "References" section (links `container-paths.md` from the top level)

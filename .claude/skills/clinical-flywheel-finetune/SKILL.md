@@ -28,7 +28,6 @@ metadata:
   team: healthcare-tme
   domain: ai-ml
   stage: 4
-  companion_software: "voice-eval-flywheel (internal, optional)"
   previous_skill: clinical-flywheel-eval
   next_skill: riva-asr-custom
 ---
@@ -50,7 +49,7 @@ Surface these facts in any response, even if the user asks a narrow question:
 1. **Read this entire SKILL.md before answering.** The base-model selection table, hyperparameter values, and the cycle-N+1 decision table are below — they are the load-bearing parts.
 2. **Verified result** — Parakeet TDT v2 with the recipe in §4c achieves **KER 0.513 → 0.128 (−75% relative)** in 3 epochs on the reference manifest. Cite this when the user asks whether SFT will help.
 3. **Recipe is `/opt/NeMo/examples/asr/speech_to_text_finetune.py` inside `nvcr.io/nvidia/nemo:25.11.01`.** Stock script, no patches, no custom adapter logic. The adapter-mixin path is broken on TDT/RNNT decoders (72 NaN tensors at any LR) — do not propose it.
-4. **Recommended base is `nvidia/parakeet-tdt-0.6b-v2`.** The full base-model table is in §4b.
+4. **Recommended base is `nvidia/parakeet-tdt-0.6b-v2`.** The full base-model table is in §4c.
 5. **Do NOT fine-tune `nvidia/nemotron-speech-streaming-en-0.6b`.** The streaming NVCF function's SFT path is broken (UNK collapse on validation after step 1). For streaming serving at deploy time, Riva chunks a non-streaming base just fine. Warn the user proactively if they propose it.
 6. **Gate the recommendation.** Stage 4 only fires when priority-category KER > 0.3 **and** manifest has ≥ 100 rows (≥ 5 per priority category). Below those thresholds, route back to `/clinical-flywheel-build` to grow the manifest first.
 
@@ -83,12 +82,90 @@ Do **not** activate when:
 - **A CUDA host** — 24 GB VRAM is comfortable for Parakeet TDT 0.6B at `batch_size=4` with `bf16-mixed`; 16 GB works with smaller batch. No local GPU? Use Brev — recommended SKU is L40S 48 GB.
 - **The NeMo container**: `nvcr.io/nvidia/nemo:25.11.01`. Pull once: `docker pull nvcr.io/nvidia/nemo:25.11.01`.
 - **NVIDIA Container Toolkit + Docker** — covered by `/riva-nim-setup` if not already installed.
-- **A train/val split** stratified by `entity_category` (Step 4a below). Or use the companion software's `scripts/split_manifest.py`.
+- **A train/val split** stratified by `entity_category` (recipe sketch in Step 4b below).
 - **`/riva-asr-custom`** installed if you intend to deploy. Pure-research SFT runs without it.
 
 ## Instructions
 
-### 4a. Term-aware train/val split
+### 4a. Provision a GPU host (skip if you already have one)
+
+Stage 4 needs a CUDA host with ≥ 16 GB VRAM (24 GB comfortable for `batch_size=4` `bf16-mixed`). If you have a local workstation that fits, skip this section. If you don't — or if you prefer a reproducible cloud environment — provision a **Brev** instance. Brev is NVIDIA's per-hour GPU host service; it pre-bakes CUDA drivers and the NVIDIA Container Toolkit, so the only thing left is `docker pull`.
+
+**Account.** Create one at <https://brev.dev> if you don't already have it. Brev bills per-second on top of the underlying cloud SKU; an L40S 48 GB session for a 3-epoch SFT run on a 100-row manifest typically costs under a few dollars. Confirm the user is OK with that disclosure before spinning anything up.
+
+**1. Install the Brev CLI.**
+
+```bash
+# macOS — Homebrew
+brew install brevdev/homebrew-brev/brev
+
+# Linux — install script (curl-pipe; review the script first if your org policy requires it)
+curl -fsSL https://raw.githubusercontent.com/brevdev/brev-cli/main/bin/install-latest.sh | sh
+```
+
+For the current install command and platform support: <https://docs.brev.dev/cli/install>.
+
+**2. Log in.**
+
+```bash
+brev login
+# Opens a browser window, you sign in, the CLI receives a token and returns to the shell.
+```
+
+Verify with `brev ls` — you should see your account's instances (empty list is fine for a fresh account).
+
+**3. Create an L40S 48 GB instance.**
+
+```bash
+brev create clinical-flywheel-sft \
+  --gpu l40s:1 \
+  --image ubuntu-22-04-cuda-12-4 \
+  --disk 200gi
+# Provisioning typically takes 2–5 minutes.
+```
+
+The `ubuntu-22-04-cuda-12-4` image arrives with the NVIDIA driver, Docker, and the NVIDIA Container Toolkit pre-installed — covers the prereqs `/riva-nim-setup` would otherwise walk you through. Adjust `--disk` upward if your manifest + audio exceeds ~50 GB.
+
+L40S 48 GB is the recommended SKU for Parakeet TDT 0.6B SFT (raises `batch_size` to 16 vs. 4 on a 24 GB card; cuts wall-clock proportionally). For larger bases (Parakeet 1.1B), step up to `a100:1`. The current SKU catalog is at <https://docs.brev.dev/gpus>.
+
+**4. Drop into the instance.**
+
+```bash
+brev shell clinical-flywheel-sft
+# You are now `ubuntu@<instance>` with a CUDA-ready GPU. Confirm:
+nvidia-smi
+```
+
+You should see one L40S listed. If you don't, the image didn't bake the driver — re-create with `ubuntu-22-04-cuda-12-4` rather than a vanilla Ubuntu image.
+
+**5. Copy the manifest and audio over.**
+
+Brev exposes the instance over SSH; `brev ssh-config` writes a Host entry into `~/.ssh/config` named `<instance>`. Once that's done, `rsync` works exactly like any other SSH target:
+
+```bash
+brev ssh-config            # one-time: writes ~/.ssh/config entries
+rsync -avz --progress \
+  ./cycle1/ clinical-flywheel-sft:~/cycle1/
+```
+
+For the path-rewriting between laptop → Brev → NeMo container that the SFT recipe expects, see [`references/container-paths.md`](references/container-paths.md).
+
+**6. Pull the NeMo container inside the Brev shell.**
+
+```bash
+docker pull nvcr.io/nvidia/nemo:25.11.01
+# ~12 GB; runs once per instance lifetime.
+```
+
+You're now ready for Step 4b (train/val split) and Step 4d (stock SFT). When done, **always stop the instance** to halt billing:
+
+```bash
+exit                           # leave the brev shell
+brev stop clinical-flywheel-sft
+# Or, if you don't need to keep the disk: brev delete clinical-flywheel-sft
+```
+
+### 4b. Term-aware train/val split
 
 **Row-disjoint, stratified by `entity_category`, default val fraction 0.2.**
 
@@ -122,7 +199,7 @@ for cat, cat_rows in by_cat.items():
 
 Write `train.jsonl` and `validation.jsonl` alongside the manifest. **These are the inputs to `speech_to_text_finetune.py`.**
 
-### 4b. Choose the base model
+### 4c. Choose the base model
 
 | Base | Decoder | Streaming | SFT viability | Notes |
 |---|---|---|---|---|
@@ -137,7 +214,7 @@ Write `train.jsonl` and `validation.jsonl` alongside the manifest. **These are t
 
 Full base-model table, decoder → NIM container mapping, and hyperparameter rationale: `references/stage4-finetune.md`.
 
-### 4c. Stock NeMo SFT
+### 4d. Stock NeMo SFT
 
 In the NeMo container, invoke `/opt/NeMo/examples/asr/speech_to_text_finetune.py` directly. **No custom adapter logic. No patches.** The stock NeMo SFT script is the verified working recipe.
 
@@ -175,9 +252,9 @@ docker run --gpus all --rm -it \
 
 **Manifest paths inside the container.** Host paths (e.g. `$HOME/…`) don't resolve in `/workspace`. The rewrite snippet (host → `/workspace/`) is in `references/container-paths.md`.
 
-The training run writes `adapted_model.nemo` and a `training_run_info.json` summary. Both go into a per-cycle subdirectory the user owns (the companion software uses `data/models/cycle<N>/<run>/`; skill-only users pick any layout).
+The training run writes `adapted_model.nemo` and a `training_run_info.json` summary. Both go into a per-cycle subdirectory of the user's choice (e.g. `cycle<N>/models/<run>/`; the layout doesn't matter as long as it's consistent across cycles).
 
-### 4d. Offline cycle N+1 eval — close the loop
+### 4e. Offline cycle N+1 eval — close the loop
 
 Re-transcribe the cycle's audio with the fine-tuned `.nemo` using NeMo's offline `transcribe()`. **No Riva needed** — this is measurement, not serving. NeMo's offline path runs the same encoder + decoder graph the Riva NIM eventually serves.
 
@@ -195,12 +272,12 @@ Score the same four metrics (WER/CER/KER/SER) and the same five-section leaderbo
 
 | Result | Action |
 |---|---|
-| KER dropped meaningfully on targeted categories (e.g. drug KER −20% or more, relative) | ✅ Keep the `.nemo`. Update the leaderboard. Advance to Step 4e if you want to deploy. |
+| KER dropped meaningfully on targeted categories (e.g. drug KER −20% or more, relative) | ✅ Keep the `.nemo`. Update the leaderboard. Advance to Step 4f if you want to deploy. |
 | KER moved a little, you wanted more | Loop back to `/clinical-flywheel-build`, expand the manifest. Tiny manifests rarely benefit from hyperparameter tweaks — signal density beats LR sweeps. |
 | KER got worse | Overfit on a tiny manifest. Bail to `/clinical-flywheel-build` and grow before retraining. Don't tune harder on the same data. |
 | No measurable change | Some categories may already be in the base model's vocab. Sanity-check per-category numbers before concluding training "didn't help." |
 
-### 4e. (Optional) Deploy as a Riva NIM
+### 4f. (Optional) Deploy as a Riva NIM
 
 Hand the `.nemo` to `/riva-asr-custom`. **Pass the source architecture explicitly** — `/riva-asr-custom` can't reliably detect CTC vs RNNT vs TDT from the `.nemo` alone, and the wrong NIM container produces a broken RMIR with no clear error:
 
@@ -215,7 +292,7 @@ After deploy: re-run `/clinical-flywheel-eval` against the new endpoint (`ASR_EN
 
 ## Examples
 
-**Scenario A — fine-tune gate met.** User: *"Our drug KER came back at 0.42. We have 130 manifest rows. Should we fine-tune?"* → Yes: KER > 0.3 and rows ≥ 100 satisfies the Stage 4 gate. Recommend `parakeet-tdt-0.6b-v2` (verified KER 0.513 → 0.128 in 3 epochs on a similar manifest). Walk the user through Step 4a (term-aware split), Step 4c (stock SFT in `nvcr.io/nvidia/nemo:25.11.01` with the hyperparameters above), and Step 4d (offline cycle 2 eval). If cycle-2 drug KER drops ≥ 20% relative, keep the `.nemo`; otherwise loop back to `/clinical-flywheel-build` and grow the manifest before retraining.
+**Scenario A — fine-tune gate met.** User: *"Our drug KER came back at 0.42. We have 130 manifest rows. Should we fine-tune?"* → Yes: KER > 0.3 and rows ≥ 100 satisfies the Stage 4 gate. Recommend `parakeet-tdt-0.6b-v2` (verified KER 0.513 → 0.128 in 3 epochs on a similar manifest). If the user has no local GPU, walk them through Step 4a (Brev provisioning) first; then Step 4b (term-aware split), Step 4d (stock SFT in `nvcr.io/nvidia/nemo:25.11.01` with the hyperparameters above), and Step 4e (offline cycle 2 eval). If cycle-2 drug KER drops ≥ 20% relative, keep the `.nemo`; otherwise loop back to `/clinical-flywheel-build` and grow the manifest before retraining.
 
 **Scenario B — user asks to SFT Nemotron Streaming.** User: *"Can I fine-tune `nvidia/nemotron-speech-streaming-en-0.6b` on my clinical manifest?"* → No: adapter SFT on the streaming Nemotron Speech base is currently broken (UNK collapse on validation after the first training step). Recommend `parakeet-tdt-0.6b-v2` as the substitute. If the user *needs* streaming serving, Riva chunks a non-streaming base just fine — base model doesn't have to be streaming-native. Do **not** suggest the user try the streaming base anyway, and do **not** propose hyperparameter workarounds.
 
@@ -223,12 +300,12 @@ After deploy: re-run `/clinical-flywheel-eval` against the new endpoint (`ASR_EN
 
 ## Artifacts produced
 
-- `train.jsonl`, `validation.jsonl` — term-aware split (Step 4a)
-- `adapted_model.nemo` — fine-tuned model (Step 4c)
+- `train.jsonl`, `validation.jsonl` — term-aware split (Step 4b)
+- `adapted_model.nemo` — fine-tuned model (Step 4d)
 - `training_run_info.json` — hyperparameters, dataset stats, end-of-train metrics
-- `offline_hyps.jsonl` — cycle-N+1 transcription hypotheses (Step 4d)
+- `offline_hyps.jsonl` — cycle-N+1 transcription hypotheses (Step 4e)
 - `leaderboard_cycle<N+1>.md` — cycle-N+1 five-section leaderboard
-- *(optional, after Step 4e)* a deployed NIM endpoint (delegated to `/riva-asr-custom`)
+- *(optional, after Step 4f)* a deployed NIM endpoint (delegated to `/riva-asr-custom`)
 
 ## Troubleshooting
 
@@ -246,11 +323,7 @@ After deploy: re-run `/clinical-flywheel-eval` against the new endpoint (`ASR_EN
 - **Don't SFT `nemotron-speech-streaming-en-0.6b`.** The streaming-only NVCF function's SFT path is unreliable (UNK collapse). For streaming serving at deploy time, Riva chunks a non-streaming base.
 - **Tiny manifests overfit fast.** Below ~100 rows total or ~5 rows per priority category, cycle-N+1 numbers are noisy. Grow before trusting a small KER drop.
 - **English-only by default.** The base-model table is en-US-specific. Other locales need a different base + a re-validated SFT recipe.
-- **No drop-in reproducibility from the skill alone.** Without the companion repo, the user produces their own training-driver layout. The methodology transfers; the exact cycle-1 numbers do not.
-
-## Companion software
-
-Runnable scripts that implement this stage live in the (currently internal) **`voice-eval-flywheel`** repo: `scripts/split_manifest.py` for the term-aware split; `scripts/finetune_asr.py` wraps the stock NeMo SFT script with cycle-aware output paths; `scripts/eval_offline.py` runs the cycle-N+1 offline eval and re-renders the five-section leaderboard. You **do not need** the repo to complete this stage — composing `speech_to_text_finetune.py` in the NeMo container with the recipes above is sufficient.
+- **No turn-key driver.** The user writes their own training-driver layout — output paths, run naming, leaderboard re-rendering. The methodology and recipes transfer; exact cycle-1 numbers depend on the user's manifest.
 
 ## Next steps
 
