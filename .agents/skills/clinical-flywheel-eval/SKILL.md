@@ -131,15 +131,7 @@ For each row in `manifest.jsonl`, transcribe `audio_filepath` and write `per_sam
 
 **Recipe** (full Python in `references/offline-asr-recipe.md`): `transcribe_manifest(api_key, manifest_path, out_path, language_code="en-US")` opens an offline gRPC stream to NVCF (or to `ASR_ENDPOINT` if set for self-hosted Riva), calls `riva.client.ASRService.offline_recognize` per row — sentences in a clinical manifest are ≤ 30 s so no streaming/batching needed — and writes the JSONL above. Same `auth_for` shape as the Stage 1 setup smoke test. The agent harness passes `api_key` explicitly; the recipe reads the three env-var overrides (`ASR_NVCF_FUNCTION_ID`, `ASR_MODEL_NAME`, `ASR_ENDPOINT`) at the top so auditors see the knobs in one place.
 
-**Whisper fallback** when Parakeet's NVCF backend is faulting (CUDA illegal-memory-access from Triton):
-
-```bash
-export ASR_NVCF_FUNCTION_ID=b702f636-f60c-4a3d-a6f4-f3568c13bd7d
-export ASR_MODEL_NAME=whisper-large-v3
-# Then call transcribe_manifest(..., language_code="en")  # not "en-US"
-```
-
-**Self-hosted Riva NIM**: `export ASR_ENDPOINT=localhost:50051` — the recipe builds a non-SSL `Auth` and skips NVCF. See `/riva-asr` Option B.
+**Whisper fallback** (when Parakeet's NVCF backend faults with `CUDA illegal-memory-access` from Triton) and **self-hosted Riva NIM** (`ASR_ENDPOINT=localhost:50051`) env-var patterns: see `references/offline-asr-recipe.md` (§Whisper fallback, §Self-hosted Riva NIM).
 
 **Resilience knobs deferred to the user.** If NVCF returns `RESOURCE_EXHAUSTED` mid-batch, the loop raises on that row; re-run from the failing row. Streaming/batching/retry-with-backoff are out of scope — see `/riva-asr`.
 
@@ -161,56 +153,7 @@ For every row, compute:
 3. Strip punctuation **except hyphen**.
 4. Collapse whitespace runs to a single space.
 
-**Inline scoring recipes** (self-contained, no `jiwer` dependency required). `jiwer` is fine if installed; the pure-Python below is the standalone fallback:
-
-```python
-import re, unicodedata
-
-def normalize(s: str) -> str:
-    s = unicodedata.normalize("NFKD", s).lower()
-    # Strip punctuation except hyphen; collapse whitespace.
-    s = re.sub(r"[^\w\s\-]", "", s)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s
-
-def edit_distance(ref, hyp) -> int:
-    """O(n*m) Levenshtein on any sequence (list of tokens or list of chars)."""
-    n, m = len(ref), len(hyp)
-    if n == 0: return m
-    if m == 0: return n
-    dp = [[0] * (m + 1) for _ in range(n + 1)]
-    for i in range(n + 1): dp[i][0] = i
-    for j in range(m + 1): dp[0][j] = j
-    for i in range(1, n + 1):
-        for j in range(1, m + 1):
-            cost = 0 if ref[i-1] == hyp[j-1] else 1
-            dp[i][j] = min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + cost)
-    return dp[n][m]
-
-def wer(ref: str, hyp: str) -> float:
-    r, h = normalize(ref).split(), normalize(hyp).split()
-    return edit_distance(r, h) / max(len(r), 1)
-
-def cer(ref: str, hyp: str) -> float:
-    r, h = list(normalize(ref)), list(normalize(hyp))
-    return edit_distance(r, h) / max(len(r), 1)
-
-def ker(hyp: str, term: str) -> int:
-    """Strict KER per row: 1 = miss, 0 = hit.
-    Term words must appear in order, adjacent, in the normalized hypothesis."""
-    norm_hyp = normalize(hyp).split()
-    norm_term = normalize(term).split()
-    for i in range(len(norm_hyp) - len(norm_term) + 1):
-        if norm_hyp[i:i + len(norm_term)] == norm_term:
-            return 0  # hit
-    return 1  # miss
-
-def ser(ref: str, hyp: str) -> int:
-    """Sentence error rate per row: 1 if any difference (post-normalize), 0 if exact."""
-    return 0 if normalize(ref) == normalize(hyp) else 1
-```
-
-Aggregate across rows: `mean(per-row score)` for each metric.
+**Inline scoring recipes** — `normalize` / `edit_distance` / `wer` / `cer` / `ker` / `ser` (pure-Python, no `jiwer` dependency): see `references/scoring-recipes.md`. Aggregate across rows by taking `mean(per-row score)` for each metric.
 
 **Strict KER** — term words must appear *in order, adjacent* in the normalized hypothesis. This is conservative: `cefazolin → cefa zolin` counts as a miss. That's the right call clinically — a downstream pharmacy lookup will fail on the misspelled token.
 
@@ -255,8 +198,6 @@ Read the **priority-category KER** (drug KER for most clinical workflows, proced
 
 **Scenario B — interpreting a mixed result.** User: *"Eval shows KER 0.05 on rows tagged `merriam-webster` but 0.40 on rows tagged `magpie_g2p`. Should I fine-tune?"* → No — this is the special case. The model is fine; the pronunciation hints aren't covering the long-tail terms. Route the user back to `/clinical-flywheel-build` Step 2d to audition the `magpie_g2p` rows and append verified IPA to `pronunciation_overrides.csv`. Re-run Stage 3 after the rebuild before reconsidering Stage 4.
 
-**Scenario C — why-KER question.** User: *"Why do you use KER instead of just WER for clinical ASR?"* → Explain: aggregate WER is dominated by function words (articles, prepositions); a model can have low WER but still be clinically dangerous if drug names are wrong. KER tracks whether the flagged clinical entity was transcribed correctly per row. Concrete example: WER 0.05 with drug KER 0.40 is not deployable. Both metrics are reported; KER is the headline.
-
 ## Artifacts produced
 
 - `per_sample.json` — per-row transcription results with all clinical-extension fields preserved (the ASR `hyp` joined to the manifest's `ref` and metadata)
@@ -275,8 +216,8 @@ Read the **priority-category KER** (drug KER for most clinical workflows, proced
 - **WER is fine on `clean` rows but balloons on `snr_5db`** → robustness gap, not a vocabulary gap. Expand the eval set with more diverse noise via `/clinical-flywheel-build`, or accept the limit and document the deployment-noise floor.
 - **ASR results diverge between Riva NIM and offline NeMo `transcribe()`** → the gap is in Riva preprocessing or `riva-build` flags, not the model. Route to `/riva-asr-custom`.
 - **Hosted ASR rate-limits** (`RESOURCE_EXHAUSTED`) on large manifests → retry after 30 s. The inlined recipe doesn't retry; slice the manifest and re-run dropped rows manually. For built-in backoff, see `/riva-asr`.
-- **`TypeError: Auth.__init__() got an unexpected keyword argument 'ssl_cert'`** → you're on `nvidia-riva-client >= 2.x`; that kwarg was renamed to `ssl_root_cert` and isn't needed for NVCF. The recipe above already drops it; if you copied an older recipe, do the same.
-- **CUDA illegal-memory-access from Triton** on the Parakeet function ID → NVCF-side backend fault, not your env. Switch to Whisper Large v3 (see the fallback block in Step 3b) until it clears.
+- **`TypeError: Auth.__init__() got an unexpected keyword argument 'ssl_cert'`** → you're on `nvidia-riva-client >= 2.x`; that kwarg was renamed to `ssl_root_cert` and isn't needed for NVCF. The shipped recipe (`references/offline-asr-recipe.md`) already drops it; if you copied an older recipe, do the same.
+- **CUDA illegal-memory-access from Triton** on the Parakeet function ID → NVCF-side backend fault, not your env. Switch to Whisper Large v3 (see `references/offline-asr-recipe.md` §Whisper fallback) until it clears.
 
 For anything not in this list, identify which upstream skill is implicated. ASR-side issues (protocol, model selection, self-hosted NIM deploy) belong to `/riva-asr`; scoring-side issues belong here.
 
@@ -297,3 +238,4 @@ For anything not in this list, identify which upstream skill is implicated. ASR-
 ## References
 
 - [`references/offline-asr-recipe.md`](references/offline-asr-recipe.md) — full Step 3b Python recipe (`transcribe_manifest`, `resolve_asr_config`, `build_asr_auth`), function-ID catalog with call-shape notes, Whisper fallback, self-hosted Riva NIM setup
+- [`references/scoring-recipes.md`](references/scoring-recipes.md) — pure-Python WER/CER/KER/SER scoring functions with the canonical 4-step normalization
