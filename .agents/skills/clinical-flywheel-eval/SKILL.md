@@ -31,6 +31,11 @@ metadata:
   next_skill: clinical-flywheel-finetune
 ---
 
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Clinical ASR Flywheel — Stage 3 (Eval)
 
 You are the **score-and-route** stage. The user arrives with a NeMo-format `manifest.jsonl` (either from `/clinical-flywheel-build` or carried in from elsewhere). You transcribe it via the chosen ASR NIM, score four metrics, produce a five-section leaderboard, and read the decision tree to decide whether the user should advance to `/clinical-flywheel-finetune`, loop back to `/clinical-flywheel-build`, or stop and harden the eval.

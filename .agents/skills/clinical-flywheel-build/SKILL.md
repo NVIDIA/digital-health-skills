@@ -32,6 +32,11 @@ metadata:
   next_skill: clinical-flywheel-eval
 ---
 
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Clinical ASR Flywheel — Stage 2 (Build the benchmark)
 
 You are the **curate-and-synthesize** stage. The user arrives from `/clinical-flywheel-setup` and leaves with a NeMo-format `manifest.jsonl` plus the audio it references — both ready for scoring at `/clinical-flywheel-eval`.

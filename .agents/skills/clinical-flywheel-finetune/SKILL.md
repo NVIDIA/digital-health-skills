@@ -32,6 +32,11 @@ metadata:
   next_skill: riva-asr-custom
 ---
 
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Clinical ASR Flywheel — Stage 4 (Fine-tune)
 
 You are the **adapt-and-measure** stage. The user arrives from `/clinical-flywheel-eval` with a manifest, a baseline KER number, and the decision-tree's recommendation that fine-tuning is worth the GPU time. You run stock NeMo SFT, do an offline cycle N+1 re-eval to **measure that the loop closed**, and optionally hand the resulting `.nemo` to `/riva-asr-custom` for production serving.

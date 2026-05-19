@@ -28,6 +28,11 @@ metadata:
   next_skill: clinical-flywheel-build
 ---
 
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Clinical ASR Flywheel — Stage 1 (Setup)
 
 You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/clinical-flywheel-build`.
