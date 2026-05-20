@@ -2,7 +2,7 @@
 
 Full Merriam-Webster respelling → IPA mapping table and SSML wrapping rules for the `clinical-flywheel-build` two-tier IPA pipeline.
 
-## ⚠️ API key handling
+## ⚠ API key handling
 
 Path A below uses `DICTIONARY_API_KEY` (Merriam-Webster); the `synthesize_row` / `magpie_validates_ipa` recipes further down use `api_key` (NVCF bearer token for Magpie TTS). Both are sensitive credentials. Before redistributing or operationalizing any code from this file, observe the following:
 

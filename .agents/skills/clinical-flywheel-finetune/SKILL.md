@@ -39,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 4 (Fine-tune)
 
-> **⚠️ Agent: read this entire SKILL.md before answering.** The Critical-workflow-rules section, the base-model table (§4c), the stock-NeMo-SFT recipe (§4d) with verified hyperparameters, and the cycle-N+1 decision table (§4e) are all load-bearing. Do **not** recommend SFT on `nvidia/nemotron-speech-streaming-en-0.6b` — its SFT path is broken (UNK collapse). Do **not** propose adapter-style SFT on TDT/RNNT decoders — that path produced 72 NaN tensors empirically.
+> **⚠ Agent: read this entire SKILL.md before answering.** The Critical-workflow-rules section, the base-model table (§4c), the stock-NeMo-SFT recipe (§4d) with verified hyperparameters, and the cycle-N+1 decision table (§4e) are all load-bearing. Do **not** recommend SFT on `nvidia/nemotron-speech-streaming-en-0.6b` — its SFT path is broken (UNK collapse). Do **not** propose adapter-style SFT on TDT/RNNT decoders — that path produced 72 NaN tensors empirically.
 
 You are the **adapt-and-measure** stage. The user arrives from `/clinical-flywheel-eval` with a manifest, a baseline KER number, and the decision-tree's recommendation that fine-tuning is worth the GPU time. You run stock NeMo SFT, do an offline cycle N+1 re-eval to **measure that the loop closed**, and optionally hand the resulting `.nemo` to `/riva-asr-custom` for production serving.
 

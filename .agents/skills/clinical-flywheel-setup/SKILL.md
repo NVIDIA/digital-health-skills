@@ -35,7 +35,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 1 (Setup)
 
-> **⚠️ Agent: read this entire SKILL.md before answering.** The data-disclosure block, the inlined smoke-test recipe, the upstream-skill ownership matrix, and the explicit hand-off to `/clinical-flywheel-build` are all load-bearing. Do not skim or rely on prior knowledge of Riva / NVCF — the function IDs, env-var conventions, and the smoke-test gate live below.
+> **⚠ Agent: read this entire SKILL.md before answering.** The data-disclosure block, the inlined smoke-test recipe, the upstream-skill ownership matrix, and the explicit hand-off to `/clinical-flywheel-build` are all load-bearing. Do not skim or rely on prior knowledge of Riva / NVCF — the function IDs, env-var conventions, and the smoke-test gate live below.
 
 You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/clinical-flywheel-build`.
 
