@@ -39,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 4 (Fine-tune)
 
-> **⚠ Agent: read this entire SKILL.md before answering.** The Critical-workflow-rules section, the base-model table (§4c), the stock-NeMo-SFT recipe (§4d) with verified hyperparameters, and the cycle-N+1 decision table (§4e) are all load-bearing. Do **not** recommend SFT on `nvidia/nemotron-speech-streaming-en-0.6b` — its SFT path is broken (UNK collapse). Do **not** propose adapter-style SFT on TDT/RNNT decoders — that path produced 72 NaN tensors empirically.
+> **⚠ Agent: read this entire SKILL.md before answering.** The Critical-workflow-rules section, the base-model table (§4c), the stock-NeMo-SFT recipe (§4d), and the cycle-N+1 decision table (§4e) are all load-bearing — the do-not-SFT bases and broken-adapter warnings live there.
 
 You are the **adapt-and-measure** stage. The user arrives from `/clinical-flywheel-eval` with a manifest, a baseline KER number, and the decision-tree's recommendation that fine-tuning is worth the GPU time. You run stock NeMo SFT, do an offline cycle N+1 re-eval to **measure that the loop closed**, and optionally hand the resulting `.nemo` to `/riva-asr-custom` for production serving.
 
@@ -240,11 +240,11 @@ After deploy: re-run `/clinical-flywheel-eval` against the new endpoint (`ASR_EN
 
 ## Examples
 
-**Scenario A — fine-tune gate met.** User: *"Our drug KER came back at 0.42. We have 130 manifest rows. Should we fine-tune?"* → Yes: KER > 0.3 and rows ≥ 100 satisfies the Stage 4 gate. Recommend `parakeet-tdt-0.6b-v2` (verified KER 0.513 → 0.128 in 3 epochs on a similar manifest). If the user has no local GPU, walk them through Step 4a (Brev provisioning) first; then Step 4b (term-aware split), Step 4d (stock SFT in `nvcr.io/nvidia/nemo:25.11.01` with the hyperparameters above), and Step 4e (offline cycle 2 eval). If cycle-2 drug KER drops ≥ 20% relative, keep the `.nemo`; otherwise loop back to `/clinical-flywheel-build` and grow the manifest before retraining.
+**Scenario A — gate met.** User: *"Drug KER 0.42, 130 rows. SFT?"* → Yes (gate cleared). `parakeet-tdt-0.6b-v2` (verified 0.513 → 0.128). No local GPU? Step 4a (Brev) → 4b (split) → 4d (stock SFT) → 4e (offline re-eval). If cycle-2 drug KER drops ≥ 20% relative, keep the `.nemo`; otherwise back to `/clinical-flywheel-build`.
 
-**Scenario B — user asks to SFT Nemotron Streaming.** User: *"Can I fine-tune `nvidia/nemotron-speech-streaming-en-0.6b` on my clinical manifest?"* → No: adapter SFT on the streaming Nemotron Speech base is currently broken (UNK collapse on validation after the first training step). Recommend `parakeet-tdt-0.6b-v2` as the substitute. If the user *needs* streaming serving, Riva chunks a non-streaming base just fine — base model doesn't have to be streaming-native. Do **not** suggest the user try the streaming base anyway, and do **not** propose hyperparameter workarounds.
+**Scenario B — Nemotron Streaming.** User: *"SFT `nvidia/nemotron-speech-streaming-en-0.6b`?"* → No (UNK collapse). Substitute `parakeet-tdt-0.6b-v2`. Riva chunks non-streaming bases for streaming serving — base doesn't need to be streaming-native.
 
-**Scenario C — cycle 2 KER unchanged.** User: *"Cycle 2 KER barely moved."* → Bail to `/clinical-flywheel-build`. Tiny manifests rarely benefit from hyperparameter sweeps; signal density beats LR tweaks. Verify category coverage and noise diversity before retraining. If `magpie_g2p` rows are bad and `merriam-webster` rows are good (per cycle-1 leaderboard), the *real* gap is pronunciation-hint coverage, not model capacity — route through `/clinical-flywheel-build` Step 2d.
+**Scenario C — cycle 2 KER unchanged.** User: *"KER barely moved."* → Back to `/clinical-flywheel-build`. Signal density beats LR sweeps. If `magpie_g2p` rows are bad but `merriam-webster` rows are good, the gap is pronunciation-coverage — `/clinical-flywheel-build` Step 2d.
 
 ## Artifacts produced
 
