@@ -1,31 +1,45 @@
 [
   {
     "id": "clinical-flywheel-setup-001",
-    "question": "I want to start the Clinical ASR Flywheel — what do I need installed?",
+    "question": "I'm setting up the Clinical ASR Flywheel on my work laptop today. Before I do anything, I need to know — does this flywheel send any of my data outside our network? My infosec team will ask.",
     "expected_skill": "clinical-flywheel-setup",
     "expected_script": null,
-    "ground_truth": "The agent invokes clinical-flywheel-setup, walks the user through the prerequisites: NVIDIA_API_KEY (length-only check), Python ≥3.10 + libraries, surfaces the data-disclosure block (NVCF + MW), runs the inlined TTS→ASR smoke test, and points the user to /clinical-flywheel-build as the next stop. The five external skills (/riva-tts, /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer) are referenced for context but not required to run the flywheel — the four clinical-flywheel-* skills inline every recipe.",
+    "ground_truth": "Surface the full data-disclosure block from SKILL.md, not a generic answer. Two external destinations: (1) NVIDIA NVCF (grpc.nvcf.nvidia.com) — receives every synthesized clinical sentence (Stage 2 TTS text) and every WAV file you transcribe (Stage 3 ASR audio bytes), governed by build.nvidia.com terms; (2) Merriam-Webster (dictionaryapi.com JSON API or merriam-webster.com public site) — receives individual clinical terms one HTTP request per term, governed by their API/site terms. What does NOT leave: PHI of any kind — the flywheel is designed for synthetic audio generated from a user-curated term list, not real patient data. MW is fully optional (skip the key, pipeline falls through to Magpie G2P). NVCF cannot be skipped — if NVCF is off-limits, this skill family is the wrong tool.",
     "expected_behavior": [
-      "Read clinical-flywheel-setup/SKILL.md before taking action",
-      "Asked about (or verified) NVIDIA_API_KEY presence without echoing the key",
-      "Surfaced the data-disclosure block (NVCF + Merriam-Webster destinations)",
-      "Listed or referenced the five external skills (/riva-tts, /riva-asr, /finetune-asr, /riva-asr-custom, /riva-nim-setup, /data-designer) as the upstream owners",
-      "Mentioned KER as the flywheel's headline metric (for downstream framing)",
-      "Recommended /clinical-flywheel-build as the next skill"
+      "Read clinical-flywheel-setup/SKILL.md before answering",
+      "Named BOTH external destinations explicitly: NVCF (grpc.nvcf.nvidia.com) AND Merriam-Webster (dictionaryapi.com / merriam-webster.com)",
+      "Specified what gets sent to each: NVCF receives synthesized text + audio bytes; MW receives individual term strings",
+      "Stated explicitly that PHI / real patient transcripts / real patient audio do NOT leave (the flywheel is synthetic-only by design)",
+      "Mentioned that MW can be skipped (Magpie G2P fall-through) but NVCF cannot"
     ]
   },
   {
     "id": "clinical-flywheel-setup-002",
-    "question": "What scripts come with this skill?",
+    "question": "I cloned the skill directory but I can't find install.sh or setup.py — what script do I run to install everything and get going?",
     "expected_skill": "clinical-flywheel-setup",
     "expected_script": null,
-    "ground_truth": "The skill family is standalone — methodology + inlined recipes, no runnable scripts ship inside the skill. Every TTS, ASR, IPA-tagging, and scoring recipe is inlined inside the four clinical-flywheel-* skills. The intended pattern is composition of /data-designer + /riva-tts + the inlined Stage 3 ASR recipe + /riva-asr-custom for optional deploy.",
+    "ground_truth": "There is no install script and no setup.py — the skill family is methodology + inlined recipes only. Each of the four clinical-flywheel-* skills ships SKILL.md plus references/ markdown; no .py or .sh files are part of the skill itself. The 'install' is three steps, all in Stage 1 of SKILL.md: (1a) export NVIDIA_API_KEY; (1b) python3 -m venv .venv && pip install nvidia-riva-client pandas soundfile requests; (1c) run the inlined smoke_test() recipe to confirm the hosted NVCF stack responds. Optional: DICTIONARY_API_KEY for Merriam-Webster, jiwer for WER reference scoring. Do not look for or invent script paths — they don't exist by design, and inventing them sends the user down a dead end.",
     "expected_behavior": [
-      "Read clinical-flywheel-setup/SKILL.md",
-      "Clarified that this skill family ships methodology + inlined recipes, NOT runnable scripts",
-      "Mentioned the composition pattern with /data-designer, /riva-tts, the inlined Stage 3 ASR recipe, and /riva-asr-custom for deploy",
-      "Did NOT claim that any external/internal companion repo is required",
-      "Did NOT invent script paths inside the skill itself"
+      "Read clinical-flywheel-setup/SKILL.md before answering",
+      "Stated explicitly that NO install script or setup.py ships with the skill",
+      "Walked the user through the three-step Stage 1 install (key export → venv + pip install → smoke_test)",
+      "Did NOT invent or hallucinate script paths (e.g., scripts/install.sh, setup.py)",
+      "Did NOT make extra tool calls (e.g., file listing) to answer this — the answer is in SKILL.md frontmatter and §Instructions"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-setup-003",
+    "question": "I exported NVIDIA_API_KEY in my shell and pip-installed everything from your prereq list. How do I know the hosted NVCF stack actually responds before I start curating clinical terms?",
+    "expected_skill": "clinical-flywheel-setup",
+    "expected_script": null,
+    "ground_truth": "Run the inlined smoke_test(api_key=...) recipe from Step 1c — it synthesizes one short sentence through Magpie TTS at grpc.nvcf.nvidia.com and then transcribes the resulting audio back through Parakeet/Nemotron ASR via the same NVCF endpoint. If the round-trip transcript matches the input within roughly one token, the hosted stack is reachable from this shell with this key. Do not defer this — 'I can run it later' is not an acceptable completion of Stage 1. Common failures: 401/PERMISSION_DENIED means the key is wrong or unexported; 404/INVALID_ARGUMENT means the NVCF function-id is stale (check build.nvidia.com); RESOURCE_EXHAUSTED is a rate limit, retry after 30 s. Once it passes, hand off to /clinical-flywheel-build.",
+    "expected_behavior": [
+      "Read clinical-flywheel-setup/SKILL.md before answering",
+      "Pointed the user at Step 1c's smoke_test(api_key=...) recipe by name",
+      "Described the round-trip behavior: Magpie TTS synth → Parakeet/Nemotron ASR transcribe, verify transcript matches input",
+      "Stated that the smoke test is non-deferrable — must run before advancing to Stage 2",
+      "Named at least one failure mode by error code (401/PERMISSION_DENIED, 404/INVALID_ARGUMENT, RESOURCE_EXHAUSTED) and the appropriate fix",
+      "Recommended /clinical-flywheel-build as the next skill after success"
     ]
   },
   {

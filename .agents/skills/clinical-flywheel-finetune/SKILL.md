@@ -96,7 +96,11 @@ Do **not** activate when:
 
 ### 4a. Provision a GPU host (skip if you already have one)
 
-Stage 4 needs a CUDA host with ≥ 16 GB VRAM (24 GB comfortable). If you have a local one that fits, skip this section. If not, use **Brev** — NVIDIA's per-second-billed GPU host service. Recommended SKU: L40S 48 GB. A 3-epoch SFT run on a 100-row manifest typically costs a few dollars; disclose this to the user before spinning anything up. Full setup walkthrough — CLI install (download-then-run, not curl-pipe), SKU choice, disk sizing, SSH config — is in `references/stage4-finetune.md` (§Brev provisioning).
+Stage 4 needs a CUDA host with ≥ 16 GB VRAM (24 GB comfortable). If you have a local one that fits, skip this section. If not, use **Brev** — NVIDIA's per-second-billed GPU host service. Recommended SKU: L40S 48 GB.
+
+**Cost disclosure — surface this to the user before any `brev create`.** L40S 48 GB runs ~$1.50/hr at time of writing; a 3-epoch SFT run on a 100-row manifest finishes in 15–30 minutes (~$0.40–$0.75 of compute). The real risk is **forgetting to stop the instance** — overnight idle on L40S is ~$36, a week of idle is ~$250. Mitigations: (a) always wrap the workflow in a script that ends with `brev stop`; (b) set a calendar reminder when you start; (c) `brev delete` instead of `brev stop` if you don't need to keep the disk (`stop` keeps disk at $0.10/GB-month — 200 GB ≈ $20/month of latent cost). Confirm the user accepts the per-hour cost shape and the idle risk before spinning anything up.
+
+Full setup walkthrough — CLI install (download-then-run, not curl-pipe), SKU choice, disk sizing, SSH config — is in `references/stage4-finetune.md` (§Brev provisioning).
 
 Short happy-path once the CLI is installed:
 
