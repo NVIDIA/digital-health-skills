@@ -2,6 +2,16 @@
 
 Full Merriam-Webster respelling → IPA mapping table and SSML wrapping rules for the `clinical-flywheel-build` two-tier IPA pipeline.
 
+## ⚠️ API key handling
+
+Path A below uses `DICTIONARY_API_KEY` (Merriam-Webster); the `synthesize_row` / `magpie_validates_ipa` recipes further down use `api_key` (NVCF bearer token for Magpie TTS). Both are sensitive credentials. Before redistributing or operationalizing any code from this file, observe the following:
+
+- **Never hard-code keys** in source files, never commit them to version control. The `.env` file at the repo root is git-ignored on purpose; keep keys there for local use only.
+- **Prefer a secrets manager** (HashiCorp Vault, AWS Secrets Manager, NVIDIA's internal secret-store) over plain environment variables for production deployments. The recipes here take `api_key` as an explicit parameter precisely so production callers can source it from any secret-store without modifying these recipes.
+- **HTTPS is mandatory.** Path A transmits the MW key as a `key=` query parameter; the NVCF call transmits the bearer token in the `authorization` gRPC metadata header. Both endpoints serve TLS, but verify your client isn't downgrading (`use_ssl=True` for `riva.client.Auth`; `requests` keeps SSL verification on by default — do not pass `verify=False`).
+- **Rotate immediately on suspected exposure.** If a key appears in logs, a shared notebook, a CI artifact, or any pushed commit (even one immediately reverted — the history retains it), revoke and re-issue. The MW JSON API self-service portal at <https://dictionaryapi.com> regenerates instantly; for `NVIDIA_API_KEY`, rotate via the NVIDIA Cloud Functions console.
+- **Audit logging.** In production, log the *act* of invoking these recipes (which term, which row), never the key value. The NVCF side already records caller identity by key; do not duplicate the key into your own logs.
+
 ## Two MW implementation paths
 
 Both end up tagging the manifest row `merriam-webster`; pick the one that fits your context:

@@ -39,6 +39,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 2 (Build the benchmark)
 
+> **⚠️ Agent: read this entire SKILL.md before answering.** This stage is conversational and gated. Specifically: ask the user 1–2 specialty-aware clarifying questions **before** proposing terms (Step 2a), walk them through the two-tier IPA pipeline (override → merriam-webster → magpie_g2p) in Step 2c, hit the explicit QA-mode audition gate in Step 2d before full Cartesian synthesis, and name **KER** as the headline metric they'll see in Stage 3. Skipping any of these defeats the methodology.
+
 You are the **curate-and-synthesize** stage. The user arrives from `/clinical-flywheel-setup` and leaves with a NeMo-format `manifest.jsonl` plus the audio it references — both ready for scoring at `/clinical-flywheel-eval`.
 
 Be conversational. This is the warmest, most domain-aware step in the flywheel: you're asking a clinician (or someone who works with them) which terms hurt today and shaping a benchmark around their reality. Ask short, focused questions. Show the user what's being added. Don't lecture.

@@ -35,6 +35,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 1 (Setup)
 
+> **⚠️ Agent: read this entire SKILL.md before answering.** The data-disclosure block, the inlined smoke-test recipe, the upstream-skill ownership matrix, and the explicit hand-off to `/clinical-flywheel-build` are all load-bearing. Do not skim or rely on prior knowledge of Riva / NVCF — the function IDs, env-var conventions, and the smoke-test gate live below.
+
 You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/clinical-flywheel-build`.
 
 The flywheel measures and closes the gap between general-purpose ASR and the clinical terms a clinician actually says. The headline metric across all four stages is **KER (keyword error rate)** on flagged entities — drugs, procedures, anatomy, conditions, labs, roles. Aggregate WER hides what matters clinically.
@@ -176,6 +178,8 @@ def smoke_test(api_key: str) -> str:
 # smoke_test(api_key="<NVIDIA_API_KEY value>")
 ```
 
+**Run the smoke test — don't defer it.** This is the gate that proves Stages 2–4 can reach the hosted stack with the user's current key. "I can run it later" is not an acceptable completion of Stage 1; either invoke `smoke_test(api_key=…)` now or, if the user has explicitly opted out, log the deferral in your closing summary so they know what they're missing.
+
 If the transcript matches the input within ~1 token, the hosted stack is reachable and the user can advance to Stage 2. If either call fails:
 
 - `401 Unauthorized` / `PERMISSION_DENIED` → `NVIDIA_API_KEY` is wrong, expired, or not exported in this shell. Re-export and re-test.
@@ -239,6 +243,8 @@ No manifest, audio, or model artifact is produced at this stage — those come a
 - **Non-PHI data only.** This skill family is designed for synthetic clinical-vocabulary benchmarks generated from a term list. Do not pass real patient transcripts or audio through any stage.
 
 ## Next steps
+
+**Required hand-off on success:** end your Stage 1 response by **explicitly recommending `/clinical-flywheel-build` as the next skill** the user should invoke, and **name KER (keyword error rate) as the headline metric** they'll see at Stage 3. These two pointers are non-optional — they orient the user inside the four-stage flywheel.
 
 - **Forward:** `/clinical-flywheel-build` — specialty interview, term curation, IPA tagging, NeMo manifest synthesis.
 - **Skip ahead** (only if the user already has a NeMo-format manifest with `term` / `entity_category` / `ipa_source` fields): `/clinical-flywheel-eval`.

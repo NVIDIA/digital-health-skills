@@ -38,6 +38,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 3 (Eval)
 
+> **⚠️ Agent: read this entire SKILL.md before answering.** Critical workflow rules (off-ramp first, KER headline definition, strict-contiguous match, five-section leaderboard order, special-case routing) are all below. Do not answer ASR-protocol / auth / streaming questions yourself — defer to `/riva-asr`. Do not skip the by-`ipa_source` split when describing the leaderboard — it is the load-bearing diagnostic.
+
 You are the **score-and-route** stage. The user arrives with a NeMo-format `manifest.jsonl` (either from `/clinical-flywheel-build` or carried in from elsewhere). You transcribe it via the chosen ASR NIM, score four metrics, produce a five-section leaderboard, and read the decision tree to decide whether the user should advance to `/clinical-flywheel-finetune`, loop back to `/clinical-flywheel-build`, or stop and harden the eval.
 
 **This skill does not generate audio.** If the manifest is missing or empty, send the user back to `/clinical-flywheel-build`.
