@@ -4,7 +4,7 @@ This repository is a **reference samples repository** maintained by the NVIDIA D
 
 ## If you want to use these skills
 
-- Clone or fork the repo and follow [README.md](README.md). The install path (symlinking from `.agents/skills/` into your agent's skills directory) is documented there.
+- Clone or fork the repo and follow [README.md](README.md). The install path (symlinking from `skills/` into your agent's skills directory) is documented there.
 - Fork and adapt the skills for your own purposes under the [Apache License 2.0](LICENSE).
 
 ## Reporting bugs and stale content
@@ -37,7 +37,7 @@ Do **not** file security issues via GitHub Issues. See [SECURITY.md](SECURITY.md
    - Frontmatter is well-formed YAML
    - No secrets, internal URLs, absolute user paths, or PHI in any file
    - `SKILL.md` reads cleanly as a workflow guide (not as software)
-   - If you touch any skill content, mirror the change is unnecessary — the canonical location is `.agents/skills/` only; there is no `.claude/skills/` duplicate in this repo (end users symlink themselves; see README).
+   - If you touch any skill content, mirror the change is unnecessary — the canonical location is `skills/` only; there is no `.claude/skills/` duplicate in this repo (end users symlink themselves; see README).
 
 ### Style guidelines
 

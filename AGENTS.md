@@ -4,7 +4,7 @@ This repository hosts **agent skills** for clinical AI workflows from NVIDIA Dig
 
 ## What's in the repo
 
-Four self-contained agent skills under `.agents/skills/`, all following the [agentskills.io specification](https://agentskills.io/specification):
+Four self-contained agent skills under `skills/`, all following the [agentskills.io specification](https://agentskills.io/specification):
 
 | Skill slug | Stage | What it does |
 |------------|-------|--------------|
@@ -38,7 +38,7 @@ git clone -b main https://github.com/NVIDIA/digital-health-skills.git
 cd digital-health-skills
 
 # Optional: symlink the skills into Claude Code's skills dir if your launcher
-# doesn't auto-discover .agents/skills/ from the working directory.
+# doesn't auto-discover skills/ from the working directory.
 mkdir -p ~/.claude/skills
 ln -s "$(pwd)/skills/digital-health-clinical-asr-setup"    ~/.claude/skills/
 ln -s "$(pwd)/skills/digital-health-clinical-asr-build"    ~/.claude/skills/
