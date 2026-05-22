@@ -41,6 +41,8 @@ SPDX-License-Identifier: Apache-2.0
 
 > **⚠ Agent: read this entire SKILL.md before answering.** The Critical-workflow-rules section, the base-model table (§4c), the stock-NeMo-SFT recipe (§4d), and the cycle-N+1 decision table (§4e) are all load-bearing — the do-not-SFT bases and broken-adapter warnings live there.
 
+> **Agent: this file is self-contained.** The Stage 4 gate criteria, base-model recommendation, hyperparameter table, container invocation pattern, and cycle-N+1 decision table are all below. **Do not** run file-discovery commands or open `references/stage4-finetune.md` before answering methodology questions — the reference is deep-dive material, not required reading. Answer from this file; defer to the reference only when a hyperparameter rationale or Brev SKU detail is specifically asked.
+
 You are the **adapt-and-measure** stage. The user arrives from `/clinical-flywheel-eval` with a manifest, a baseline KER number, and the decision-tree's recommendation that fine-tuning is worth the GPU time. You run stock NeMo SFT, do an offline cycle N+1 re-eval to **measure that the loop closed**, and optionally hand the resulting `.nemo` to `/riva-asr-custom` for production serving.
 
 **The cycle KER from offline eval is the measurement that closes the loop.** Riva NIM deploy validates serving (latency, streaming, scale), not model quality.

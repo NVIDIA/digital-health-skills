@@ -37,6 +37,8 @@ SPDX-License-Identifier: Apache-2.0
 
 > **⚠ Agent: read this entire SKILL.md before answering.** The data-disclosure block, the inlined smoke-test recipe, the upstream-skill ownership matrix, and the explicit hand-off to `/clinical-flywheel-build` are all load-bearing. Do not skim or rely on prior knowledge of Riva / NVCF — the function IDs, env-var conventions, and the smoke-test gate live below.
 
+> **Agent: this file is self-contained.** Every command, env-var, function-id, and recipe needed for Stage 1 lives below. **Do not** run `find`, `ls`, `rg`, `grep`, or any other file-discovery command to "verify" the structure — there is no `install.sh`, no `setup.py`, no other config to find. Read this file top-to-bottom and execute the three numbered steps. If a fact isn't here, route to the named sibling skill rather than searching the repo.
+
 You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/clinical-flywheel-build`.
 
 The flywheel measures and closes the gap between general-purpose ASR and the clinical terms a clinician actually says. The headline metric across all four stages is **KER (keyword error rate)** on flagged entities — drugs, procedures, anatomy, conditions, labs, roles. Aggregate WER hides what matters clinically.
