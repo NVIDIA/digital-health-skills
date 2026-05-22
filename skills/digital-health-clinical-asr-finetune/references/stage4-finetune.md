@@ -37,7 +37,7 @@ A multi-cycle loop has natural stopping points. After cycle N+1, evaluate:
 
 - **You've hit a KER floor across multiple cycles.** Two consecutive cycles with KER drop < 5% relative is the signal to stop tuning and either accept the model or rethink the methodology (add a new metric, extend `entity_category` to capture a missed dimension, etc.).
 - **You're past 30 epochs without improvement.** TDT bases plateau by ~30 epochs on manifests under ~5,000 rows. Larger manifests merit larger budgets — but verify scaling laws empirically; don't extrapolate from the 3-epoch smoke run.
-- **Validation WER trends upward while training loss drops.** Classic overfit. Bail to `/clinical-flywheel-build` and grow the manifest, or add early-stopping (`patience=3` on validation WER).
+- **Validation WER trends upward while training loss drops.** Classic overfit. Bail to `/digital-health-clinical-asr-build` and grow the manifest, or add early-stopping (`patience=3` on validation WER).
 
 ## Brev provisioning (full walkthrough)
 
@@ -87,10 +87,10 @@ Brev exposes each instance over SSH, but the connection details aren't in `~/.ss
 
 ```bash
 brev ssh-config            # writes Host entries to ~/.ssh/config
-ssh clinical-flywheel-sft  # or: rsync -avz ./cycle1/ clinical-flywheel-sft:~/cycle1/
+ssh digital-health-clinical-asr-sft  # or: rsync -avz ./cycle1/ digital-health-clinical-asr-sft:~/cycle1/
 ```
 
-After `brev ssh-config`, the instance name works as a standard SSH host. Skip this command and `rsync` will fail with `ssh: Could not resolve hostname clinical-flywheel-sft`.
+After `brev ssh-config`, the instance name works as a standard SSH host. Skip this command and `rsync` will fail with `ssh: Could not resolve hostname digital-health-clinical-asr-sft`.
 
 ### Stopping vs deleting
 
@@ -98,6 +98,28 @@ After `brev ssh-config`, the instance name works as a standard SSH host. Skip th
 - `brev delete <name>` — frees everything. Use when you're done with a cycle and have rsync'd the artifacts back to your laptop.
 
 If you have a recurring training cadence (e.g. one cycle a week), `stop` between sessions saves you the `docker pull` + re-rsync each time. If cycles are one-offs, `delete` is cleaner.
+
+## Container invocation (full docker-run pattern from SKILL.md §4d)
+
+Paths are illustrative — adapt to your cycle layout. The flag set encodes the hyperparameters from the SKILL.md §4d table.
+
+```bash
+docker run --gpus all --rm -it \
+  -v "$PWD:/workspace" \
+  nvcr.io/nvidia/nemo:25.11.01 \
+  python /opt/NeMo/examples/asr/speech_to_text_finetune.py \
+    --config-path=conf \
+    --config-name=speech_to_text_finetune \
+    model.train_ds.manifest_filepath=/workspace/train.jsonl \
+    model.validation_ds.manifest_filepath=/workspace/validation.jsonl \
+    init_from_pretrained_model=nvidia/parakeet-tdt-0.6b-v2 \
+    trainer.precision=bf16-mixed \
+    trainer.max_epochs=3 \
+    model.optim.lr=3e-4 \
+    model.optim.sched.warmup_steps=5 \
+    model.train_ds.batch_size=4 \
+    trainer.gradient_clip_val=1.0
+```
 
 ## Related references
 

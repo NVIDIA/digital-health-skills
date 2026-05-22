@@ -12,10 +12,10 @@ These skills are **docs-only workflow guides**. They do not ship companion runti
 
 | Skill | Stage | What it guides |
 |-------|-------|----------------|
-| [`clinical-flywheel-setup`](.agents/skills/clinical-flywheel-setup/) | 1 | Verify `NVIDIA_API_KEY`, install Python deps, set up NGC + Docker for the NeMo training container, smoke-test the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. |
-| [`clinical-flywheel-build`](.agents/skills/clinical-flywheel-build/) | 2 | Specialty interview, term curation, two-tier IPA tagging, NeMo-format manifest synthesis. Inlines a Magpie TTS NVCF recipe. |
-| [`clinical-flywheel-eval`](.agents/skills/clinical-flywheel-eval/) | 3 | Transcribe a NeMo manifest via Parakeet/Nemotron ASR, score WER/CER/KER/SER, produce a five-section leaderboard, route via the post-eval decision tree. |
-| [`clinical-flywheel-finetune`](.agents/skills/clinical-flywheel-finetune/) | 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. |
+| [`digital-health-clinical-asr-setup`](skills/digital-health-clinical-asr-setup/) | 1 | Verify `NVIDIA_API_KEY`, install Python deps, set up NGC + Docker for the NeMo training container, smoke-test the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. |
+| [`digital-health-clinical-asr-build`](skills/digital-health-clinical-asr-build/) | 2 | Specialty interview, term curation, two-tier IPA tagging, NeMo-format manifest synthesis. Inlines a Magpie TTS NVCF recipe. |
+| [`digital-health-clinical-asr-eval`](skills/digital-health-clinical-asr-eval/) | 3 | Transcribe a NeMo manifest via Parakeet/Nemotron ASR, score WER/CER/KER/SER, produce a five-section leaderboard, route via the post-eval decision tree. |
+| [`digital-health-clinical-asr-finetune`](skills/digital-health-clinical-asr-finetune/) | 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. |
 
 Each skill folder contains `SKILL.md` (the workflow guide), optional `references/*.md` (deeper detail loaded on demand), and `evals/evals.json` (trigger / behavior / boundary test cases).
 
@@ -29,15 +29,15 @@ cd digital-health-skills
 
 # Either symlink or copy the four skill folders into your Claude Code skills dir:
 mkdir -p ~/.claude/skills
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-setup"    ~/.claude/skills/
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-build"    ~/.claude/skills/
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-eval"     ~/.claude/skills/
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-finetune" ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-setup"    ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-build"    ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-eval"     ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-finetune" ~/.claude/skills/
 ```
 
-Then invoke them from your agent: `/clinical-flywheel-setup`, `/clinical-flywheel-build`, `/clinical-flywheel-eval`, `/clinical-flywheel-finetune`.
+Then invoke them from your agent: `/digital-health-clinical-asr-setup`, `/digital-health-clinical-asr-build`, `/digital-health-clinical-asr-eval`, `/digital-health-clinical-asr-finetune`.
 
-The skills walk the agent through each stage and hand off to the next. Start with `/clinical-flywheel-setup`.
+The skills walk the agent through each stage and hand off to the next. Start with `/digital-health-clinical-asr-setup`.
 
 ## Requirements
 

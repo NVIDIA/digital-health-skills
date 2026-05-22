@@ -12,7 +12,7 @@ Function IDs sourced from `/riva-asr`'s catalog. All four below are offline-capa
 | `b702f636-f60c-4a3d-a6f4-f3568c13bd7d` | `openai/whisper-large-v3` | **offline** | Cross-vendor baseline. Drop-in for the Parakeet recipe; pass `language_code="en"` (not `"en-US"`). The pragmatic fallback while Parakeet's NVCF backend is faulting. |
 | `71203149-d3b7-4460-8231-1be2543a1fca` | `nvidia/parakeet-tdt-1.1b-rnnt-multilingual` | streaming-shaped | Higher accuracy, larger model; pass `language_code="multi"`. Needs `/riva-asr`'s streaming recipe. |
 | `1598d209-5e27-4d3c-8079-4751568b1081` | `nvidia/parakeet-ctc-1.1b-asr` | streaming-shaped | CTC decoder, English; simpler Riva export path. Needs `/riva-asr`'s streaming recipe. |
-| `bb0837de-8c7b-481f-9ec8-ef5663e9c1fa` | `nvidia/nemotron-asr-streaming` | streaming-only | **Eval-only**; do not pair with `/clinical-flywheel-finetune` (SFT path is unreliable — UNK collapse on validation after step 1). Use `/riva-asr` Option A's `transcribe_file.py` for the streaming call shape. |
+| `bb0837de-8c7b-481f-9ec8-ef5663e9c1fa` | `nvidia/nemotron-asr-streaming` | streaming-only | **Eval-only**; do not pair with `/digital-health-clinical-asr-finetune` (SFT path is unreliable — UNK collapse on validation after step 1). Use `/riva-asr` Option A's `transcribe_file.py` for the streaming call shape. |
 
 ## Full recipe
 

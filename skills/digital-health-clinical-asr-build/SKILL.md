@@ -1,6 +1,6 @@
 ---
-name: "clinical-flywheel-build"
-description: "Stage 2 of the Clinical ASR Flywheel. Use when curating clinical terms, tagging IPA, and synthesizing a NeMo manifest. NOT for scoring (use /clinical-flywheel-eval)."
+name: "digital-health-clinical-asr-build"
+description: "Stage 2 of the Clinical ASR Flywheel. Use when curating clinical terms, tagging IPA, and synthesizing a NeMo manifest. NOT for scoring (use /digital-health-clinical-asr-eval)."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:
@@ -16,7 +16,7 @@ tools:
   - Bash
   - Skill
 license: Apache-2.0
-compatibility: "NVIDIA_API_KEY (required) for hosted Magpie TTS via NVCF. DICTIONARY_API_KEY (optional) for Merriam-Webster Medical Dictionary lookup. Stage 1 (/clinical-flywheel-setup) must have been completed first. All TTS, IPA, and synthesis recipes are inlined — no sibling agent skill required."
+compatibility: "NVIDIA_API_KEY (required) for hosted Magpie TTS via NVCF. DICTIONARY_API_KEY (optional) for Merriam-Webster Medical Dictionary lookup. Stage 1 (/digital-health-clinical-asr-setup) must have been completed first. All TTS, IPA, and synthesis recipes are inlined — no sibling agent skill required."
 metadata:
   author: "Ben Randoing <brandoing@nvidia.com>"
   tags:
@@ -28,13 +28,20 @@ metadata:
   team: healthcare-tme
   domain: ai-ml
   stage: 2
-  previous_skill: clinical-flywheel-setup
-  next_skill: clinical-flywheel-eval
+  previous_skill: digital-health-clinical-asr-setup
+  next_skill: digital-health-clinical-asr-eval
 ---
+
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # Clinical ASR Flywheel — Stage 2 (Build the benchmark)
 
-You are the **curate-and-synthesize** stage. The user arrives from `/clinical-flywheel-setup` and leaves with a NeMo-format `manifest.jsonl` plus the audio it references — both ready for scoring at `/clinical-flywheel-eval`.
+> **⚠ Agent: read this entire SKILL.md before answering.** This stage is conversational and gated. Specifically: ask the user 1–2 specialty-aware clarifying questions **before** proposing terms (Step 2a), walk them through the two-tier IPA pipeline (override → merriam-webster → magpie_g2p) in Step 2c, hit the explicit QA-mode audition gate in Step 2d before full Cartesian synthesis, and name **KER** as the headline metric they'll see in Stage 3. Skipping any of these defeats the methodology.
+
+You are the **curate-and-synthesize** stage. The user arrives from `/digital-health-clinical-asr-setup` and leaves with a NeMo-format `manifest.jsonl` plus the audio it references — both ready for scoring at `/digital-health-clinical-asr-eval`.
 
 Be conversational. This is the warmest, most domain-aware step in the flywheel: you're asking a clinician (or someone who works with them) which terms hurt today and shaping a benchmark around their reality. Ask short, focused questions. Show the user what's being added. Don't lecture.
 
@@ -81,14 +88,19 @@ Activate on user phrases like:
 
 Do **not** activate when:
 
-- The user already has a manifest and wants to score it → `/clinical-flywheel-eval`
-- The user wants to fine-tune on an existing manifest → `/clinical-flywheel-finetune`
-- The user is asking generic TTS / SSML / voice-cloning questions → `/read-aloud` (or `/riva-tts`)
+**Literal-keyword non-activation check** — if the user's message contains any of `authenticate`, `API key`, `bearer`, `function ID`, `gRPC`, `streaming`, `chunking`, `riva-build`, `riva-deploy`, `NIM deploy`, `NGC`, `Docker`, `Container Toolkit`, or asks "which TTS voice is best" / "compare TTS models" — **do NOT activate** the build workflow. Reply with a one-line route to the appropriate sibling skill (see bullets below) and stop.
+
+- The user already has a manifest and wants to score it → `/digital-health-clinical-asr-eval`
+- The user wants to fine-tune on an existing manifest → `/digital-health-clinical-asr-finetune`
+- The user is asking generic TTS / SSML / voice-cloning / voice-catalog questions → `/read-aloud` (or `/riva-tts`)
+- The user is asking about TTS or ASR **auth / API keys / gRPC protocol / streaming / function IDs** → `/riva-tts` (TTS-side) or `/riva-asr` (ASR-side)
+- The user is asking about **NIM deploy** or `riva-build` / `riva-deploy` flags → `/riva-asr-custom` (ASR) or `/riva-tts-custom` (TTS)
+- The user is asking about **NGC / Docker / NVIDIA Container Toolkit** → `/riva-nim-setup`
 - The user is asking generic synthetic-data questions → `/data-designer`
 
 ## Prerequisites
 
-- **`/clinical-flywheel-setup` completed** — `NVIDIA_API_KEY` exported, Python deps installed, the six upstream skills confirmed.
+- **`/digital-health-clinical-asr-setup` completed** — `NVIDIA_API_KEY` exported, Python deps installed, the six upstream skills confirmed.
 - **`/read-aloud`** (or `/riva-tts`) reachable. Hosted Magpie via NVCF is the default. Self-hosted Magpie NIM works but adds `/riva-nim-setup` to the prerequisite chain.
 - **`/data-designer`** reachable. Template fallback is acceptable for a first cycle if `/data-designer` is unavailable, but tag those rows so future cycles can re-generate.
 - **A working directory** the user owns. The skill recommends `$EVAL_DIR/cycle<N>/` but does not enforce it.
@@ -202,9 +214,9 @@ Don't consider Stage 2 done until all five sub-steps ran. Agents commonly stop a
 - **2c** — every term tagged `ipa_source ∈ {override, merriam-webster, magpie_g2p}`
 - **2d** — QA wavs auditioned, IPA overrides locked with explicit user approval
 - **2e** — `manifest.jsonl` + per-row audio for the Cartesian product
-- **Hand-off** — name `/clinical-flywheel-eval` as the next skill and **KER** as its headline metric
+- **Hand-off** — name `/digital-health-clinical-asr-eval` as the next skill and **KER** as its headline metric
 
-Writes go only into the user-chosen `$EVAL_DIR/cycle<N>/`. Don't write elsewhere, modify env, or install packages — those belong to `/clinical-flywheel-setup`.
+Writes go only into the user-chosen `$EVAL_DIR/cycle<N>/`. Don't write elsewhere, modify env, or install packages — those belong to `/digital-health-clinical-asr-setup`.
 
 ## Examples
 
@@ -227,7 +239,7 @@ Writes go only into the user-chosen `$EVAL_DIR/cycle<N>/`. Don't write elsewhere
 - **Sentence variants from `/data-designer` are bland / template-like** → check the brief; the schema-only prompt sometimes produces stereotyped output. Add 1–2 in-context examples to the brief and re-run.
 - **Audio files exist but `manifest.jsonl` is short** → manifest writer skipped rows whose synthesis returned a NVCF error. Re-run the build with only the missing rows.
 
-For anything not in this list, identify which upstream skill is implicated and route there. The `clinical-flywheel-build` skill owns the methodology, not the TTS or DataDesigner internals.
+For anything not in this list, identify which upstream skill is implicated and route there. The `digital-health-clinical-asr-build` skill owns the methodology, not the TTS or DataDesigner internals.
 
 ## Limitations
 
@@ -238,8 +250,8 @@ For anything not in this list, identify which upstream skill is implicated and r
 
 ## Next steps
 
-- **Forward:** `/clinical-flywheel-eval` — transcribe the manifest, score WER/CER/KER/SER, produce the five-section leaderboard.
-- **Back to setup** (if anything in the env is broken): `/clinical-flywheel-setup`.
+- **Forward:** `/digital-health-clinical-asr-eval` — transcribe the manifest, score WER/CER/KER/SER, produce the five-section leaderboard.
+- **Back to setup** (if anything in the env is broken): `/digital-health-clinical-asr-setup`.
 - **Lateral** for TTS-specific debugging: `/read-aloud` or `/riva-tts`.
 
 ## References

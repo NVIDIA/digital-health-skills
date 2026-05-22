@@ -1,0 +1,56 @@
+NVIDIA Digital Health — agent skill samples
+Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+the files in this repository except in compliance with the License. You may
+obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+================================================================================
+Repository scope
+================================================================================
+
+This repository ships **agent skill documentation** (`.agents/skills/**/SKILL.md`
+and accompanying `references/`, `evals/` markdown). It does not vendor or
+distribute any third-party source code.
+
+Each `SKILL.md` describes how an agent should orchestrate NVIDIA services and
+related public tools. The skill files themselves are documentation (Markdown +
+YAML frontmatter); the only executable Python in this repository ships under
+`.agents/skills/data-designer/scripts/` and carries its own SPDX header.
+
+================================================================================
+Runtime references (not vendored)
+================================================================================
+
+The agent skill bodies reference the following NVIDIA or third-party tools at
+*runtime* — i.e. an agent following a skill may invoke them, but no source code
+from any of them is shipped here. Each is the property of its respective
+copyright holder under its own license terms:
+
+- NVIDIA NIM services (Magpie TTS, Parakeet TDT, Nemotron Speech, Whisper Large
+  v3 hosted on NVCF) — subject to NVIDIA's NIM terms of service.
+- `nvidia-riva-client` Python package — subject to the NVIDIA software license
+  agreement that ships with the package on PyPI; not redistributed in this
+  repository.
+- Brev CLI (`brevdev/brev-cli`) — referenced by the `clinical-flywheel-finetune`
+  skill as a GPU-provisioning convenience; install instructions point at the
+  upstream brev.dev release artifacts. Not redistributed.
+- Merriam-Webster Medical Dictionary (`dictionaryapi.com` JSON API and
+  `merriam-webster.com` public website) — referenced for pronunciation lookup
+  in `clinical-flywheel-build`. Subject to Merriam-Webster's terms of service.
+  Not redistributed.
+
+================================================================================
+Third-party content shipped under this repository
+================================================================================
+
+None at this time. If a future contribution vendors third-party source code,
+add an entry here naming the upstream project, its license, and its NOTICE
+contents (per Section 4(d) of the Apache 2.0 License).

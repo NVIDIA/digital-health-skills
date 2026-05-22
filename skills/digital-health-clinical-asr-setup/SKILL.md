@@ -1,6 +1,6 @@
 ---
-name: "clinical-flywheel-setup"
-description: "Stage 1 of the Clinical ASR Flywheel. Use when bootstrapping a cycle: verify NVIDIA_API_KEY, install Python deps, smoke-test the hosted TTS+ASR stack. NOT for Stage 4 NGC/Docker fine-tune setup."
+name: "digital-health-clinical-asr-setup"
+description: "Stage 1 (Clinical ASR Flywheel). Use when bootstrapping a cycle: surface NVCF+MW disclosure, verify NVIDIA_API_KEY, install deps, smoke-test, hand off to /digital-health-clinical-asr-build. NOT for Stage 4 fine-tune setup."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:
@@ -25,18 +25,29 @@ metadata:
   team: healthcare-tme
   domain: ai-ml
   stage: 1
-  next_skill: clinical-flywheel-build
+  next_skill: digital-health-clinical-asr-build
 ---
+
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # Clinical ASR Flywheel — Stage 1 (Setup)
 
-You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/clinical-flywheel-build`.
+> **⚠ Agent: read this entire SKILL.md before answering.** The data-disclosure block, the inlined smoke-test recipe, the upstream-skill ownership matrix, and the explicit hand-off to `/digital-health-clinical-asr-build` are all load-bearing. Do not skim or rely on prior knowledge of Riva / NVCF — the function IDs, env-var conventions, and the smoke-test gate live below.
+
+> **Agent: this file is self-contained.** Every command, env-var, function-id, and recipe needed for Stage 1 lives below. **Do not** run `find`, `ls`, `rg`, `grep`, or any other file-discovery command to "verify" the structure — there is no `install.sh`, no `setup.py`, no other config to find. Read this file top-to-bottom and execute the three numbered steps. If a fact isn't here, route to the named sibling skill rather than searching the repo.
+
+You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/digital-health-clinical-asr-build`.
 
 The flywheel measures and closes the gap between general-purpose ASR and the clinical terms a clinician actually says. The headline metric across all four stages is **KER (keyword error rate)** on flagged entities — drugs, procedures, anatomy, conditions, labs, roles. Aggregate WER hides what matters clinically.
 
+**No `install.sh`, no `setup.py`, no entry-point script ships with this skill.** Stage 1 is the three inlined steps below (1a key length-check → 1b `pip install` → 1c TTS→ASR smoke test). Everything beyond Stage 1 is composed from sibling skills (`/data-designer`, `/riva-tts`, the inlined Stage 3 ASR recipe, `/riva-asr-custom`). When a user asks "what script do I run to install everything?", surface this fact from this paragraph — do not go searching the repo for an installer.
+
 ## Data leaves your environment — disclose this to the user before proceeding
 
-This flywheel sends data to two external services. **Surface this to the user up front** so they can confirm it's acceptable under their organization's data-governance policy before any clinical term list, audio, or text leaves the local machine:
+This flywheel sends data to two external services. **Surface this to the user up front** so they can confirm it's acceptable under their organization's data-governance policy before any clinical term list, audio, or text leaves the local machine. **Quote the table below verbatim — do not paraphrase the service names or what gets sent. The literal phrasing is the disclosure; a summary is not.**
 
 | Service | What gets sent | When | Hosted by |
 |---|---|---|---|
@@ -54,7 +65,7 @@ A version of this notice belongs in the workspace `README.md` your user maintain
 
 Bootstrap a clean machine into a working Clinical ASR Flywheel cycle. Confirm `NVIDIA_API_KEY` is present, the Python interpreter and required libraries are available, and the hosted NVCF stack responds. Tell the user which skill to run next.
 
-This skill family is **fully self-contained**. Every TTS, ASR, IPA-tagging, and scoring recipe is inlined inside the four `clinical-flywheel-*` skills — you do not need to install any other agent skill to run the flywheel end-to-end.
+This skill family is **fully self-contained**. Every TTS, ASR, IPA-tagging, and scoring recipe is inlined inside the four `digital-health-clinical-asr-*` skills — you do not need to install any other agent skill to run the flywheel end-to-end.
 
 The skill assumes the user owns the working directory and chooses their layout. It does not impose `data/eval_sets/cycle<N>/` or any other path convention.
 
@@ -70,9 +81,9 @@ Activate on user phrases like:
 
 Do **not** activate when:
 
-- The user already has a manifest and wants to score it → `/clinical-flywheel-eval`
-- The user already has the env set up and wants to curate terms → `/clinical-flywheel-build`
-- The user is asking about Stage 4 fine-tune NGC/Docker setup specifically → that's covered inside `/clinical-flywheel-finetune`
+- The user already has a manifest and wants to score it → `/digital-health-clinical-asr-eval`
+- The user already has the env set up and wants to curate terms → `/digital-health-clinical-asr-build`
+- The user is asking about Stage 4 fine-tune NGC/Docker setup specifically → that's covered inside `/digital-health-clinical-asr-finetune`
 
 ## Prerequisites
 
@@ -83,7 +94,7 @@ Do **not** activate when:
 | `nvidia-riva-client`, `pandas`, `soundfile`, `requests` | **Required** | TTS + ASR clients, manifest I/O, MW lookup | `pip install nvidia-riva-client pandas soundfile requests` |
 | `DICTIONARY_API_KEY` | Optional | Merriam-Webster Medical Dictionary lookup via the JSON API (Path A in the build skill — recommended) | Free key at <https://dictionaryapi.com>. Path B (HTML scrape of `merriam-webster.com`, no key, brittle) is also documented in the build skill if you can't get a key. Without either path, Stage 2 falls through to Magpie G2P with weaker long-tail coverage. |
 | `jiwer` | Optional | Reference WER/CER against the inlined Levenshtein implementation | `pip install jiwer` — the eval skill includes a pure-Python fallback |
-| (Stage 4 only) `NGC_API_KEY` + CUDA host + NeMo container | Optional, deferred | Fine-tune workload | Set up inside `/clinical-flywheel-finetune`; defer until the eval shows KER > 0.3 |
+| (Stage 4 only) `NGC_API_KEY` + CUDA host + NeMo container | Optional, deferred | Fine-tune workload | Set up inside `/digital-health-clinical-asr-finetune`; defer until the eval shows KER > 0.3 |
 
 ## Instructions
 
@@ -111,9 +122,17 @@ pip install nvidia-riva-client pandas soundfile requests
 pip install jiwer
 ```
 
-For Stage 4 (fine-tune) only: `nemo-toolkit` and Docker + NVIDIA Container Toolkit are also required. Defer those to `/clinical-flywheel-finetune` — there is no point installing them up front if the user may never reach Stage 4.
+For Stage 4 (fine-tune) only: `nemo-toolkit` and Docker + NVIDIA Container Toolkit are also required. Defer those to `/digital-health-clinical-asr-finetune` — there is no point installing them up front if the user may never reach Stage 4.
 
 ### 1c. Smoke-test the hosted NVCF stack
+
+**`NVIDIA_API_KEY` handling — load-bearing, do not deviate:**
+
+- The agent harness reads `$NVIDIA_API_KEY` from the shell and passes it as an **explicit function argument** to `smoke_test(api_key=…)`.
+- Auditors can grep the recipe for every wire crossing — every `api_key` use is visible in `auth_for(...)`.
+- Do **not** `echo`, `print`, or log the key value (including truncated). Length-only checks are fine (see §1a).
+- Do **not** let the recipe read `os.environ["NVIDIA_API_KEY"]` itself — the explicit-argument pattern is the auditability guarantee.
+- Do **not** commit the key to any file, including `.env` examples or notebook outputs.
 
 Verify the `NVIDIA_API_KEY` actually works against Magpie TTS and Parakeet/Nemotron ASR before advancing. The four skills inline every recipe needed; this round-trip just confirms the API key + network path are real.
 
@@ -171,6 +190,8 @@ def smoke_test(api_key: str) -> str:
 # smoke_test(api_key="<NVIDIA_API_KEY value>")
 ```
 
+**Run the smoke test — don't defer it.** This is the gate that proves Stages 2–4 can reach the hosted stack with the user's current key. "I can run it later" is not an acceptable completion of Stage 1; either invoke `smoke_test(api_key=…)` now or, if the user has explicitly opted out, log the deferral in your closing summary so they know what they're missing.
+
 If the transcript matches the input within ~1 token, the hosted stack is reachable and the user can advance to Stage 2. If either call fails:
 
 - `401 Unauthorized` / `PERMISSION_DENIED` → `NVIDIA_API_KEY` is wrong, expired, or not exported in this shell. Re-export and re-test.
@@ -204,7 +225,7 @@ Remember the data-disclosure note at the top: under either path, each clinical t
 
 ## Examples
 
-**Scenario A — first-time setup, fresh shell.** User: *"I want to start the flywheel."* → Surface the data-disclosure block at the top. Walk through 1a (key length check), 1b (venv + pip install), 1c (round-trip smoke test). On all-green, advise `/clinical-flywheel-build` as the next stop and mention the headline KER framing so the user arrives at Stage 2 with the right metric in mind.
+**Scenario A — first-time setup, fresh shell.** User: *"I want to start the flywheel."* → Surface the data-disclosure block at the top. Walk through 1a (key length check), 1b (venv + pip install), 1c (round-trip smoke test). On all-green, advise `/digital-health-clinical-asr-build` as the next stop and mention the headline KER framing so the user arrives at Stage 2 with the right metric in mind.
 
 **Scenario B — returning user, partial env.** User: *"I already have the env, just confirm I'm good to go."* → Skip 1b. Run 1a and 1c only. If the round-trip succeeds, advance.
 
@@ -221,22 +242,24 @@ No manifest, audio, or model artifact is produced at this stage — those come a
 - **Length check shows nothing or `len=0`** → `NVIDIA_API_KEY` isn't exported in this shell. Run `export NVIDIA_API_KEY=nvapi-...` and re-check.
 - **Variable is set in one shell but not another** → exports don't persist across sessions. Add the `export` line to your shell rc (`~/.bashrc`, `~/.zshrc`), or use a per-directory loader like `direnv`.
 - **`401 Unauthorized` on the smoke test** → key value is wrong or expired. Re-issue at <https://build.nvidia.com>.
-- **`grpc.RpcError: function not found`** → the inlined function IDs need updating against the current NVCF catalog. Check <https://build.nvidia.com> and edit the constants in 1c. The eval skill (`/clinical-flywheel-eval`) provides a catalog of current function IDs in its Step 3a "Other catalog options" list.
+- **`grpc.RpcError: function not found`** → the inlined function IDs need updating against the current NVCF catalog. Check <https://build.nvidia.com> and edit the constants in 1c. The eval skill (`/digital-health-clinical-asr-eval`) provides a catalog of current function IDs in its Step 3a "Other catalog options" list.
 - **`StatusCode.INVALID_ARGUMENT` with `CUDA error: an illegal memory access was encountered`** → NVCF-side backend fault on this specific function ID (Triton/PyTorch on NVCF, not your env). Either retry later or temporarily point at a different offline ASR NIM — Whisper Large v3 function-id `b702f636-f60c-4a3d-a6f4-f3568c13bd7d` is the closest drop-in (also offline; pass `language_code="en"` instead of `"en-US"`). For routine eval cycles, prefer to wait for the Parakeet backend to recover so Stage 3 baseline and Stage 4 SFT base stay aligned.
 - **`TypeError: Auth.__init__() got an unexpected keyword argument 'ssl_cert'`** → you're on `nvidia-riva-client >= 2.x` where the kwarg was renamed to `ssl_root_cert` (and is no longer needed for hosted NVCF). Drop the `ssl_cert=None,` line from your local copy of the recipe.
 - **`ModuleNotFoundError: riva.client`** → step 1b was skipped or the venv isn't activated. `source .venv/bin/activate && pip install nvidia-riva-client`.
 
 ## Limitations
 
-- **Setup only verifies the environment.** It does not validate that the user's specialty / term list / pronunciation overrides make sense — that's the job of `/clinical-flywheel-build`.
+- **Setup only verifies the environment.** It does not validate that the user's specialty / term list / pronunciation overrides make sense — that's the job of `/digital-health-clinical-asr-build`.
 - **English-only by default.** Magpie's en-US phoneme inventory drives Stage 2 IPA validation. Other locales require a different upstream phoneme set.
-- **Hosted-only paths assumed.** Self-hosted NIMs work but require additional setup (covered inside `/clinical-flywheel-finetune` Stage 4d).
+- **Hosted-only paths assumed.** Self-hosted NIMs work but require additional setup (covered inside `/digital-health-clinical-asr-finetune` Stage 4d).
 - **Non-PHI data only.** This skill family is designed for synthetic clinical-vocabulary benchmarks generated from a term list. Do not pass real patient transcripts or audio through any stage.
 
 ## Next steps
 
-- **Forward:** `/clinical-flywheel-build` — specialty interview, term curation, IPA tagging, NeMo manifest synthesis.
-- **Skip ahead** (only if the user already has a NeMo-format manifest with `term` / `entity_category` / `ipa_source` fields): `/clinical-flywheel-eval`.
+**Required hand-off on success:** end your Stage 1 response by **explicitly recommending `/digital-health-clinical-asr-build` as the next skill** the user should invoke, and **name KER (keyword error rate) as the headline metric** they'll see at Stage 3. These two pointers are non-optional — they orient the user inside the four-stage flywheel.
+
+- **Forward:** `/digital-health-clinical-asr-build` — specialty interview, term curation, IPA tagging, NeMo manifest synthesis.
+- **Skip ahead** (only if the user already has a NeMo-format manifest with `term` / `entity_category` / `ipa_source` fields): `/digital-health-clinical-asr-eval`.
 
 ## References
 
