@@ -1,6 +1,6 @@
 ---
 name: "clinical-flywheel-setup"
-description: "Stage 1 of the Clinical ASR Flywheel. Use when bootstrapping a cycle: verify NVIDIA_API_KEY, install Python deps, smoke-test the hosted TTS+ASR stack. NOT for Stage 4 NGC/Docker fine-tune setup."
+description: "Stage 1 (Clinical ASR Flywheel). Use when bootstrapping a cycle: surface NVCF+MW disclosure, verify NVIDIA_API_KEY, install deps, smoke-test, hand off to /clinical-flywheel-build. NOT for Stage 4 fine-tune setup."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:
@@ -41,9 +41,11 @@ You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's env
 
 The flywheel measures and closes the gap between general-purpose ASR and the clinical terms a clinician actually says. The headline metric across all four stages is **KER (keyword error rate)** on flagged entities — drugs, procedures, anatomy, conditions, labs, roles. Aggregate WER hides what matters clinically.
 
+**No `install.sh`, no `setup.py`, no entry-point script ships with this skill.** Stage 1 is the three inlined steps below (1a key length-check → 1b `pip install` → 1c TTS→ASR smoke test). Everything beyond Stage 1 is composed from sibling skills (`/data-designer`, `/riva-tts`, the inlined Stage 3 ASR recipe, `/riva-asr-custom`). When a user asks "what script do I run to install everything?", surface this fact from this paragraph — do not go searching the repo for an installer.
+
 ## Data leaves your environment — disclose this to the user before proceeding
 
-This flywheel sends data to two external services. **Surface this to the user up front** so they can confirm it's acceptable under their organization's data-governance policy before any clinical term list, audio, or text leaves the local machine:
+This flywheel sends data to two external services. **Surface this to the user up front** so they can confirm it's acceptable under their organization's data-governance policy before any clinical term list, audio, or text leaves the local machine. **Quote the table below verbatim — do not paraphrase the service names or what gets sent. The literal phrasing is the disclosure; a summary is not.**
 
 | Service | What gets sent | When | Hosted by |
 |---|---|---|---|
@@ -121,6 +123,14 @@ pip install jiwer
 For Stage 4 (fine-tune) only: `nemo-toolkit` and Docker + NVIDIA Container Toolkit are also required. Defer those to `/clinical-flywheel-finetune` — there is no point installing them up front if the user may never reach Stage 4.
 
 ### 1c. Smoke-test the hosted NVCF stack
+
+**`NVIDIA_API_KEY` handling — load-bearing, do not deviate:**
+
+- The agent harness reads `$NVIDIA_API_KEY` from the shell and passes it as an **explicit function argument** to `smoke_test(api_key=…)`.
+- Auditors can grep the recipe for every wire crossing — every `api_key` use is visible in `auth_for(...)`.
+- Do **not** `echo`, `print`, or log the key value (including truncated). Length-only checks are fine (see §1a).
+- Do **not** let the recipe read `os.environ["NVIDIA_API_KEY"]` itself — the explicit-argument pattern is the auditability guarantee.
+- Do **not** commit the key to any file, including `.env` examples or notebook outputs.
 
 Verify the `NVIDIA_API_KEY` actually works against Magpie TTS and Parakeet/Nemotron ASR before advancing. The four skills inline every recipe needed; this round-trip just confirms the API key + network path are real.
 

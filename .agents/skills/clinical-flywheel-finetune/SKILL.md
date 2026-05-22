@@ -102,10 +102,17 @@ Stage 4 needs a CUDA host with ≥ 16 GB VRAM (24 GB comfortable). If you have a
 
 Full setup walkthrough — CLI install (download-then-run, not curl-pipe), SKU choice, disk sizing, SSH config — is in `references/stage4-finetune.md` (§Brev provisioning).
 
-Short happy-path once the CLI is installed:
+Short happy-path once the CLI is installed. **Do not run `brev create` until the user has explicitly typed `YES` at the confirmation prompt below** — the gate is mandatory, not advisory, because everything after it bills against the user's account by the second:
 
 ```bash
 brev login                                  # browser auth
+
+# Mandatory cost-confirmation gate — do NOT skip or auto-answer this.
+echo "About to provision: clinical-flywheel-sft on L40S 48 GB."
+echo "Cost shape: ~\$1.50/hr while running; ~\$36/night if left idle; ~\$20/mo disk if you 'stop' instead of 'delete'."
+read -rp "Type YES to provision (anything else cancels): " confirm
+[ "$confirm" = "YES" ] || { echo "Cancelled — no GPU instance was created."; exit 1; }
+
 brev create clinical-flywheel-sft \
   --gpu l40s:1 --image ubuntu-22-04-cuda-12-4 --disk 200gi
 brev ssh-config                             # writes ~/.ssh/config entries
@@ -153,18 +160,12 @@ Write `train.jsonl` and `validation.jsonl` alongside the manifest. **These are t
 
 ### 4c. Choose the base model
 
-| Base | Decoder | Streaming | SFT viability | Notes |
-|---|---|---|---|---|
-| **`nvidia/parakeet-tdt-0.6b-v2`** | TDT | ❌ at serve, ✅ via Riva chunking | ✅ **Empirically verified** (KER 0.513 → 0.128 in 3 epochs, -75% relative) | NVIDIA's current English ASR default. Stock NeMo SFT recipe works end-to-end. **Recommended.** |
-| `nvidia/parakeet-tdt-1.1b` | TDT | ❌ | Expected (same TDT arch, larger) | Higher accuracy. Bigger; pick when WER matters more than cost. |
-| `nvidia/parakeet-ctc-0.6b-v2` | CTC | ❌ | Expected | Simpler decoder; cleanest Riva export path. |
-| `nvidia/parakeet-rnnt-0.6b` | RNNT | "Streaming-ready" per `/finetune-asr` | Expected | Pick only if you specifically need RNNT serving alignment. |
-| `nvidia/stt_en_conformer_ctc_large` | CTC | ❌ | Legacy fallback | Older base; Parakeet TDT v2 is NVIDIA's current recommendation. |
-| `nvidia/nemotron-speech-streaming-en-0.6b` | RNNT (cache-aware) | ✅ streaming-only | ❌ **Don't use for SFT** | NVCF function is streaming-only; SFT path unreliable (UNK collapse on validation after first training step). For streaming serving at deploy time, Riva chunks a non-streaming base just fine. |
+| Base | SFT viability | Notes |
+|---|---|---|
+| **`nvidia/parakeet-tdt-0.6b-v2`** | ✅ **Empirically verified** (KER 0.513 → 0.128 in 3 epochs, −75% relative) | NVIDIA's current English ASR default. Stock NeMo SFT recipe works end-to-end. **Recommended.** |
+| `nvidia/nemotron-speech-streaming-en-0.6b` | ❌ **Don't use for SFT** | NVCF function is streaming-only; SFT path unreliable (UNK collapse on validation after first training step). For streaming serving, Riva chunks a non-streaming base just fine. |
 
-**Rule of thumb**: if the user asks to fine-tune Nemotron Speech Streaming, **warn about the collapse and recommend Parakeet TDT v2**. Downstream `/riva-asr-custom` works the same way for any of these — only the NIM container family changes (see `references/stage4-finetune.md`).
-
-Full base-model table, decoder → NIM container mapping, and hyperparameter rationale: `references/stage4-finetune.md`.
+Other Parakeet/Conformer bases (1.1B, CTC, RNNT, `stt_en_conformer_ctc_large`) + decoder → NIM container mapping: `references/stage4-finetune.md`. If the user asks to fine-tune Nemotron Speech Streaming, **warn about the collapse and recommend Parakeet TDT v2**.
 
 ### 4d. Stock NeMo SFT
 
@@ -182,27 +183,9 @@ batch_size:                 4                # fits 16 GB VRAM; raise to 16 on L
 gradient_clip_val:          1.0              # defensive
 ```
 
-**Container invocation pattern** (paths are illustrative — adapt to your layout):
+**Container invocation**: `docker run --gpus all --rm -it -v "$PWD:/workspace" nvcr.io/nvidia/nemo:25.11.01 python /opt/NeMo/examples/asr/speech_to_text_finetune.py` with `model.train_ds.manifest_filepath=/workspace/train.jsonl`, `model.validation_ds.manifest_filepath=/workspace/validation.jsonl`, `init_from_pretrained_model=nvidia/parakeet-tdt-0.6b-v2`, and the hyperparameter overrides from the table above. Full docker-run line with config-path / config-name flags: `references/stage4-finetune.md` §Container invocation.
 
-```bash
-docker run --gpus all --rm -it \
-  -v "$PWD:/workspace" \
-  nvcr.io/nvidia/nemo:25.11.01 \
-  python /opt/NeMo/examples/asr/speech_to_text_finetune.py \
-    --config-path=conf \
-    --config-name=speech_to_text_finetune \
-    model.train_ds.manifest_filepath=/workspace/train.jsonl \
-    model.validation_ds.manifest_filepath=/workspace/validation.jsonl \
-    init_from_pretrained_model=nvidia/parakeet-tdt-0.6b-v2 \
-    trainer.precision=bf16-mixed \
-    trainer.max_epochs=3 \
-    model.optim.lr=3e-4 \
-    model.optim.sched.warmup_steps=5 \
-    model.train_ds.batch_size=4 \
-    trainer.gradient_clip_val=1.0
-```
-
-**Manifest paths inside the container.** Host paths (e.g. `$HOME/…`) don't resolve in `/workspace`. The rewrite snippet (host → `/workspace/`) is in `references/container-paths.md`.
+**Manifest paths inside the container.** Host paths (e.g. `$HOME/…`) don't resolve in `/workspace`. Rewrite snippet: `references/container-paths.md`.
 
 The training run writes `adapted_model.nemo` and a `training_run_info.json` summary. Both go into a per-cycle subdirectory of the user's choice (e.g. `cycle<N>/models/<run>/`; the layout doesn't matter as long as it's consistent across cycles).
 

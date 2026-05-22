@@ -99,6 +99,28 @@ After `brev ssh-config`, the instance name works as a standard SSH host. Skip th
 
 If you have a recurring training cadence (e.g. one cycle a week), `stop` between sessions saves you the `docker pull` + re-rsync each time. If cycles are one-offs, `delete` is cleaner.
 
+## Container invocation (full docker-run pattern from SKILL.md §4d)
+
+Paths are illustrative — adapt to your cycle layout. The flag set encodes the hyperparameters from the SKILL.md §4d table.
+
+```bash
+docker run --gpus all --rm -it \
+  -v "$PWD:/workspace" \
+  nvcr.io/nvidia/nemo:25.11.01 \
+  python /opt/NeMo/examples/asr/speech_to_text_finetune.py \
+    --config-path=conf \
+    --config-name=speech_to_text_finetune \
+    model.train_ds.manifest_filepath=/workspace/train.jsonl \
+    model.validation_ds.manifest_filepath=/workspace/validation.jsonl \
+    init_from_pretrained_model=nvidia/parakeet-tdt-0.6b-v2 \
+    trainer.precision=bf16-mixed \
+    trainer.max_epochs=3 \
+    model.optim.lr=3e-4 \
+    model.optim.sched.warmup_steps=5 \
+    model.train_ds.batch_size=4 \
+    trainer.gradient_clip_val=1.0
+```
+
 ## Related references
 
 - Base-model selection table → `SKILL.md` §4c

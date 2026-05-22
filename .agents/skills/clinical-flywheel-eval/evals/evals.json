@@ -24,6 +24,54 @@
     ]
   },
   {
+    "id": "clinical-flywheel-eval-001-paraphrase-a",
+    "question": "What does the leaderboard look like once I've scored a cycle? Walk me through which sections it has and which one I should be paying attention to first.",
+    "expected_skill": "clinical-flywheel-eval",
+    "expected_script": null,
+    "ground_truth": "The five-section leaderboard, in fixed order: (1) Headline — overall WER/CER/KER/SER. (2) KER by entity_category. (3) KER by ipa_source — this is the headline diagnostic section, the merriam-webster vs magpie_g2p delta is the proof the SSML override pipeline is working. (4) KER by noise_level. (5) Per-term KER, worst-first. Overall, KER is the clinical headline metric, not aggregate WER.",
+    "expected_behavior": [
+      "Listed the five leaderboard sections in roughly the correct order",
+      "Identified the KER-by-ipa_source split as the headline diagnostic section (the merriam-webster vs magpie_g2p delta is the canonical clinical-flywheel signal)",
+      "Treated KER as the clinical headline metric over aggregate WER"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-eval-001-paraphrase-b",
+    "question": "I just ran an eval — what's in the report and which number tells me whether the pronunciation pipeline actually worked?",
+    "expected_skill": "clinical-flywheel-eval",
+    "expected_script": null,
+    "ground_truth": "The five-section leaderboard, in fixed order: (1) Headline — overall WER/CER/KER/SER. (2) KER by entity_category. (3) KER by ipa_source — this is the headline diagnostic section, the merriam-webster vs magpie_g2p delta is the proof the SSML override pipeline is working. (4) KER by noise_level. (5) Per-term KER, worst-first. Overall, KER is the clinical headline metric, not aggregate WER.",
+    "expected_behavior": [
+      "Listed the five leaderboard sections in roughly the correct order",
+      "Identified the KER-by-ipa_source split as the headline diagnostic section (the merriam-webster vs magpie_g2p delta is the canonical clinical-flywheel signal)",
+      "Treated KER as the clinical headline metric over aggregate WER"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-eval-002-paraphrase-a",
+    "question": "My merriam-webster-tagged rows are scoring well but the magpie_g2p ones are tanking — is that the cue to start fine-tuning?",
+    "expected_skill": "clinical-flywheel-eval",
+    "expected_script": null,
+    "ground_truth": "No — this is a pronunciation-hint coverage gap, not a model-capacity gap. The right move is to route back to /clinical-flywheel-build (specifically the IPA QA step) to append verified IPA to pronunciation_overrides.csv. Reconsider /clinical-flywheel-finetune only after that rebuild, if the gap persists.",
+    "expected_behavior": [
+      "Diagnosed the merriam-webster vs magpie_g2p delta as a pronunciation-coverage gap rather than a model-capacity gap",
+      "Routed back to the IPA QA / pronunciation-override loop in /clinical-flywheel-build before considering fine-tuning",
+      "Made clear fine-tuning is the wrong first move for this specific signal shape"
+    ]
+  },
+  {
+    "id": "clinical-flywheel-eval-002-paraphrase-b",
+    "question": "Big gap in KER between the rows I have MW respellings for and the ones falling through to neural G2P. What should I do next?",
+    "expected_skill": "clinical-flywheel-eval",
+    "expected_script": null,
+    "ground_truth": "No — this is a pronunciation-hint coverage gap, not a model-capacity gap. The right move is to route back to /clinical-flywheel-build (specifically the IPA QA step) to append verified IPA to pronunciation_overrides.csv. Reconsider /clinical-flywheel-finetune only after that rebuild, if the gap persists.",
+    "expected_behavior": [
+      "Diagnosed the merriam-webster vs magpie_g2p delta as a pronunciation-coverage gap rather than a model-capacity gap",
+      "Routed back to the IPA QA / pronunciation-override loop in /clinical-flywheel-build before considering fine-tuning",
+      "Made clear fine-tuning is the wrong first move for this specific signal shape"
+    ]
+  },
+  {
     "id": "clinical-flywheel-eval-003",
     "question": "How does this flywheel's KER scoring handle a transcription like 'cefa zolin' when the reference term is 'cefazolin' — is that a hit or a miss, and why was it scored that way?",
     "expected_skill": "clinical-flywheel-eval",

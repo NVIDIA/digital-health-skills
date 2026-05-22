@@ -1,6 +1,6 @@
 ---
 name: "clinical-flywheel-eval"
-description: "Stage 3 of the Clinical ASR Flywheel. Use when scoring a NeMo manifest for clinical-term accuracy (KER) and producing the leaderboard."
+description: "Stage 3 (Clinical ASR Flywheel). Use when scoring a NeMo manifest, produce the five-section KER leaderboard (by-ipa_source diagnostic). NOT for ASR auth/gRPC (/riva-asr) or fine-tune (/clinical-flywheel-finetune)."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:
@@ -85,6 +85,8 @@ Activate on user phrases like:
 
 Do **not** activate when (per Critical Workflow Rule #1, route immediately and stop):
 
+**Literal-keyword non-activation check** — if the user's message contains any of `authenticate`, `API key`, `bearer`, `function ID`, `gRPC`, `streaming`, `chunking`, `batching`, `transcription retry`, `riva-build`, `riva-deploy`, `NIM deploy`, `NGC`, `Docker`, `Container Toolkit`, or asks "which ASR model is best" / "compare models" / "vendor differences" — **do NOT activate** the scoring workflow. Reply with a one-line route to the appropriate sibling skill (see bullets below) and stop. This applies even if the user mentions "KER" or "eval" alongside the keyword.
+
 - The user doesn't have a manifest yet → `/clinical-flywheel-build`
 - The user wants to fine-tune *now* with a known KER → `/clinical-flywheel-finetune`
 - The user asks about ASR **auth** (API keys, bearer tokens, function IDs) → `/riva-asr` (covers both cloud and self-hosted)
@@ -106,15 +108,7 @@ Do **not** activate when (per Critical Workflow Rule #1, route immediately and s
 
 **Default**: `nvidia/parakeet-tdt-0.6b-v2` via NVCF gRPC (offline), function-id `d3fe9151-442b-4204-a70d-5fcc597fd610`. NVIDIA's current English ASR recommendation — fastest/cheapest in the catalog, and supported in NeMo's stock SFT recipe so the Stage 3 baseline and a Stage 4 fine-tune ride the same model family.
 
-Override via env vars (all read at runtime by the Step 3b recipe):
-
-| Variable | Use when |
-|---|---|
-| `ASR_MODEL_NAME` | Leaderboard display name (e.g. `parakeet-tdt-0.6b-v2-mycycle1`). |
-| `ASR_NVCF_FUNCTION_ID` | Swap to a different hosted NIM — a fine-tuned NIM, or Whisper Large v3 (`b702f636-…`) while Parakeet's NVCF backend is faulting. Catalog table in `references/offline-asr-recipe.md`. |
-| `ASR_ENDPOINT` | Self-hosted gRPC (e.g. `localhost:50051`). Takes precedence over NVCF when set. |
-
-Full alternate-NIM catalog (Parakeet TDT 1.1B, Parakeet CTC 1.1B, Whisper Large v3, Nemotron streaming) with function IDs and call-shape notes: `references/offline-asr-recipe.md`.
+Three runtime env-var override knobs (`ASR_MODEL_NAME` for leaderboard display, `ASR_NVCF_FUNCTION_ID` to swap to a different hosted NIM, `ASR_ENDPOINT` for self-hosted gRPC) plus the full alternate-NIM catalog (Parakeet TDT 1.1B, Parakeet CTC 1.1B, Whisper Large v3, Nemotron streaming) with function IDs and call-shape notes: `references/offline-asr-recipe.md`.
 
 Echo the chosen NIM, the resolved function-id, and any env-var overrides to the user **before** spending API credits. A 200-row manifest on hosted Parakeet TDT v2 is cheap; an accidental run against the wrong model on a 1,000-row manifest is not.
 
@@ -176,16 +170,7 @@ Write a five-section markdown leaderboard, **in this order**:
 4. **KER by `noise_level`** — clinical environments are loud. `snr_5db` rows are closer to reality than `clean`.
 5. **Per-term KER** (worst first) — these are your Stage 4 fine-tune targets.
 
-A representative `ipa_source` split looks like:
-
-```
-ipa_source           KER     n
-merriam-webster      0.05    420
-magpie_g2p           0.41    180   ← these are the pronunciation-coverage gap
-override             0.03     45
-```
-
-The 0.05 vs 0.41 delta tells the deployment story. If the user sees this gap and asks "should we fine-tune?" — the answer is *not yet*. Route them back to `/clinical-flywheel-build`'s IPA QA pipeline (Stage 2d). See the decision tree below.
+A representative `ipa_source` split with the merriam-webster vs magpie_g2p delta interpretation: `references/scoring-recipes.md` §Representative ipa_source split. The delta tells the deployment story — if the user sees a wide gap and asks "should we fine-tune?", the answer is *not yet*; route them back to `/clinical-flywheel-build`'s IPA QA pipeline (Stage 2d). See the decision tree below.
 
 ## Decision tree (after eval)
 
@@ -215,18 +200,17 @@ Read the **priority-category KER** (drug KER for most clinical workflows, proced
 
 ## Troubleshooting
 
-- **"No manifest found"** → the user skipped Stage 2 or pointed at the wrong directory. Route to `/clinical-flywheel-build`, or confirm `$MANIFEST_PATH`.
-- **All rows score KER=1** → check normalization. If `ref` and `hyp` are normalized differently (one lowercased, one not; one with punctuation, one without), every contiguous match will fail. Apply the four normalization steps to both sides.
-- **All rows score KER=0** but WER is high → KER is finding the term *somewhere* but the rest of the sentence is wrong. Sanity-check by reading a few `(ref, hyp)` pairs by hand. Often this surfaces a misaligned manifest (audio belongs to a different row).
-- **`merriam-webster` KER and `magpie_g2p` KER are both high** → not a pronunciation-coverage issue; the ASR model genuinely can't transcribe these terms. Stage 4 is the right route, assuming the manifest has ≥ 100 rows.
-- **`merriam-webster` KER low, `magpie_g2p` KER high** → pronunciation-coverage gap. Route to `/clinical-flywheel-build` Step 2d. **Do not fine-tune** as a first response — the model isn't the problem.
-- **WER is fine on `clean` rows but balloons on `snr_5db`** → robustness gap, not a vocabulary gap. Expand the eval set with more diverse noise via `/clinical-flywheel-build`, or accept the limit and document the deployment-noise floor.
-- **ASR results diverge between Riva NIM and offline NeMo `transcribe()`** → the gap is in Riva preprocessing or `riva-build` flags, not the model. Route to `/riva-asr-custom`.
-- **Hosted ASR rate-limits** (`RESOURCE_EXHAUSTED`) on large manifests → retry after 30 s. The inlined recipe doesn't retry; slice the manifest and re-run dropped rows manually. For built-in backoff, see `/riva-asr`.
-- **`TypeError: Auth.__init__() got an unexpected keyword argument 'ssl_cert'`** → you're on `nvidia-riva-client >= 2.x`; that kwarg was renamed to `ssl_root_cert` and isn't needed for NVCF. The shipped recipe (`references/offline-asr-recipe.md`) already drops it; if you copied an older recipe, do the same.
-- **CUDA illegal-memory-access from Triton** on the Parakeet function ID → NVCF-side backend fault, not your env. Switch to Whisper Large v3 (see `references/offline-asr-recipe.md` §Whisper fallback) until it clears.
+- **"No manifest found"** → user skipped Stage 2. Route to `/clinical-flywheel-build` or confirm `$MANIFEST_PATH`.
+- **All rows KER=1** → normalization mismatch between `ref` and `hyp`. Apply the four normalization steps to both sides.
+- **All rows KER=0 but WER high** → likely misaligned manifest (audio row mismatch). Spot-check a few `(ref, hyp)` pairs by hand.
+- **`merriam-webster` low, `magpie_g2p` high** → pronunciation-coverage gap. Route to `/clinical-flywheel-build` Step 2d. **Don't fine-tune** — model isn't the problem.
+- **Both `merriam-webster` and `magpie_g2p` high** → real model gap. Stage 4 is the right route (manifest ≥ 100 rows).
+- **`clean` rows fine, `snr_5db` balloons** → robustness gap; expand noise diversity via `/clinical-flywheel-build`.
+- **Riva-NIM and offline NeMo results diverge** → Riva preprocessing / `riva-build` flags. Route to `/riva-asr-custom`.
+- **`RESOURCE_EXHAUSTED` on large manifests** → retry after 30 s; slice + re-run dropped rows. Built-in backoff: `/riva-asr`.
+- **`Auth.__init__() got 'ssl_cert'`** / **CUDA illegal-memory-access on Parakeet function ID**: see `references/offline-asr-recipe.md` (ssl_root_cert rename + §Whisper fallback).
 
-For anything not in this list, identify which upstream skill is implicated. ASR-side issues (protocol, model selection, self-hosted NIM deploy) belong to `/riva-asr`; scoring-side issues belong here.
+Anything else: identify the upstream owner. ASR protocol / NIM deploy → `/riva-asr`. Scoring → here.
 
 ## Limitations
 
