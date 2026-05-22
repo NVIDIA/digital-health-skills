@@ -1,7 +1,7 @@
-# Skill Card — clinical-flywheel-setup
+# Skill Card — digital-health-clinical-asr-setup
 
 ## Description
-Bootstraps a Clinical ASR Flywheel cycle: verifies `NVIDIA_API_KEY`, installs Python deps, smoke-tests the hosted Magpie TTS + Parakeet/Nemotron ASR stack via NVCF, and hands off to `/clinical-flywheel-build` with KER (keyword error rate) named as the headline metric. Ready for commercial/non-commercial use.
+Bootstraps a Clinical ASR Flywheel cycle: verifies `NVIDIA_API_KEY`, installs Python deps, smoke-tests the hosted Magpie TTS + Parakeet/Nemotron ASR stack via NVCF, and hands off to `/digital-health-clinical-asr-build` with KER (keyword error rate) named as the headline metric. Ready for commercial/non-commercial use.
 
 ## Owner
 Ben Randoing <brandoing@nvidia.com>, NVIDIA Healthcare TME.

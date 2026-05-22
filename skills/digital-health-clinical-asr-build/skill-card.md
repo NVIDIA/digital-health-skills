@@ -1,4 +1,4 @@
-# Skill Card — clinical-flywheel-build
+# Skill Card — digital-health-clinical-asr-build
 
 ## Description
 Curates a clinical specialty term list, tags IPA pronunciation hints via Merriam-Webster + Magpie G2P, and synthesizes a NeMo-format manifest of audio + reference text for downstream clinical ASR scoring. Stage 2 of the Clinical ASR Flywheel. Ready for commercial/non-commercial use.

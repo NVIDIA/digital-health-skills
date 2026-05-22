@@ -60,4 +60,4 @@ magpie_g2p           0.41    180   ← these are the pronunciation-coverage gap
 override             0.03     45
 ```
 
-The 0.05 vs 0.41 delta tells the deployment story. If the user sees this gap and asks "should we fine-tune?" — the answer is *not yet*. Route them back to `/clinical-flywheel-build`'s IPA QA pipeline (Stage 2d), per the SKILL.md special-case rule.
+The 0.05 vs 0.41 delta tells the deployment story. If the user sees this gap and asks "should we fine-tune?" — the answer is *not yet*. Route them back to `/digital-health-clinical-asr-build`'s IPA QA pipeline (Stage 2d), per the SKILL.md special-case rule.

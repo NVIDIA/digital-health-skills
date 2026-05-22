@@ -8,10 +8,10 @@ Four self-contained agent skills under `.agents/skills/`, all following the [age
 
 | Skill slug | Stage | What it does |
 |------------|-------|--------------|
-| `clinical-flywheel-setup` | 1 | Verifies `NVIDIA_API_KEY`, installs Python deps, sets up NGC + Docker for the NeMo training container, smoke-tests the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. Hands off to `/clinical-flywheel-build`. |
-| `clinical-flywheel-build` | 2 | Specialty interview, term curation, two-tier IPA tagging (Merriam-Webster + Magpie G2P), NeMo-format manifest synthesis. Inlines a complete Magpie TTS NVCF recipe and a Merriam-Webster lookup recipe. Hands off to `/clinical-flywheel-eval`. |
-| `clinical-flywheel-eval` | 3 | Transcribes a NeMo manifest via Parakeet/Nemotron ASR, scores WER/CER/KER/SER (pure-Python Levenshtein inline; `jiwer` optional), produces a five-section leaderboard, routes via the post-eval decision tree. Hands off to `/clinical-flywheel-finetune` or back to `/clinical-flywheel-build`. |
-| `clinical-flywheel-finetune` | 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. Returns to `/clinical-flywheel-build` for the next cycle. |
+| `digital-health-clinical-asr-setup` | 1 | Verifies `NVIDIA_API_KEY`, installs Python deps, sets up NGC + Docker for the NeMo training container, smoke-tests the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. Hands off to `/digital-health-clinical-asr-build`. |
+| `digital-health-clinical-asr-build` | 2 | Specialty interview, term curation, two-tier IPA tagging (Merriam-Webster + Magpie G2P), NeMo-format manifest synthesis. Inlines a complete Magpie TTS NVCF recipe and a Merriam-Webster lookup recipe. Hands off to `/digital-health-clinical-asr-eval`. |
+| `digital-health-clinical-asr-eval` | 3 | Transcribes a NeMo manifest via Parakeet/Nemotron ASR, scores WER/CER/KER/SER (pure-Python Levenshtein inline; `jiwer` optional), produces a five-section leaderboard, routes via the post-eval decision tree. Hands off to `/digital-health-clinical-asr-finetune` or back to `/digital-health-clinical-asr-build`. |
+| `digital-health-clinical-asr-finetune` | 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. Returns to `/digital-health-clinical-asr-build` for the next cycle. |
 
 Each skill folder contains `SKILL.md` (workflow guide), optional `references/*.md` (deeper detail loaded on demand), and `evals/evals.json` (trigger / behavior / boundary cases).
 
@@ -28,8 +28,8 @@ Set these before invoking the skills:
 | Env var | Used by | Required? |
 |---------|---------|-----------|
 | `NVIDIA_API_KEY` | All stages (Magpie TTS + Parakeet/Nemotron ASR via NVCF) | **Yes** — get one at [build.nvidia.com](https://build.nvidia.com). Free tier is sufficient for benchmark generation. |
-| `DICTIONARY_API_KEY` | `clinical-flywheel-build` (Merriam-Webster lookup) | Optional. If unset, the IPA pipeline falls through to Magpie G2P for un-overridden terms. Free key at [dictionaryapi.com](https://dictionaryapi.com). |
-| `NGC_API_KEY` | `clinical-flywheel-finetune` only (pulls NeMo training container) | Optional. Skip if you're only running stages 1–3. |
+| `DICTIONARY_API_KEY` | `digital-health-clinical-asr-build` (Merriam-Webster lookup) | Optional. If unset, the IPA pipeline falls through to Magpie G2P for un-overridden terms. Free key at [dictionaryapi.com](https://dictionaryapi.com). |
+| `NGC_API_KEY` | `digital-health-clinical-asr-finetune` only (pulls NeMo training container) | Optional. Skip if you're only running stages 1–3. |
 
 ## How to invoke (Claude Code example)
 
@@ -40,16 +40,16 @@ cd digital-health-skills
 # Optional: symlink the skills into Claude Code's skills dir if your launcher
 # doesn't auto-discover .agents/skills/ from the working directory.
 mkdir -p ~/.claude/skills
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-setup"    ~/.claude/skills/
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-build"    ~/.claude/skills/
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-eval"     ~/.claude/skills/
-ln -s "$(pwd)/.agents/skills/clinical-flywheel-finetune" ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-setup"    ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-build"    ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-eval"     ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-clinical-asr-finetune" ~/.claude/skills/
 
 # Then in your agent session:
-/clinical-flywheel-setup
+/digital-health-clinical-asr-setup
 ```
 
-Skills hand off explicitly. Start with `/clinical-flywheel-setup`; each stage tells you which skill comes next.
+Skills hand off explicitly. Start with `/digital-health-clinical-asr-setup`; each stage tells you which skill comes next.
 
 ## When NOT to use these skills
 

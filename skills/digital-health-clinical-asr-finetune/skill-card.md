@@ -1,4 +1,4 @@
-# Skill Card — clinical-flywheel-finetune
+# Skill Card — digital-health-clinical-asr-finetune
 
 ## Description
 Runs stock NeMo SFT on `nvidia/parakeet-tdt-0.6b-v2` in `nvcr.io/nvidia/nemo:25.11.01` against a term-aware row-disjoint train/val split, re-evals offline as cycle N+1 to measure that the loop closed, and optionally hands the `.nemo` to `/riva-asr-custom` for NIM deploy. Stage 4 of the Clinical ASR Flywheel. Empirically verified at KER 0.513 → 0.128 (−75% relative) in 3 epochs on the reference manifest. Ready for commercial/non-commercial use.
@@ -10,7 +10,7 @@ Ben Randoing <brandoing@nvidia.com>, NVIDIA Healthcare TME.
 Apache 2.0 — see [LICENSE](../../../LICENSE).
 
 ## Use Case
-ML engineers fine-tuning ASR for clinical vocabularies after Stage 3 surfaces priority-category KER > 0.3 with a manifest of ≥ 100 rows (≥ 5 per priority `entity_category`). Below those thresholds, route back to `/clinical-flywheel-build` first.
+ML engineers fine-tuning ASR for clinical vocabularies after Stage 3 surfaces priority-category KER > 0.3 with a manifest of ≥ 100 rows (≥ 5 per priority `entity_category`). Below those thresholds, route back to `/digital-health-clinical-asr-build` first.
 
 ## Deployment Geography
 Global. NVIDIA NeMo container is publicly available; GPU host can be local CUDA or per-second-billed Brev (L40S 48 GB recommended).

@@ -27,7 +27,7 @@ Do **not** file security issues via GitHub Issues. See [SECURITY.md](SECURITY.md
 
 ### Adding or modifying a skill
 
-1. **Pick a name.** Use kebab-case, prefix by domain (e.g., `clinical-flywheel-*`, `radiology-*`). The directory name must equal the `name` field in `SKILL.md` frontmatter.
+1. **Pick a name.** Use kebab-case, prefix by domain (e.g., `digital-health-clinical-asr-*`, `radiology-*`). The directory name must equal the `name` field in `SKILL.md` frontmatter.
 2. **Write or edit `SKILL.md`.** Keep it under 500 lines. Move long content into `references/*.md` and link from `SKILL.md`. Required frontmatter fields: `name`, `description`, `version`, `tags`, `license`.
 3. **Author or update `evals/evals.json`.** Cover the three classes of cases:
    - **Trigger** — phrases that should activate the skill

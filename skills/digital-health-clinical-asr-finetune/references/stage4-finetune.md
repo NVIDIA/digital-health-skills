@@ -37,7 +37,7 @@ A multi-cycle loop has natural stopping points. After cycle N+1, evaluate:
 
 - **You've hit a KER floor across multiple cycles.** Two consecutive cycles with KER drop < 5% relative is the signal to stop tuning and either accept the model or rethink the methodology (add a new metric, extend `entity_category` to capture a missed dimension, etc.).
 - **You're past 30 epochs without improvement.** TDT bases plateau by ~30 epochs on manifests under ~5,000 rows. Larger manifests merit larger budgets — but verify scaling laws empirically; don't extrapolate from the 3-epoch smoke run.
-- **Validation WER trends upward while training loss drops.** Classic overfit. Bail to `/clinical-flywheel-build` and grow the manifest, or add early-stopping (`patience=3` on validation WER).
+- **Validation WER trends upward while training loss drops.** Classic overfit. Bail to `/digital-health-clinical-asr-build` and grow the manifest, or add early-stopping (`patience=3` on validation WER).
 
 ## Brev provisioning (full walkthrough)
 
@@ -87,10 +87,10 @@ Brev exposes each instance over SSH, but the connection details aren't in `~/.ss
 
 ```bash
 brev ssh-config            # writes Host entries to ~/.ssh/config
-ssh clinical-flywheel-sft  # or: rsync -avz ./cycle1/ clinical-flywheel-sft:~/cycle1/
+ssh digital-health-clinical-asr-sft  # or: rsync -avz ./cycle1/ digital-health-clinical-asr-sft:~/cycle1/
 ```
 
-After `brev ssh-config`, the instance name works as a standard SSH host. Skip this command and `rsync` will fail with `ssh: Could not resolve hostname clinical-flywheel-sft`.
+After `brev ssh-config`, the instance name works as a standard SSH host. Skip this command and `rsync` will fail with `ssh: Could not resolve hostname digital-health-clinical-asr-sft`.
 
 ### Stopping vs deleting
 

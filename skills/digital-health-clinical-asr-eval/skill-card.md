@@ -1,4 +1,4 @@
-# Skill Card — clinical-flywheel-eval
+# Skill Card — digital-health-clinical-asr-eval
 
 ## Description
 Scores a NeMo-format clinical manifest with four ASR metrics (WER/CER/KER/SER) via NVCF Parakeet/Nemotron, then produces a five-section leaderboard whose by-`ipa_source` (merriam-webster vs magpie_g2p) split is the headline diagnostic. Stage 3 of the Clinical ASR Flywheel. Ready for commercial/non-commercial use.
@@ -10,7 +10,7 @@ Ben Randoing <brandoing@nvidia.com>, NVIDIA Healthcare TME.
 Apache 2.0 — see [LICENSE](../../../LICENSE).
 
 ## Use Case
-Speech engineers running KER-driven evaluation of ASR models on clinical vocabularies before promoting models to Stage 4 fine-tuning. Read the by-`ipa_source` split aloud — a wide merriam-webster vs magpie_g2p gap means *route back to /clinical-flywheel-build*, not fine-tune.
+Speech engineers running KER-driven evaluation of ASR models on clinical vocabularies before promoting models to Stage 4 fine-tuning. Read the by-`ipa_source` split aloud — a wide merriam-webster vs magpie_g2p gap means *route back to /digital-health-clinical-asr-build*, not fine-tune.
 
 ## Deployment Geography
 Global. Hosted NVCF Parakeet/Nemotron endpoints are publicly reachable; self-hosted Riva NIM works via `ASR_ENDPOINT` env var.

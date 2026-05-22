@@ -1,6 +1,6 @@
 ---
-name: "clinical-flywheel-eval"
-description: "Stage 3 (Clinical ASR Flywheel). Use when scoring a NeMo manifest, produce the five-section KER leaderboard (by-ipa_source diagnostic). NOT for ASR auth/gRPC (/riva-asr) or fine-tune (/clinical-flywheel-finetune)."
+name: "digital-health-clinical-asr-eval"
+description: "Stage 3 (Clinical ASR Flywheel). Use when scoring a NeMo manifest, produce the five-section KER leaderboard (by-ipa_source diagnostic). NOT for ASR auth/gRPC (/riva-asr) or fine-tune (/digital-health-clinical-asr-finetune)."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:
@@ -15,7 +15,7 @@ tools:
   - Bash
   - Skill
 license: Apache-2.0
-compatibility: "NVIDIA_API_KEY (required) for hosted ASR NIMs via NVCF. A NeMo-format manifest produced by /clinical-flywheel-build (or an externally-provided manifest carrying the clinical-extension fields). All ASR call shapes and WER/CER/KER/SER scoring recipes are inlined — no sibling agent skill required."
+compatibility: "NVIDIA_API_KEY (required) for hosted ASR NIMs via NVCF. A NeMo-format manifest produced by /digital-health-clinical-asr-build (or an externally-provided manifest carrying the clinical-extension fields). All ASR call shapes and WER/CER/KER/SER scoring recipes are inlined — no sibling agent skill required."
 metadata:
   author: "Ben Randoing <brandoing@nvidia.com>"
   tags:
@@ -27,8 +27,8 @@ metadata:
   team: healthcare-tme
   domain: ai-ml
   stage: 3
-  previous_skill: clinical-flywheel-build
-  next_skill: clinical-flywheel-finetune
+  previous_skill: digital-health-clinical-asr-build
+  next_skill: digital-health-clinical-asr-finetune
 ---
 
 <!--
@@ -42,9 +42,9 @@ SPDX-License-Identifier: Apache-2.0
 
 > **Agent: this file is self-contained.** The five-section leaderboard order, KER definition, normalization rules, decision tree, and routing rules all live in this single SKILL.md. **Do not** explore `evals/`, `references/`, or `assets/` to "verify" — they are pointers, not load-bearing. Answer methodology questions from this file directly; only invoke tools when the user explicitly asks to execute against a real manifest.
 
-You are the **score-and-route** stage. The user arrives with a NeMo-format `manifest.jsonl` (either from `/clinical-flywheel-build` or carried in from elsewhere). You transcribe it via the chosen ASR NIM, score four metrics, produce a five-section leaderboard, and read the decision tree to decide whether the user should advance to `/clinical-flywheel-finetune`, loop back to `/clinical-flywheel-build`, or stop and harden the eval.
+You are the **score-and-route** stage. The user arrives with a NeMo-format `manifest.jsonl` (either from `/digital-health-clinical-asr-build` or carried in from elsewhere). You transcribe it via the chosen ASR NIM, score four metrics, produce a five-section leaderboard, and read the decision tree to decide whether the user should advance to `/digital-health-clinical-asr-finetune`, loop back to `/digital-health-clinical-asr-build`, or stop and harden the eval.
 
-**This skill does not generate audio.** If the manifest is missing or empty, send the user back to `/clinical-flywheel-build`.
+**This skill does not generate audio.** If the manifest is missing or empty, send the user back to `/digital-health-clinical-asr-build`.
 
 ## Audio leaves your environment — disclose this to the user before any clip is sent
 
@@ -65,7 +65,7 @@ For methodology questions (leaderboard structure, KER definition, decision tree)
 3. **ASR transcription is inlined in Step 3b** (NVCF gRPC + `riva.client.ASRService.offline_recognize`, same auth pattern as Stage 1). For deeper protocol/auth questions, alternative NIM catalogs, or self-hosted Riva NIM configuration, defer to `/riva-asr`.
 4. **KER is the headline.** Per-row check: the flagged `term` words must appear *in order, contiguous, adjacent* in the normalized hypothesis. `cefazolin → cefa zolin` is a miss. Aggregate WER hides clinically dangerous failures; both are reported, KER is the gate.
 5. **The by-`ipa_source` split is the most informative single number** in the leaderboard. The `merriam-webster` vs `magpie_g2p` delta proves the SSML override pipeline is doing real work. Read it aloud to the user.
-6. **Special-case routing.** `merriam-webster` rows good, `magpie_g2p` rows bad → pronunciation-coverage gap, **not** a model gap. Route back to `/clinical-flywheel-build` Step 2d. **Do NOT recommend `/clinical-flywheel-finetune`** as a first response.
+6. **Special-case routing.** `merriam-webster` rows good, `magpie_g2p` rows bad → pronunciation-coverage gap, **not** a model gap. Route back to `/digital-health-clinical-asr-build` Step 2d. **Do NOT recommend `/digital-health-clinical-asr-finetune`** as a first response.
 7. **Five-section leaderboard order.** Headline (WER/CER/KER/SER) → KER by `entity_category` → KER by `ipa_source` → KER by `noise_level` → Per-term KER worst-first. The by-`ipa_source` section is mandatory; it is the proof the SSML pipeline works.
 
 ## Purpose
@@ -89,8 +89,8 @@ Do **not** activate when (per Critical Workflow Rule #1, route immediately and s
 
 **Literal-keyword non-activation check** — if the user's message contains any of `authenticate`, `API key`, `bearer`, `function ID`, `gRPC`, `streaming`, `chunking`, `batching`, `transcription retry`, `riva-build`, `riva-deploy`, `NIM deploy`, `NGC`, `Docker`, `Container Toolkit`, or asks "which ASR model is best" / "compare models" / "vendor differences" — **do NOT activate** the scoring workflow. Reply with a one-line route to the appropriate sibling skill (see bullets below) and stop. This applies even if the user mentions "KER" or "eval" alongside the keyword.
 
-- The user doesn't have a manifest yet → `/clinical-flywheel-build`
-- The user wants to fine-tune *now* with a known KER → `/clinical-flywheel-finetune`
+- The user doesn't have a manifest yet → `/digital-health-clinical-asr-build`
+- The user wants to fine-tune *now* with a known KER → `/digital-health-clinical-asr-finetune`
 - The user asks about ASR **auth** (API keys, bearer tokens, function IDs) → `/riva-asr` (covers both cloud and self-hosted)
 - The user asks about the ASR **gRPC protocol**, streaming, batching, chunking, or transcription retries → `/riva-asr`
 - The user asks about ASR **model catalog selection** (which model is best, model comparison, vendor differences) → `/riva-asr`
@@ -172,7 +172,7 @@ Write a five-section markdown leaderboard, **in this order**:
 4. **KER by `noise_level`** — clinical environments are loud. `snr_5db` rows are closer to reality than `clean`.
 5. **Per-term KER** (worst first) — these are your Stage 4 fine-tune targets.
 
-A representative `ipa_source` split with the merriam-webster vs magpie_g2p delta interpretation: `references/scoring-recipes.md` §Representative ipa_source split. The delta tells the deployment story — if the user sees a wide gap and asks "should we fine-tune?", the answer is *not yet*; route them back to `/clinical-flywheel-build`'s IPA QA pipeline (Stage 2d). See the decision tree below.
+A representative `ipa_source` split with the merriam-webster vs magpie_g2p delta interpretation: `references/scoring-recipes.md` §Representative ipa_source split. The delta tells the deployment story — if the user sees a wide gap and asks "should we fine-tune?", the answer is *not yet*; route them back to `/digital-health-clinical-asr-build`'s IPA QA pipeline (Stage 2d). See the decision tree below.
 
 ## Decision tree (after eval)
 
@@ -180,17 +180,17 @@ Read the **priority-category KER** (drug KER for most clinical workflows, proced
 
 | KER on priority category | Recommend |
 |---|---|
-| **> 0.3** | `/clinical-flywheel-finetune`. Manifest is already NeMo-format-ready. Note: rows ≥ 100 is the minimum for a believable fine-tune signal; if the manifest is smaller, grow it first via `/clinical-flywheel-build`. |
-| **0.1 – 0.3** | Either expand the term list (back to `/clinical-flywheel-build` with new domain terms — usually surfaces more failures cheaper than tuning) **or** fine-tune. On a *first* eval, expand. On a *later* eval where you've already grown the manifest, tune. |
-| **< 0.1** | Strong baseline. Don't tune yet — you'd be optimizing against a saturated metric. Push the eval harder: add voices, noise levels, contexts, adversarial terms. Loop back to `/clinical-flywheel-build`. |
+| **> 0.3** | `/digital-health-clinical-asr-finetune`. Manifest is already NeMo-format-ready. Note: rows ≥ 100 is the minimum for a believable fine-tune signal; if the manifest is smaller, grow it first via `/digital-health-clinical-asr-build`. |
+| **0.1 – 0.3** | Either expand the term list (back to `/digital-health-clinical-asr-build` with new domain terms — usually surfaces more failures cheaper than tuning) **or** fine-tune. On a *first* eval, expand. On a *later* eval where you've already grown the manifest, tune. |
+| **< 0.1** | Strong baseline. Don't tune yet — you'd be optimizing against a saturated metric. Push the eval harder: add voices, noise levels, contexts, adversarial terms. Loop back to `/digital-health-clinical-asr-build`. |
 
-**Special case — `merriam-webster` rows score well but `magpie_g2p` rows are bad.** That's a pronunciation-hint coverage gap, **not a model gap**. Route back to `/clinical-flywheel-build` Step 2d (IPA QA review), not to `/clinical-flywheel-finetune`. Fine-tuning over a TTS-pronunciation gap teaches the model to mis-recognize the model's own mistakes — the wrong fix.
+**Special case — `merriam-webster` rows score well but `magpie_g2p` rows are bad.** That's a pronunciation-hint coverage gap, **not a model gap**. Route back to `/digital-health-clinical-asr-build` Step 2d (IPA QA review), not to `/digital-health-clinical-asr-finetune`. Fine-tuning over a TTS-pronunciation gap teaches the model to mis-recognize the model's own mistakes — the wrong fix.
 
 ## Examples
 
 **Scenario A — first eval on a fresh cycle-1 manifest.** User: *"I have `manifest.jsonl` with 200 clinical audio rows already, with `term` and `entity_category` fields. How do I score it?"* → Skip Stage 2 entirely. Run the audio-existence pre-flight. Pick `parakeet-tdt-0.6b-v2` (default) and echo the choice + resolved function-id. Run the inlined Step 3b recipe (`transcribe_manifest(...)`). Score the four metrics. Produce the five-section leaderboard. Read the by-`ipa_source` split to the user. Apply the decision tree against drug KER.
 
-**Scenario B — interpreting a mixed result.** User: *"Eval shows KER 0.05 on rows tagged `merriam-webster` but 0.40 on rows tagged `magpie_g2p`. Should I fine-tune?"* → No — this is the special case. The model is fine; the pronunciation hints aren't covering the long-tail terms. Route the user back to `/clinical-flywheel-build` Step 2d to audition the `magpie_g2p` rows and append verified IPA to `pronunciation_overrides.csv`. Re-run Stage 3 after the rebuild before reconsidering Stage 4.
+**Scenario B — interpreting a mixed result.** User: *"Eval shows KER 0.05 on rows tagged `merriam-webster` but 0.40 on rows tagged `magpie_g2p`. Should I fine-tune?"* → No — this is the special case. The model is fine; the pronunciation hints aren't covering the long-tail terms. Route the user back to `/digital-health-clinical-asr-build` Step 2d to audition the `magpie_g2p` rows and append verified IPA to `pronunciation_overrides.csv`. Re-run Stage 3 after the rebuild before reconsidering Stage 4.
 
 ## Artifacts produced
 
@@ -202,12 +202,12 @@ Read the **priority-category KER** (drug KER for most clinical workflows, proced
 
 ## Troubleshooting
 
-- **"No manifest found"** → user skipped Stage 2. Route to `/clinical-flywheel-build` or confirm `$MANIFEST_PATH`.
+- **"No manifest found"** → user skipped Stage 2. Route to `/digital-health-clinical-asr-build` or confirm `$MANIFEST_PATH`.
 - **All rows KER=1** → normalization mismatch between `ref` and `hyp`. Apply the four normalization steps to both sides.
 - **All rows KER=0 but WER high** → likely misaligned manifest (audio row mismatch). Spot-check a few `(ref, hyp)` pairs by hand.
-- **`merriam-webster` low, `magpie_g2p` high** → pronunciation-coverage gap. Route to `/clinical-flywheel-build` Step 2d. **Don't fine-tune** — model isn't the problem.
+- **`merriam-webster` low, `magpie_g2p` high** → pronunciation-coverage gap. Route to `/digital-health-clinical-asr-build` Step 2d. **Don't fine-tune** — model isn't the problem.
 - **Both `merriam-webster` and `magpie_g2p` high** → real model gap. Stage 4 is the right route (manifest ≥ 100 rows).
-- **`clean` rows fine, `snr_5db` balloons** → robustness gap; expand noise diversity via `/clinical-flywheel-build`.
+- **`clean` rows fine, `snr_5db` balloons** → robustness gap; expand noise diversity via `/digital-health-clinical-asr-build`.
 - **Riva-NIM and offline NeMo results diverge** → Riva preprocessing / `riva-build` flags. Route to `/riva-asr-custom`.
 - **`RESOURCE_EXHAUSTED` on large manifests** → retry after 30 s; slice + re-run dropped rows. Built-in backoff: `/riva-asr`.
 - **`Auth.__init__() got 'ssl_cert'`** / **CUDA illegal-memory-access on Parakeet function ID**: see `references/offline-asr-recipe.md` (ssl_root_cert rename + §Whisper fallback).
@@ -223,8 +223,8 @@ Anything else: identify the upstream owner. ASR protocol / NIM deploy → `/riva
 
 ## Next steps
 
-- **Forward (KER > 0.3, manifest ≥ 100 rows):** `/clinical-flywheel-finetune`.
-- **Back to build (KER 0.1–0.3 on first eval, or `magpie_g2p` gap):** `/clinical-flywheel-build`.
+- **Forward (KER > 0.3, manifest ≥ 100 rows):** `/digital-health-clinical-asr-finetune`.
+- **Back to build (KER 0.1–0.3 on first eval, or `magpie_g2p` gap):** `/digital-health-clinical-asr-build`.
 - **Stop (KER < 0.1):** the eval is saturated. Harden it before declaring victory.
 - **Lateral** for ASR protocol / auth / streaming / self-hosted NIM details: `/riva-asr`.
 

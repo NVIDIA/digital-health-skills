@@ -1,6 +1,6 @@
 # Skill boundaries — what this skill family owns vs. what it defers
 
-The Clinical ASR Flywheel skill family is **glue + methodology**. Most of the deep work composes other skills in the public NVIDIA skills catalog. When something breaks, route to the right skill — don't open an issue against `clinical-flywheel-*` for a TTS pronunciation bug. (ASR transcription used to defer entirely; as of v1.1, the offline-gRPC call shape is **inlined** in the eval skill's Stage 3 Step 3b. For deeper ASR protocol/auth/streaming questions, `/riva-asr` is still the canonical reference.)
+The Clinical ASR Flywheel skill family is **glue + methodology**. Most of the deep work composes other skills in the public NVIDIA skills catalog. When something breaks, route to the right skill — don't open an issue against `digital-health-clinical-asr-*` for a TTS pronunciation bug. (ASR transcription used to defer entirely; as of v1.1, the offline-gRPC call shape is **inlined** in the eval skill's Stage 3 Step 3b. For deeper ASR protocol/auth/streaming questions, `/riva-asr` is still the canonical reference.)
 
 ## The five external skills this family composes
 
@@ -15,7 +15,7 @@ The Clinical ASR Flywheel skill family is **glue + methodology**. Most of the de
 
 If the user reports a problem inside any of these, **the right move is to invoke that skill** for diagnosis rather than trying to debug here. Each one carries its own error tables, retry logic, and version-pinning that this family is intentionally not duplicating.
 
-## What the `clinical-flywheel-*` skills own
+## What the `digital-health-clinical-asr-*` skills own
 
 - The **clinical-ASR methodology** — KER as headline, two-tier IPA tagging, term-aware split, cycle N+1 close-loop.
 - The **decision tree** (post-eval) — when to fine-tune vs grow the manifest vs accept the baseline.
@@ -24,7 +24,7 @@ If the user reports a problem inside any of these, **the right move is to invoke
 - The **inlined offline ASR gRPC recipe** for routine Stage 3 transcription (with env-var overrides for swap-in models).
 - The **composition pattern** — how `/data-designer + /riva-tts + [inlined ASR in eval] + /riva-asr-custom` fit together for a clinical workflow.
 
-## What the `clinical-flywheel-*` skills do **NOT** own
+## What the `digital-health-clinical-asr-*` skills do **NOT** own
 
 - **TTS pronunciation issues on specific terms** → `/read-aloud` (`/riva-tts`). We provide the SSML override mechanism + IPA validation list; we don't fix the underlying neural G2P.
 - **ASR streaming or alternative offline shapes** → `/riva-asr`. The eval skill inlines the simplest offline gRPC call shape ("whole file as one chunk") because clinical sentences are ≤ 30 s; anything beyond that (streaming partials, batching, retry-with-backoff, vendor catalog comparison) lives upstream.
@@ -35,7 +35,7 @@ If the user reports a problem inside any of these, **the right move is to invoke
 
 ## Version pinning (current)
 
-These are the versions the `clinical-flywheel-*` recipes assume. Bump as the upstream skills/models release.
+These are the versions the `digital-health-clinical-asr-*` recipes assume. Bump as the upstream skills/models release.
 
 | Component | Version assumed | If you change it |
 |---|---|---|
@@ -50,7 +50,7 @@ These are the versions the `clinical-flywheel-*` recipes assume. Bump as the ups
 
 This repo accepts contributions per `CONTRIBUTING.md` at the repo root. When you file an issue, include:
 
-1. Which stage skill was active (`clinical-flywheel-setup` / `-build` / `-eval` / `-finetune`).
+1. Which stage skill was active (`digital-health-clinical-asr-setup` / `-build` / `-eval` / `-finetune`).
 2. Which external skill was being driven (`/riva-tts`, `/riva-asr`, etc.), or "inlined Stage 3 transcription" if the issue is in the eval skill's recipe.
 3. The exact error or symptom — not just "it didn't work."
 4. (For Stage 3+) the manifest schema check output from the build skill's `references/manifest-schema.md`.

@@ -1,6 +1,6 @@
 # Pronunciation Pipeline Reference
 
-Full Merriam-Webster respelling → IPA mapping table and SSML wrapping rules for the `clinical-flywheel-build` two-tier IPA pipeline.
+Full Merriam-Webster respelling → IPA mapping table and SSML wrapping rules for the `digital-health-clinical-asr-build` two-tier IPA pipeline.
 
 ## ⚠ API key handling
 
@@ -75,7 +75,7 @@ No API key needed, but brittle to MW site HTML changes; only use this if you con
   from typing import Optional
   from urllib.parse import quote
 
-  UA = "clinical-flywheel-build/1.0 (mw scrape, change me if you redistribute)"
+  UA = "digital-health-clinical-asr-build/1.0 (mw scrape, change me if you redistribute)"
 
   def scrape_mw_respelling(term: str, timeout: float = 15.0) -> Optional[str]:
       """Path B: parse the public MW website for the term's respelling.
