@@ -1,8 +1,7 @@
 ---
 name: "riva-nim-setup"
 license: "Apache-2.0"
-description: >-
-  Use this skill when the user asks how to get started with NVIDIA Riva Speech NIMs, set up NGC access, configure Docker for nvcr.io, install the NVIDIA Container Toolkit, verify GPU access, or install the Riva Python client. Trigger phrases: "get started with Riva", "NGC API key", "docker login nvcr.io", "NVIDIA Container Toolkit", "riva-client install", "prerequisites for Riva NIM".
+description: "Use when getting started with NVIDIA Riva Speech NIMs: NGC access, Docker login for nvcr.io, NVIDIA Container Toolkit, GPU verification, Riva Python client."
 metadata:
   author: "Mayank Jain <mayjain@nvidia.com>"
   team: riva
@@ -26,7 +25,7 @@ metadata:
 
 Prepare a Linux x86_64 system to run NVIDIA Riva Speech NIM containers. Covers NVIDIA driver installation, Docker setup, NVIDIA Container Toolkit, NGC authentication, and the Riva Python client. Follow the 7 steps in order — this setup only needs to be done once per machine.
 
-## Hardware Requirements
+## Prerequisites
 
 Current GPU compatibility, driver versions, VRAM requirements, and OS requirements: see https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html
 
@@ -37,7 +36,17 @@ Key invariants (unlikely to change):
 
 ## Instructions
 
-Follow the 7 steps below in order. Steps 1–3 require root/sudo. Steps 4–7 run as a normal user. Complete all steps before attempting to pull or run any Riva NIM container.
+Follow the 7 steps below in order. Steps 1–3 require root/sudo. Steps 4–7 run as a normal user.
+
+1. **Step 1**: Install NVIDIA Drivers (driver only — CUDA is in the NIM container).
+2. **Step 2**: Install Docker.
+3. **Step 3**: Install NVIDIA Container Toolkit.
+4. **Step 4**: Obtain an NGC API Key.
+5. **Step 5**: Docker login to `nvcr.io`.
+6. **Step 6**: Install the Riva Python Client (`pip install nvidia-riva-client`).
+7. **Step 7** (optional): Clone the riva client repos for example scripts.
+
+Complete all steps before attempting to pull or run any Riva NIM container.
 
 
 ## Step 1 — Install NVIDIA Drivers
