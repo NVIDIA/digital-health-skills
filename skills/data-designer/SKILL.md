@@ -1,5 +1,6 @@
 ---
 name: data-designer
+license: "Apache-2.0"
 description: Use when the user wants to create a dataset, generate synthetic data, or build a data generation pipeline.
 argument-hint: [describe the dataset you want to generate]
 metadata:

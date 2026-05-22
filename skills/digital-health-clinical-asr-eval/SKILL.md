@@ -1,6 +1,6 @@
 ---
 name: "digital-health-clinical-asr-eval"
-description: "Stage 3 (Clinical ASR Flywheel). Use when scoring a NeMo manifest, produce the five-section KER leaderboard (by-ipa_source diagnostic). NOT for ASR auth/gRPC (/riva-asr) or fine-tune (/digital-health-clinical-asr-finetune)."
+description: "Stage 3 of Clinical ASR Flywheel. Score a NeMo manifest, produce the five-section KER leaderboard (by-ipa_source diagnostic). Not for ASR auth (/riva-asr)."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:

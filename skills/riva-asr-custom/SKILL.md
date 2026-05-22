@@ -1,5 +1,6 @@
 ---
 name: "riva-asr-custom"
+license: "Apache-2.0"
 description: >-
   Use this skill when the user wants to deploy a custom-trained ASR model as a Riva NIM, or use their own NeMo model with Riva. Trigger phrases: "custom ASR model Riva", "nemo2riva", "riva-build", "riva-deploy", "deploy NeMo model as NIM", "convert .nemo to .riva", "RMIR Riva", "custom model repository Riva", "riva-build speech_recognition", "fine-tuned ASR NIM".
 metadata:

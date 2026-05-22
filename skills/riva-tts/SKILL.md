@@ -1,5 +1,6 @@
 ---
 name: "riva-tts"
+license: "Apache-2.0"
 description: >-
   Use this skill when the user wants to deploy, run, or test a TTS (text-to-speech / speech synthesis) Riva NIM — cloud-hosted (build.nvidia.com) or self-hosted. Trigger phrases: "deploy TTS NIM", "run Riva text-to-speech", "Magpie TTS", "Riva voice synthesis", "list Riva voices", "streaming TTS", "voice cloning Riva", "synthesize speech with Riva", "TTS docker run", "cloud TTS NIM", "grpc.nvcf.nvidia.com TTS".
 metadata:

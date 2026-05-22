@@ -1,5 +1,6 @@
 ---
 name: "riva-nim-setup"
+license: "Apache-2.0"
 description: >-
   Use this skill when the user asks how to get started with NVIDIA Riva Speech NIMs, set up NGC access, configure Docker for nvcr.io, install the NVIDIA Container Toolkit, verify GPU access, or install the Riva Python client. Trigger phrases: "get started with Riva", "NGC API key", "docker login nvcr.io", "NVIDIA Container Toolkit", "riva-client install", "prerequisites for Riva NIM".
 metadata:

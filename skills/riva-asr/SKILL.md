@@ -1,5 +1,6 @@
 ---
 name: "riva-asr"
+license: "Apache-2.0"
 description: >-
   Use this skill when the user wants to deploy, run, or test an ASR (automatic speech recognition / speech-to-text) Riva NIM — either cloud-hosted (build.nvidia.com) or self-hosted. Trigger phrases: "deploy ASR NIM", "run Riva speech-to-text", "transcribe audio with Riva", "Parakeet NIM", "Canary NIM", "Whisper NIM", "docker run ASR NIM", "test ASR with python-clients", "stream audio to Riva", "offline transcription Riva", "cloud NIM inference", "build.nvidia.com ASR", "NVIDIA_API_KEY ASR", "grpc.nvcf.nvidia.com".
 metadata:
