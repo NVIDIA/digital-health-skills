@@ -86,16 +86,14 @@ Activate on user phrases like:
 - "Audition the TTS pronunciation for these drug names"
 - "Make me a cycle-N manifest"
 
-Do **not** activate when:
-
-**Literal-keyword non-activation check** — if the user's message contains any of `authenticate`, `API key`, `bearer`, `function ID`, `gRPC`, `streaming`, `chunking`, `riva-build`, `riva-deploy`, `NIM deploy`, `NGC`, `Docker`, `Container Toolkit`, or asks "which TTS voice is best" / "compare TTS models" — **do NOT activate** the build workflow. Reply with a one-line route to the appropriate sibling skill (see bullets below) and stop.
+Do **not** activate when (also: if the message mentions `auth`, `API key`, `gRPC`, `streaming`, `riva-build`, `NIM deploy`, `NGC`, or `Docker`, route per the bullets below and stop):
 
 - The user already has a manifest and wants to score it → `/digital-health-clinical-asr-eval`
 - The user wants to fine-tune on an existing manifest → `/digital-health-clinical-asr-finetune`
 - The user is asking generic TTS / SSML / voice-cloning / voice-catalog questions → `/read-aloud` (or `/riva-tts`)
-- The user is asking about TTS or ASR **auth / API keys / gRPC protocol / streaming / function IDs** → `/riva-tts` (TTS-side) or `/riva-asr` (ASR-side)
-- The user is asking about **NIM deploy** or `riva-build` / `riva-deploy` flags → `/riva-asr-custom` (ASR) or `/riva-tts-custom` (TTS)
-- The user is asking about **NGC / Docker / NVIDIA Container Toolkit** → `/riva-nim-setup`
+- TTS/ASR **auth / API keys / gRPC / streaming** → `/riva-tts` or `/riva-asr`
+- **NIM deploy** or `riva-build` / `riva-deploy` flags → `/riva-asr-custom` or `/riva-tts-custom`
+- **NGC / Docker / NVIDIA Container Toolkit** → `/riva-nim-setup`
 - The user is asking generic synthetic-data questions → `/data-designer`
 
 ## Prerequisites

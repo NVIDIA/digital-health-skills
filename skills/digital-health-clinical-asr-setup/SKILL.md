@@ -1,6 +1,6 @@
 ---
 name: "digital-health-clinical-asr-setup"
-description: "Stage 1 (Clinical ASR Flywheel). Use when bootstrapping a cycle: surface NVCF+MW disclosure, verify NVIDIA_API_KEY, install deps, smoke-test, hand off to /digital-health-clinical-asr-build. NOT for Stage 4 fine-tune setup."
+description: "Stage 1 of Clinical ASR Flywheel. Use when bootstrapping a cycle: NVCF+MW disclosure, NVIDIA_API_KEY check, deps install, TTS+ASR smoke test."
 version: "1.1.0"
 author: "Ben Randoing <brandoing@nvidia.com>"
 tags:

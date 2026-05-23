@@ -1,7 +1,7 @@
 ---
 name: "riva-asr-custom"
-description: >-
-  Use this skill when the user wants to deploy a custom-trained ASR model as a Riva NIM, or use their own NeMo model with Riva. Trigger phrases: "custom ASR model Riva", "nemo2riva", "riva-build", "riva-deploy", "deploy NeMo model as NIM", "convert .nemo to .riva", "RMIR Riva", "custom model repository Riva", "riva-build speech_recognition", "fine-tuned ASR NIM".
+license: "Apache-2.0"
+description: "Use when the user wants to deploy a custom-trained ASR model as a Riva NIM, or convert a NeMo model via nemo2riva / riva-build / riva-deploy / RMIR."
 metadata:
   author: "Mayank Jain <mayjain@nvidia.com>"
   team: riva
@@ -43,7 +43,12 @@ model repository, and launching the NIM.
 
 ## Instructions
 
-Follow the 4-phase pipeline below. Run `riva-build` and `riva-deploy` inside the NIM container (enter with `--entrypoint /bin/bash`). All paths like `/riva_build_deploy/` refer to the mounted directory inside the container.
+1. **Phase 1**: Obtain a `.riva` file (download from NGC or convert `.nemo` via `nemo2riva`).
+2. **Phase 2**: Build an RMIR with `riva-build` (run inside the NIM container).
+3. **Phase 3**: Deploy the model repository with `riva-deploy`.
+4. **Phase 4**: Launch the custom NIM and run inference.
+
+Run `riva-build` and `riva-deploy` inside the NIM container (enter with `--entrypoint /bin/bash`). All paths like `/riva_build_deploy/` refer to the mounted directory inside the container.
 
 ## Phase 1 — Obtain a `.riva` File
 

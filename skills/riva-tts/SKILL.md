@@ -1,7 +1,7 @@
 ---
 name: "riva-tts"
-description: >-
-  Use this skill when the user wants to deploy, run, or test a TTS (text-to-speech / speech synthesis) Riva NIM — cloud-hosted (build.nvidia.com) or self-hosted. Trigger phrases: "deploy TTS NIM", "run Riva text-to-speech", "Magpie TTS", "Riva voice synthesis", "list Riva voices", "streaming TTS", "voice cloning Riva", "synthesize speech with Riva", "TTS docker run", "cloud TTS NIM", "grpc.nvcf.nvidia.com TTS".
+license: "Apache-2.0"
+description: "Use when the user wants to deploy, run, or test a TTS (speech-synthesis) Riva NIM — cloud-hosted (build.nvidia.com) or self-hosted Magpie / voice cloning."
 metadata:
   author: "Mayank Jain <mayjain@nvidia.com>"
   team: riva
@@ -51,9 +51,9 @@ Choose **Option A** (cloud) for quick testing without a GPU, or **Option B** (se
 
 ## Instructions
 
-For **cloud synthesis**: install `nvidia-riva-client`, set `NVIDIA_API_KEY`, and run `talk.py` against `grpc.nvcf.nvidia.com:443` with `--use-ssl` and the function ID from the table below.
-
-For **self-hosted**: set `CONTAINER_ID` and `NIM_TAGS_SELECTOR` from the TTS support matrix, then follow Steps 1–4 below to deploy the container, verify readiness, list available voices, and synthesize speech.
+1. **Pick a path**: cloud synthesis (Option A) or self-hosted NIM (Option B).
+2. **For cloud synthesis (Option A)**: install `nvidia-riva-client`, set `NVIDIA_API_KEY`, run `talk.py` against `grpc.nvcf.nvidia.com:443` with `--use-ssl` and the function ID from the table below.
+3. **For self-hosted (Option B)**: set `CONTAINER_ID` and `NIM_TAGS_SELECTOR` from the TTS support matrix, then follow Steps 1–4 below (deploy container, verify readiness, list voices, synthesize speech).
 
 
 ## Option A — Cloud-Hosted Inference (build.nvidia.com)

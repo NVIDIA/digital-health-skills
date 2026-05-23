@@ -1,7 +1,7 @@
 ---
 name: "riva-asr"
-description: >-
-  Use this skill when the user wants to deploy, run, or test an ASR (automatic speech recognition / speech-to-text) Riva NIM — either cloud-hosted (build.nvidia.com) or self-hosted. Trigger phrases: "deploy ASR NIM", "run Riva speech-to-text", "transcribe audio with Riva", "Parakeet NIM", "Canary NIM", "Whisper NIM", "docker run ASR NIM", "test ASR with python-clients", "stream audio to Riva", "offline transcription Riva", "cloud NIM inference", "build.nvidia.com ASR", "NVIDIA_API_KEY ASR", "grpc.nvcf.nvidia.com".
+license: "Apache-2.0"
+description: "Use when the user wants to deploy, run, or test an ASR (speech-to-text) Riva NIM — cloud-hosted (build.nvidia.com) or self-hosted Parakeet/Canary/Whisper."
 metadata:
   author: "Mayank Jain <mayjain@nvidia.com>"
   team: riva
@@ -47,9 +47,9 @@ Choose **Option A** (cloud) for quick testing without a GPU, or **Option B** (se
 
 ## Instructions
 
-For **cloud inference**: install `nvidia-riva-client`, set `NVIDIA_API_KEY`, select the function ID from the table below, and run `transcribe_file.py` (streaming) or `transcribe_file_offline.py` (offline) against `grpc.nvcf.nvidia.com:443` with `--use-ssl`.
-
-For **self-hosted**: look up `CONTAINER_ID` and `NIM_TAGS_SELECTOR` from the ASR support matrix, mount a model cache directory with `chmod 700`, then follow Steps 1–4 below.
+1. **Pick a path**: cloud inference (Option A) or self-hosted NIM (Option B).
+2. **For cloud inference (Option A)**: install `nvidia-riva-client`, set `NVIDIA_API_KEY`, pick a function ID, run `transcribe_file.py` (streaming) or `transcribe_file_offline.py` (offline) against `grpc.nvcf.nvidia.com:443` with `--use-ssl`.
+3. **For self-hosted (Option B)**: look up `CONTAINER_ID` and `NIM_TAGS_SELECTOR` from the ASR support matrix, mount a model cache dir with `chmod 700`, then follow Steps 1–4 below (set vars, run container, verify readiness, run inference).
 
 ## Option A — Cloud-Hosted Inference (build.nvidia.com)
 
