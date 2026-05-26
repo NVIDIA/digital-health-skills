@@ -232,3 +232,4 @@ Anything else: identify the upstream owner. ASR protocol / NIM deploy → `/riva
 
 - [`references/offline-asr-recipe.md`](references/offline-asr-recipe.md) — full Step 3b Python recipe (`transcribe_manifest`, `resolve_asr_config`, `build_asr_auth`), function-ID catalog with call-shape notes, Whisper fallback, self-hosted Riva NIM setup
 - [`references/scoring-recipes.md`](references/scoring-recipes.md) — pure-Python WER/CER/KER/SER scoring functions with the canonical 4-step normalization
+
