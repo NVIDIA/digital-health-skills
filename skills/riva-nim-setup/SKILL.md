@@ -23,7 +23,7 @@ metadata:
 
 ## Purpose
 
-Prepare a Linux x86_64 system to run NVIDIA Riva Speech NIM containers. Covers NVIDIA driver installation, Docker setup, NVIDIA Container Toolkit, NGC authentication, and the Riva Python client. Follow the 7 steps in order — this setup only needs to be done once per machine.
+Prepare a Linux x86_64 system to run NVIDIA Riva Speech NIM containers — a one-time per-machine setup.
 
 ## Prerequisites
 
@@ -73,10 +73,9 @@ sudo usermod -aG docker $USER
 
 ## Step 3 — Install NVIDIA Container Toolkit
 
-The Container Toolkit lets Docker containers access the host GPU.
+The Container Toolkit lets Docker containers access the host GPU. Full reference: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ```bash
-# Install (see full guide: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 sudo apt-get install -y nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker

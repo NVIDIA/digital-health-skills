@@ -250,19 +250,32 @@ node src/index.js --riva-server=localhost:50051
 
 ## Examples
 
-**Cloud inference — transcribe a file (Nemotron Streaming):**
+These are end-to-end use cases that combine features covered above; they are not repeats of the canonical commands in Option A or Step 4.
+
+**Whisper translation — non-English audio → English transcript (cloud):**
 ```bash
-python python-clients/scripts/asr/transcribe_file.py \
+python python-clients/scripts/asr/transcribe_file_offline.py \
     --server grpc.nvcf.nvidia.com:443 --use-ssl \
-    --metadata function-id "bb0837de-8c7b-481f-9ec8-ef5663e9c1fa" \
+    --metadata function-id "b702f636-f60c-4a3d-a6f4-f3568c13bd7d" \
     --metadata authorization "Bearer $NVIDIA_API_KEY" \
-    --input-file audio.wav
+    --custom-configuration "task:translate" \
+    --input-file spanish_audio.wav
 ```
 
-**Self-hosted streaming transcription:**
+**Streaming with diarization and word timestamps (self-hosted):**
 ```bash
 python3 python-clients/scripts/asr/transcribe_file.py \
-  --server 0.0.0.0:50051 --input-file audio.wav --language-code en-US
+  --server 0.0.0.0:50051 --input-file meeting.wav --language-code en-US \
+  --speaker-diarization --word-time-offsets
+```
+
+**Domain-specific vocabulary via token boosting (CTC, self-hosted):**
+```bash
+python3 python-clients/scripts/asr/transcribe_file.py \
+  --server 0.0.0.0:50051 --input-file clinical_dictation.wav \
+  --language-code en-US \
+  --boosted-lm-words 'Abloopar:▁a/b/lo/op/er' \
+  --boosted-lm-score 80
 ```
 
 
