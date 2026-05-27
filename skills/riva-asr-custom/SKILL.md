@@ -26,14 +26,7 @@ metadata:
 
 ## Purpose
 
-Deploy a custom NeMo-trained ASR model as a Riva NIM when pre-built NIMs do not
-meet accuracy requirements or domain-specific vocabulary is needed. Covers the
-full pipeline: exporting a `.nemo` checkpoint, building an RMIR, deploying the
-model repository, and launching the NIM.
-
-## Workflow
-
-4-phase pipeline: obtain a `.riva` file → build an RMIR with `riva-build` → deploy the model repository with `riva-deploy` → launch the custom NIM.
+Deploy a custom NeMo-trained ASR model as a Riva NIM when pre-built NIMs do not meet accuracy requirements or need domain-specific vocabulary.
 
 ## Prerequisites
 
@@ -206,25 +199,23 @@ python3 python-clients/scripts/asr/transcribe_file_offline.py \
 
 ## Examples
 
-**Export a NeMo checkpoint to .riva format:**
+These are variations on the canonical phase commands above; for the standard flow follow Phases 1–4 directly.
+
+**Export an encrypted `.riva` from NeMo (Phase 1, Option B variant):**
 ```bash
-nemo2riva --out /artifacts/model.riva /path/to/model.nemo
+nemo2riva --out /artifacts/model.riva --key my-secret /path/to/model.nemo
 ```
 
-**Build RMIR (inside NIM container):**
+**Build a punctuation pipeline instead of speech recognition (Phase 2 variant):**
 ```bash
-riva-build speech_recognition \
-  /riva_build_deploy/model.rmir \
-  /riva_build_deploy/model.riva
+riva-build punctuation \
+  /riva_build_deploy/punct_model.rmir \
+  /riva_build_deploy/punct_model.riva
 ```
 
-**Launch the custom NIM:**
+**Re-deploy after editing `.rmir` (Phase 3 variant — force overwrite):**
 ```bash
-docker run -it --rm --runtime=nvidia --gpus '"device=0"' \
-  -e NGC_API_KEY -e NIM_DISABLE_MODEL_DOWNLOAD=true \
-  -v $NIM_EXPORT_PATH:/opt/nim/export \
-  -e NIM_EXPORT_PATH=/opt/nim/export \
-  nvcr.io/nim/nvidia/$CONTAINER_ID:latest
+riva-deploy -f /riva_build_deploy/custom_model.rmir /data/models
 ```
 
 
@@ -249,3 +240,4 @@ docker run -it --rm --runtime=nvidia --gpus '"device=0"' \
 
 - Configure pipeline details (VAD, diarization, language model, streaming): see `riva-pipelines`
 - Check system requirements: see `riva-ops`
+
