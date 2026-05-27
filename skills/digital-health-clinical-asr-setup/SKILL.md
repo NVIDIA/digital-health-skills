@@ -35,39 +35,37 @@ SPDX-License-Identifier: Apache-2.0
 
 # Clinical ASR Flywheel — Stage 1 (Setup)
 
-> **⚠ Agent: read this entire SKILL.md before answering.** The data-disclosure block, the inlined smoke-test recipe, the upstream-skill ownership matrix, and the explicit hand-off to `/digital-health-clinical-asr-build` are all load-bearing. Do not skim or rely on prior knowledge of Riva / NVCF — the function IDs, env-var conventions, and the smoke-test gate live below.
+> **Agent: this file is the complete Stage 1 procedure.** Do not invoke `find`, `ls`, `rg`, or `grep` looking for an installer or hidden config — there isn't one. The four sections below (outbound-data disclosure, three numbered checks, sibling hand-off) are all required reading; don't skip any. Function IDs, env-var conventions, and the smoke-test gate are inlined further down — answer from what's actually written here rather than from prior Riva/NVCF familiarity.
 
-> **Agent: this file is self-contained.** Every command, env-var, function-id, and recipe needed for Stage 1 lives below. **Do not** run `find`, `ls`, `rg`, `grep`, or any other file-discovery command to "verify" the structure — there is no `install.sh`, no `setup.py`, no other config to find. Read this file top-to-bottom and execute the three numbered steps. If a fact isn't here, route to the named sibling skill rather than searching the repo.
+Stage 1 has one job: prove the user can reach NVIDIA's hosted speech stack with the `NVIDIA_API_KEY` they currently hold. Once a single clinical sentence round-trips through Magpie TTS → Parakeet/Nemotron ASR successfully, the user is cleared to advance to `/digital-health-clinical-asr-build`.
 
-You are the **entry point** to the Clinical ASR Flywheel. Confirm the user's environment is ready — `NVIDIA_API_KEY`, Python deps — then round-trip a single sentence through Magpie TTS + Parakeet/Nemotron ASR to prove the hosted stack is reachable. On success, hand off to `/digital-health-clinical-asr-build`.
+The four-stage flywheel exists to drive down **KER (keyword error rate)** on clinical entities — drugs, procedures, anatomy, conditions, labs, roles. WER averages obscure the failures that hurt clinically; KER is what Stage 3 will measure you against.
 
-The flywheel measures and closes the gap between general-purpose ASR and the clinical terms a clinician actually says. The headline metric across all four stages is **KER (keyword error rate)** on flagged entities — drugs, procedures, anatomy, conditions, labs, roles. Aggregate WER hides what matters clinically.
+There is **no installer script** anywhere in this skill — not `install.sh`, not `setup.py`, nothing hidden. Stage 1 *is* the three steps below: verify the key, install Python deps, run the smoke test. Anything past Stage 1 is composed from sibling skills (`/data-designer`, `/riva-tts`, the inlined Stage 3 ASR recipe, `/riva-asr-custom`). If a user asks "what script installs everything?", answer from this paragraph; don't go searching.
 
-**No `install.sh`, no `setup.py`, no entry-point script ships with this skill.** Stage 1 is the three inlined steps below (1a key length-check → 1b `pip install` → 1c TTS→ASR smoke test). Everything beyond Stage 1 is composed from sibling skills (`/data-designer`, `/riva-tts`, the inlined Stage 3 ASR recipe, `/riva-asr-custom`). When a user asks "what script do I run to install everything?", surface this fact from this paragraph — do not go searching the repo for an installer.
+## Outbound data flows — surface before any text or audio is sent
 
-## Data leaves your environment — disclose this to the user before proceeding
-
-This flywheel sends data to two external services. **Surface this to the user up front** so they can confirm it's acceptable under their organization's data-governance policy before any clinical term list, audio, or text leaves the local machine. **Quote the table below verbatim — do not paraphrase the service names or what gets sent. The literal phrasing is the disclosure; a summary is not.**
+Two external endpoints receive data during this flywheel. The user has to acknowledge both before Stage 2 begins, against whatever data-governance policy their organization enforces. **Render the table below word-for-word in your response — a paraphrase doesn't satisfy the disclosure; the literal phrasing is what counts.**
 
 | Service | What gets sent | When | Hosted by |
 |---|---|---|---|
 | **NVIDIA NVCF** (`grpc.nvcf.nvidia.com`) | The clinical sentences you synthesize (text), and the WAV files you transcribe (audio) | Every Stage 2 TTS call and every Stage 3 ASR call | NVIDIA, governed by build.nvidia.com terms |
 | **Merriam-Webster** (`dictionaryapi.com` JSON API **or** the public `merriam-webster.com` HTML site) | Individual clinical terms (drug names, anatomy, procedures), one HTTP request per term | Stage 2 IPA tagging — see "Two MW paths" below for which endpoint applies | Merriam-Webster, governed by their API or site terms |
 
-Both endpoints carry **non-PHI synthetic data** by design — the flywheel generates sentences and audio from a term list the user curates, not from real patient encounters. **Do not pass real patient transcripts, real ASR audio, or any PHI through these skills.** If the user's term list itself is sensitive (proprietary drug-codename list, unreleased product names), they should review their organization's external-API policy before continuing. Both APIs can be skipped:
+The data is **synthetic by construction** — the flywheel manufactures sentences and audio from a user-curated term list, never from real patient encounters. That said: **do not feed real patient transcripts, recorded clinical audio, or any PHI through any stage.** If the term list itself contains sensitive material (codename drugs, unreleased product names), the user should consult their organization's external-API policy before proceeding. Either endpoint can be turned off:
 
-- **No MW at all**: leave `DICTIONARY_API_KEY` unset and don't run a scraper. Stage 2 falls through to Magpie G2P; the pipeline still works with reduced coverage on long-tail clinical terms.
-- **No NVCF**: this flywheel cannot run without it — Magpie TTS + Parakeet/Nemotron ASR are the workload. If NVCF is off-limits, this skill family is the wrong tool; use a self-hosted ASR/TTS pipeline instead.
+- **Skip Merriam-Webster entirely:** leave `DICTIONARY_API_KEY` unset and don't run a scraper. Stage 2 falls back to Magpie G2P, which still works but with weaker coverage on long-tail clinical terms.
+- **Skip NVCF:** this is a hard stop. Magpie TTS + Parakeet/Nemotron ASR *are* the workload; without them this skill family is the wrong tool — a self-hosted ASR/TTS pipeline is what you want instead.
 
-A version of this notice belongs in the workspace `README.md` your user maintains — surface it on first invocation if you don't see it already there.
+Recommend a copy of this notice lands in the user's workspace `README.md`; bring it forward on first invocation if it isn't already there.
 
 ## Purpose
 
-Bootstrap a clean machine into a working Clinical ASR Flywheel cycle. Confirm `NVIDIA_API_KEY` is present, the Python interpreter and required libraries are available, and the hosted NVCF stack responds. Tell the user which skill to run next.
+Get a fresh environment ready for Stage 2. Three things to confirm: key is present, deps import cleanly, hosted stack actually answers. Close by naming which skill to run next.
 
-This skill family is **fully self-contained**. Every TTS, ASR, IPA-tagging, and scoring recipe is inlined inside the four `digital-health-clinical-asr-*` skills — you do not need to install any other agent skill to run the flywheel end-to-end.
+The four `digital-health-clinical-asr-*` skills are **self-contained** — every TTS, ASR, IPA-tagging, and scoring recipe lives inside them; no other agent skill needs installing to run the flywheel end-to-end.
 
-The skill assumes the user owns the working directory and chooses their layout. It does not impose `data/eval_sets/cycle<N>/` or any other path convention.
+This skill takes no opinion on workspace layout. The user decides where their cycle artifacts live; `data/eval_sets/cycle<N>/` is not imposed.
 
 ## When to use this skill
 
@@ -225,9 +223,9 @@ Remember the data-disclosure note at the top: under either path, each clinical t
 
 ## Examples
 
-**Scenario A — first-time setup, fresh shell.** User: *"I want to start the flywheel."* → Surface the data-disclosure block at the top. Walk through 1a (key length check), 1b (venv + pip install), 1c (round-trip smoke test). On all-green, advise `/digital-health-clinical-asr-build` as the next stop and mention the headline KER framing so the user arrives at Stage 2 with the right metric in mind.
+**Fresh shell, never run before.** User says something like *"I want to start the flywheel."* → Quote the disclosure table first, then walk through 1a → 1b → 1c in order. On a green smoke test, point them at `/digital-health-clinical-asr-build` and explicitly name KER as the metric Stage 3 will judge them by.
 
-**Scenario B — returning user, partial env.** User: *"I already have the env, just confirm I'm good to go."* → Skip 1b. Run 1a and 1c only. If the round-trip succeeds, advance.
+**Returning user, env already up.** User says *"I already have the env, just confirm I'm good to go."* → Skip the venv + `pip install` (1b). Run only the length check (1a) and the smoke test (1c). On green, advance.
 
 ## Artifacts produced
 
@@ -249,17 +247,17 @@ No manifest, audio, or model artifact is produced at this stage — those come a
 
 ## Limitations
 
-- **Setup only verifies the environment.** It does not validate that the user's specialty / term list / pronunciation overrides make sense — that's the job of `/digital-health-clinical-asr-build`.
-- **English-only by default.** Magpie's en-US phoneme inventory drives Stage 2 IPA validation. Other locales require a different upstream phoneme set.
-- **Hosted-only paths assumed.** Self-hosted NIMs work but require additional setup (covered inside `/digital-health-clinical-asr-finetune` Stage 4d).
-- **Non-PHI data only.** This skill family is designed for synthetic clinical-vocabulary benchmarks generated from a term list. Do not pass real patient transcripts or audio through any stage.
+- **Scope is environment readiness only.** Whether the user's term list or pronunciation overrides make sense is decided in `/digital-health-clinical-asr-build`, not here.
+- **Magpie en-US assumption.** Downstream IPA validation rides on Magpie's English phoneme inventory; other locales require a different phoneme set entirely.
+- **Hosted NVCF is the assumed deployment.** Running self-hosted Riva NIMs is possible but the setup for that lives inside `/digital-health-clinical-asr-finetune` Stage 4d.
+- **Synthetic data only.** This skill family is built for benchmarks generated from a curated term list. Real patient transcripts and recorded audio must not flow through any stage.
 
 ## Next steps
 
-**Required hand-off on success:** end your Stage 1 response by **explicitly recommending `/digital-health-clinical-asr-build` as the next skill** the user should invoke, and **name KER (keyword error rate) as the headline metric** they'll see at Stage 3. These two pointers are non-optional — they orient the user inside the four-stage flywheel.
+**Mandatory close on success:** finish the Stage 1 response by **pointing the user explicitly to `/digital-health-clinical-asr-build`** and **naming KER (keyword error rate) as the headline measure** they'll see at Stage 3. Both pointers are required, not optional — they place the user inside the four-stage flywheel.
 
-- **Forward:** `/digital-health-clinical-asr-build` — specialty interview, term curation, IPA tagging, NeMo manifest synthesis.
-- **Skip ahead** (only if the user already has a NeMo-format manifest with `term` / `entity_category` / `ipa_source` fields): `/digital-health-clinical-asr-eval`.
+- **Default forward route:** `/digital-health-clinical-asr-build` — specialty interview, term curation, IPA tagging, NeMo manifest synthesis.
+- **Direct jump to Stage 3** (only when the user is bringing their own NeMo-format manifest with `term` / `entity_category` / `ipa_source` fields): `/digital-health-clinical-asr-eval`.
 
 ## References
 
