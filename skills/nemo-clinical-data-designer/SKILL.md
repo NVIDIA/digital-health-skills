@@ -1,5 +1,5 @@
 ---
-name: nemo-data-designer
+name: nemo-clinical-data-designer
 license: "Apache-2.0"
 description: "Use when generating synthetic tabular datasets via Data Designer — sampler columns, LLM columns, custom generators. Not for ASR audio."
 argument-hint: [describe the dataset you want to generate]
