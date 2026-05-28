@@ -23,48 +23,48 @@ metadata:
 
 ## Purpose
 
-Prepare a Linux x86_64 system to run NVIDIA Riva Speech NIM containers — a one-time per-machine setup.
+A first-pass machine preparation: bring a Linux x86_64 host up to the point where it can pull and execute Riva Speech NIM containers. The work below is one-time per host.
 
 ## Prerequisites
 
-Current GPU compatibility, driver versions, VRAM requirements, and OS requirements: see https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html
+Up-to-date GPU compatibility, minimum driver versions, VRAM thresholds, and supported operating systems are all maintained at https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html — consult that page before installing anything.
 
-Key invariants (unlikely to change):
-- CPU: x86_64 only
-- NVIDIA AI Enterprise license required for self-hosting
-- Install **driver only** — CUDA toolkit is bundled inside the NIM container
+A few invariants worth knowing without clicking through:
+- The host CPU must be x86_64; ARM is not supported.
+- Self-hosting Riva NIMs requires an active NVIDIA AI Enterprise license.
+- Install the **driver alone** — the CUDA toolkit ships inside the NIM container, so installing it separately at the host level is redundant (and a common source of version-skew bugs).
 
 ## Instructions
 
-Follow the 7 steps below in order. Steps 1–3 require root/sudo. Steps 4–7 run as a normal user.
+The setup is seven sequential steps. The first three need root or `sudo`; the remaining four can run as your normal user. Knock them off in order; don't try to pull a NIM container before Step 7 is done.
 
-1. **Step 1**: Install NVIDIA Drivers (driver only — CUDA is in the NIM container).
-2. **Step 2**: Install Docker.
-3. **Step 3**: Install NVIDIA Container Toolkit.
-4. **Step 4**: Obtain an NGC API Key.
-5. **Step 5**: Docker login to `nvcr.io`.
-6. **Step 6**: Install the Riva Python Client (`pip install nvidia-riva-client`).
-7. **Step 7** (optional): Clone the riva client repos for example scripts.
-
-Complete all steps before attempting to pull or run any Riva NIM container.
+| # | What | Why it's first |
+|---|---|---|
+| 1 | NVIDIA driver (no CUDA toolkit) | The host has to be able to talk to the GPU at all |
+| 2 | Docker Engine | Container runtime |
+| 3 | NVIDIA Container Toolkit | Bridges Docker to the GPU |
+| 4 | NGC API key | Auth artifact for pulling images |
+| 5 | `docker login nvcr.io` | Activates the key against the registry |
+| 6 | `nvidia-riva-client` (pip) | Lets you exercise the running NIM from Python |
+| 7 | (optional) clone client sample repos | Source for the example scripts |
 
 
 ## Step 1 — Install NVIDIA Drivers
 
-Install drivers via package manager. Skip the CUDA toolkit — it is bundled inside the NIM container.
+Use your distro's package manager to install the driver only. Don't add the CUDA toolkit at the host level — the NIM container ships with its own bundled CUDA stack.
 
 ```bash
 # Verify installed driver version
 nvidia-smi
 ```
 
-Check the minimum required driver version at https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html before installing. See [CUDA installation guide for Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux) for package manager install steps.
+Cross-check the version `nvidia-smi` prints against the per-model minimum at https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html before continuing. If you do need a fresh install, the [CUDA installation guide for Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux) walks through the distro-specific package manager steps (you'll only follow the driver portion, not the toolkit portion).
 
 ## Step 2 — Install Docker
 
-Install Docker Engine for your distro: https://docs.docker.com/engine/install/
+Pick the Docker Engine flavor for your distribution from the official matrix: https://docs.docker.com/engine/install/
 
-After install, allow your user to run Docker without `sudo`:
+Once installed, add your user to the `docker` group so subsequent commands don't need `sudo`:
 
 ```bash
 sudo usermod -aG docker $USER
@@ -81,19 +81,21 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-Verify GPU access inside a container:
+Smoke-test that a container can actually see the GPU:
 
 ```bash
 docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 ```
 
-The output must show your driver version and GPU(s). If it does, the environment is ready.
+A successful run prints the same driver version and GPU listing you'd see on the host. If you get an error or empty output, something in Steps 1–3 didn't take — revisit before moving on.
 
 ## Step 4 — NGC API Key
 
-1. Open https://org.ngc.nvidia.com/setup/api-keys
-2. Create a key with at least **NGC Catalog** under **Services Included**
-3. Export it in your terminal:
+Three short steps to generate a key and load it into your shell:
+
+1. Navigate to https://org.ngc.nvidia.com/setup/api-keys in a browser.
+2. Click **Generate API Key** and grant it at least the **NGC Catalog** service scope.
+3. Copy the key value and export it:
 
 ```bash
 export NGC_API_KEY=${your-key-value}
@@ -120,20 +122,22 @@ echo "export NGC_API_KEY=${your-key-value}" >> ~/.zshrc
 echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
 
-- Username is the **literal string** `$oauthtoken` (not your NGC username)
-- Password is the value of `NGC_API_KEY`
+Two non-obvious points often missed:
 
-After this, `docker pull nvcr.io/nim/nvidia/<image>:<tag>` will succeed.
+- The `--username` argument is the literal four-character string `$oauthtoken`. It is **not** your NGC display name or email — copy it verbatim.
+- The actual credential is the API key from Step 4, piped to stdin.
+
+A successful login unlocks every `docker pull nvcr.io/nim/nvidia/<image>:<tag>` invocation.
 
 ## Step 6 — Install Riva Python Client
 
-Required to run the sample inference scripts from `python-clients/`.
+The example client scripts in `python-clients/` depend on the `nvidia-riva-client` package — install it now:
 
 ```bash
 pip install nvidia-riva-client
 ```
 
-Verify:
+Confirm the install:
 
 ```bash
 python3 -c "import riva.client; print('Riva client OK')"
@@ -141,7 +145,7 @@ python3 -c "import riva.client; print('Riva client OK')"
 
 ## Step 7 — Clone Client Repos (Optional)
 
-Sample scripts live in the public repos. Clone whichever you need:
+Open-source sample scripts live in three public repos; clone whichever match the protocol you'll exercise:
 
 ```bash
 # Python clients and sample scripts
@@ -156,17 +160,19 @@ git clone https://github.com/nvidia-riva/websocket-bridge
 
 ## Examples
 
-**Verify GPU access inside a container (after Step 3):**
+Three quick sanity checks anyone can rerun later to confirm the environment hasn't drifted.
+
+**After Step 3 — container-level GPU visibility:**
 ```bash
 docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 ```
 
-**Verify Riva Python client (after Step 6):**
+**After Step 6 — Python client import test:**
 ```bash
 python3 -c "import riva.client; print('Riva client OK')"
 ```
 
-**Log in to nvcr.io (Step 5):**
+**Step 5 reproduced — re-authenticate against `nvcr.io` after a key rotation:**
 ```bash
 echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
@@ -174,24 +180,26 @@ echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-s
 
 ## Troubleshooting
 
-- **Username must be `$oauthtoken` literally** — not your NGC username or email.
-- **Driver-only install** — do NOT install the CUDA toolkit separately; the NIM container brings its own.
-- **Group change requires logout** — `usermod -aG docker` only takes effect after re-login.
-- **`glibc` check** — run `ld -v` and compare against the minimum glibc listed at https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html (older Ubuntu releases may not meet the requirement).
-- **WSL2 on Windows** — use Podman instead of Docker; minimum driver 570; minimum Ubuntu 24.04 in WSL; only select Parakeet models supported.
+- **`docker login` fails authentication** → the `--username` value must be the literal `$oauthtoken` string. Many users instinctively type their NGC email or display name here; that's the most common cause of 401 on this step.
+- **CUDA library version mismatches at container start** → check that you didn't install the CUDA toolkit at the host level. The NIM container ships its own toolkit; a parallel host install will fight it.
+- **`docker run` still wants sudo after `usermod -aG docker`** → group membership only applies to new login sessions. Log out and back in (or open a new shell with `newgrp docker`) and the membership takes effect.
+- **`nvidia-container-cli` reports `version: GLIBC_X.YY not found`** → host glibc is older than what the NIM expects. Confirm via `ld -v` against the minimum listed at https://docs.nvidia.com/nim/speech/latest/get-started/prerequisites.html — older Ubuntu LTS releases may need an upgrade.
+- **Running inside WSL2 on Windows** → swap Docker for Podman, ensure your NVIDIA driver is ≥ 570, use Ubuntu 24.04 inside WSL, and note that only specific Parakeet models are currently supported under WSL2.
 
 
 ## Limitations
 
-- x86_64 architecture only — WSL2 on Windows requires Podman instead of Docker and supports only select Parakeet models
-- NVIDIA AI Enterprise license required for self-hosting Riva NIMs
-- Do not install the CUDA toolkit separately — it is bundled inside the NIM container
-- Group membership changes (`docker` group) require logout/login to take effect
+- Host architecture is x86_64 only. WSL2 on Windows is a partially supported path with Podman replacing Docker and a narrower model catalog (Parakeet subset).
+- Self-hosting a Riva NIM is gated behind an active NVIDIA AI Enterprise license.
+- The host should not carry a separate CUDA toolkit install — the NIM container brings the toolkit it expects. Parallel installs at the host level are a frequent source of breakage.
+- Adding a user to the `docker` group requires re-logging in before that user can run Docker commands without `sudo`.
 
 ## Next Steps
 
-- Select a model: see `riva-model-selection`
-- Deploy ASR: see `riva-asr`
-- Deploy TTS: see `riva-tts`
-- Deploy NMT: see `riva-nmt`
+Once Steps 1–7 are green, route to the deployment skill that matches the modality you want:
+
+- **Model choice undecided** → `riva-model-selection`
+- **Speech-to-text deployments** → `riva-asr`
+- **Text-to-speech deployments** → `riva-tts`
+- **Translation deployments** → `riva-nmt`
 
