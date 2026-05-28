@@ -274,3 +274,4 @@ After deploy: re-run `/digital-health-clinical-asr-eval` against the new endpoin
 - [`references/stage4-finetune.md`](references/stage4-finetune.md) — base-model selection table, hyperparameter rationale, decoder → NIM container mapping, decision tree comparing cycle-N+1 to cycle-N
 - [`references/container-paths.md`](references/container-paths.md) — host → `/workspace/` path rewriting for cross-host manifest portability (laptop ↔ Brev ↔ NeMo container)
 
+
