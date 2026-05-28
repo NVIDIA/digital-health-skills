@@ -1,0 +1,3776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NV-BASE Validation Report</title>
+    <style>
+        :root {
+            --nv: #76b900;
+            --accent-color: #76b900;
+            --primary-color: #0f4c2a;
+            --secondary-color: #76b900;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --warning-color: #eab308;
+            --critical-color: #b91c1c;
+            --high-color: #dc2626;
+            --medium-color: #d97706;
+            --low-color: #6b7280;
+            --info-color: #0369a1;
+            --light-bg: #f8fafc;
+            --bg: #ffffff;
+            --bg-secondary: #f1f5f9;
+            --bg-tertiary: #e2e8f0;
+            --dark-text: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --table-header-bg: #f8fafc;
+            --table-row-hover: #f1f5f9;
+            --chart-grid: #e2e8f0;
+            --chart-tick: #64748b;
+            --chart-label: #0f172a;
+            --badge-pass-bg: #dcfce7;
+            --badge-pass-tx: #166534;
+            --badge-warn-bg: #fef9c3;
+            --badge-warn-tx: #854d0e;
+            --badge-fail-bg: #fee2e2;
+            --badge-fail-tx: #991b1b;
+        }
+        [data-theme="dark"] {
+            --primary-color: #0c111b;
+            --secondary-color: #76b900;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --warning-color: #eab308;
+            --critical-color: #f87171;
+            --high-color: #f87171;
+            --medium-color: #fbbf24;
+            --low-color: #9ca3af;
+            --info-color: #38bdf8;
+            --light-bg: #0c111b;
+            --bg: #151d2e;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #2a3650;
+            --dark-text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 1px 3px 0 rgba(0,0,0,0.4);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.4);
+            --code-bg: #161b22;
+            --code-text: #c9d1d9;
+            --table-header-bg: #1e293b;
+            --table-row-hover: #2a3650;
+            --chart-grid: #1e293b;
+            --chart-tick: #94a3b8;
+            --chart-label: #e2e8f0;
+            --badge-pass-bg: #14532d;
+            --badge-pass-tx: #bbf7d0;
+            --badge-warn-bg: #713f12;
+            --badge-warn-tx: #fef08a;
+            --badge-fail-bg: #7f1d1d;
+            --badge-fail-tx: #fecaca;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .main-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.25rem 0;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo-section { display: flex; flex-direction: column; gap: 0.2rem; }
+        /* Brand block. Sized to mirror the hero panel one row down so the
+           page reads as a single visual hierarchy rather than two competing
+           type scales (hero title is 1.8rem/800; brand sits a hair larger to
+           keep "NV-BASE" as the top-level identifier). */
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+        }
+        .header-subtitle-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.35rem;
+        }
+        .header-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin: 0;
+            font-weight: 400;
+            line-height: 1.3;
+        }
+        .header-powered-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.6rem;
+            border: 1px solid rgba(255,255,255,0.32);
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.10));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.20);
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .header-powered-tag::before {
+            content: "";
+            width: 0.4rem;
+            height: 0.4rem;
+            border-radius: 999px;
+            background: #a3e635;
+            box-shadow: 0 0 0 2px rgba(163,230,53,0.20);
+        }
+        .header-meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+        .header-meta-item { font-size: 0.8rem; opacity: 0.85; margin: 0; }
+        .header-target-link {
+            color: #a5d8ff;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            transition: color 0.15s ease;
+        }
+        .header-target-link:hover { color: #ffffff; }
+        .header-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .theme-toggle, .export-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .theme-toggle:hover, .export-btn:hover { background: rgba(255,255,255,0.25); }
+        .header-status-badge {
+            display: inline-block;
+            padding: 0.375rem 1rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .header-status-badge.pass { background: rgba(255,255,255,0.95); color: var(--success-color); }
+        .header-status-badge.fail { background: #fecaca; color: #991b1b; border: 1px solid #fca5a5; }
+        [data-theme="dark"] .header-status-badge.fail { background: #450a0a; color: #fca5a5; border-color: #991b1b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .nav-tabs { display: flex; gap: 0.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg);
+            color: var(--dark-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .nav-tab:hover { border-color: var(--secondary-color); color: var(--secondary-color); }
+        .nav-tab.active { background: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .dashboard-card {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        .dashboard-card:hover { box-shadow: var(--shadow-lg); }
+        .dashboard-card-title {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+        }
+        .dashboard-card-value { font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--dark-text); }
+        .dashboard-card-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin: 0.25rem 0 0 0; }
+        .dashboard-card.success .dashboard-card-value { color: var(--success-color); }
+        .dashboard-card.danger .dashboard-card-value { color: var(--danger-color); }
+        .progress-bar {
+            width: 100%; height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--success-color);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-badge.pass { background: #dcfce7; color: #166534; }
+        .status-badge.fail { background: #fee2e2; color: #991b1b; }
+        .status-badge.warn { background: #fef3c7; color: #92400e; }
+        [data-theme="dark"] .status-badge.pass { background: #14532d; color: #86efac; }
+        [data-theme="dark"] .status-badge.fail { background: #450a0a; color: #fca5a5; }
+        [data-theme="dark"] .status-badge.warn { background: #451a03; color: #fcd34d; }
+        .section-header {
+            color: var(--dark-text);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .filter-group {
+            display: flex; gap: 0.5rem; margin: 1.25rem 0; flex-wrap: wrap;
+            position: sticky; top: 4.5rem; z-index: 50;
+            background: var(--light-bg); padding-top: 0.75rem; padding-bottom: 0.75rem;
+        }
+        .filter-btn {
+            padding: 0.4rem 0.875rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg);
+            color: var(--dark-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .filter-btn:hover { border-color: var(--secondary-color); }
+        .filter-btn.active { background: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+        .filter-btn.success.active { background: var(--success-color); border-color: var(--success-color); }
+        .filter-btn.danger.active { background: var(--danger-color); border-color: var(--danger-color); }
+        .table-section { margin: 1.25rem 0; }
+        .table-toggle {
+            background: var(--bg);
+            color: var(--dark-text);
+            cursor: pointer;
+            padding: 0.875rem 1rem;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-toggle:hover { background: var(--bg-secondary); }
+        .table-toggle .toggle-icon { font-size: 0.75rem; color: var(--text-secondary); transition: transform 0.2s ease; }
+        .table-toggle.active .toggle-icon { transform: rotate(180deg); }
+        .table-container {
+            background: var(--bg);
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease-out;
+            border: 1px solid var(--border-color);
+            border-top: none;
+        }
+        .table-container.active { max-height: 2000px; }
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table th {
+            background: var(--table-header-bg);
+            color: var(--text-secondary);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .summary-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.875rem; }
+        .summary-table tbody tr { cursor: pointer; transition: background-color 0.15s ease; }
+        .summary-table tbody tr:hover { background-color: var(--table-row-hover); }
+        .summary-table tbody tr:last-child td { border-bottom: none; }
+        .summary-table .name-col { font-weight: 500; color: var(--dark-text); }
+        .summary-table .error-text { color: var(--danger-color); font-weight: 600; }
+        .summary-table .warning-text { color: var(--warning-color); font-weight: 600; }
+        .skill-card, .validator-card, .skill-filter-banner { scroll-margin-top: 9rem; }
+        .validator-card { margin-bottom: 0.75rem; border-radius: 8px; overflow: hidden; }
+        .validator-collapsible {
+            background: var(--bg);
+            color: var(--dark-text);
+            cursor: pointer;
+            padding: 0.875rem 1rem;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .validator-collapsible:hover { background: var(--bg-secondary); }
+        .validator-collapsible.active {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+            border-radius: 8px 8px 0 0;
+        }
+        .validator-collapsible .expand-text { font-size: 0.7rem; font-weight: 500; opacity: 0.7; }
+        .validator-collapsible.active .expand-text { opacity: 0.9; }
+        .collapsible-header { display: flex; align-items: center; gap: 0.625rem; flex: 1; }
+        .collapsible-header .status-indicator { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .collapsible-header .status-indicator.pass { background: var(--success-color); }
+        .collapsible-header .status-indicator.fail { background: var(--danger-color); }
+        .validator-collapsible.active .status-indicator.pass { background: #86efac; }
+        .validator-collapsible.active .status-indicator.fail { background: #fca5a5; }
+        .validator-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .validator-content.active { max-height: 5000px; padding: 1rem; }
+        .validator-summary {
+            display: flex; flex-wrap: wrap; gap: 1rem;
+            padding: 0.625rem 0; margin-bottom: 0.625rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.8rem; color: var(--text-secondary);
+        }
+        .summary-stat { display: flex; align-items: center; gap: 0.375rem; }
+        .summary-stat svg { width: 0.875rem; height: 0.875rem; }
+        .summary-stat.error { color: var(--danger-color); }
+        .summary-stat.warning { color: var(--warning-color); }
+        .success-list { list-style: none; padding: 0; margin: 0; }
+        .success-item { padding: 0.375rem 0; display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.875rem; }
+        .success-icon { color: var(--success-color); flex-shrink: 0; width: 1rem; height: 1rem; margin-top: 0.125rem; }
+        .findings-list { display: flex; flex-direction: column; gap: 0.625rem; }
+        .finding { padding: 0.875rem; border-left: 3px solid; background: var(--bg-secondary); border-radius: 0 6px 6px 0; }
+        .finding.critical { border-color: var(--critical-color); }
+        .finding.high { border-color: var(--high-color); }
+        .finding.medium { border-color: var(--medium-color); }
+        .finding.low { border-color: var(--low-color); }
+        .finding.info { border-color: var(--info-color); }
+        .finding-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.375rem; }
+        .finding-message { font-weight: 500; font-size: 0.875rem; }
+        .severity-tag { font-size: 0.65rem; padding: 0.125rem 0.375rem; border-radius: 3px; font-weight: 600; white-space: nowrap; }
+        .severity-critical, .severity-high { background: #fee2e2; color: #991b1b; }
+        .severity-medium { background: #fef3c7; color: #92400e; }
+        .severity-low { background: #f3f4f6; color: #4b5563; }
+        .severity-info { background: #dbeafe; color: #1e40af; }
+        [data-theme="dark"] .severity-critical, [data-theme="dark"] .severity-high { background: #450a0a; color: #fca5a5; }
+        [data-theme="dark"] .severity-medium { background: #451a03; color: #fcd34d; }
+        [data-theme="dark"] .severity-low { background: #374151; color: #9ca3af; }
+        [data-theme="dark"] .severity-info { background: #1e3a8a; color: #93c5fd; }
+        .finding-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.375rem; }
+        .finding-meta span { display: flex; align-items: center; gap: 0.25rem; }
+        .meta-icon { width: 0.8rem; height: 0.8rem; flex-shrink: 0; }
+        .code-snippet {
+            font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 0.625rem 0.875rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+        .suggestion {
+            background: #f0fdf4;
+            padding: 0.625rem 0.875rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            border-left: 3px solid var(--success-color);
+            color: #166534;
+        }
+        [data-theme="dark"] .suggestion { background: #14532d; color: #bbf7d0; }
+        footer {
+            margin-top: 2rem;
+            padding: 1.25rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 0.8rem;
+            background: var(--bg);
+        }
+        #backToTop {
+            display: none;
+            position: fixed;
+            bottom: 1.5rem; right: 1.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.2s ease;
+            z-index: 99;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        #backToTop:hover { background: var(--primary-color); }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-content { flex-direction: column; align-items: flex-start; }
+            .header-meta { text-align: left; align-items: flex-start; }
+            .header-title { font-size: 1.65rem; }
+            .header-subtitle { font-size: 0.85rem; }
+            .header-powered-tag { font-size: 0.62rem; }
+            .dashboard { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-card-value { font-size: 1.5rem; }
+            .finding-header { flex-direction: column; gap: 0.375rem; }
+        }
+        @media (max-width: 480px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .header-controls { width: 100%; justify-content: flex-start; margin-top: 0.5rem; }
+        }
+        /* Skill-centric view styles */
+        .skill-card {
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+        .skill-header:hover { background: var(--table-row-hover); }
+        .skill-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--dark-text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .skill-name .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .skill-name .status-dot.pass { background: var(--success-color); }
+        .skill-name .status-dot.fail { background: var(--danger-color); }
+        .skill-checks-summary {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+        }
+        .skill-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .skill-content.active { max-height: 5000px; }
+        .skill-checks-grid {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .check-result {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .check-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.625rem 0.875rem;
+            background: var(--bg-secondary);
+            font-size: 0.875rem;
+        }
+        .check-name { font-weight: 600; color: var(--dark-text); }
+        .check-description { font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.5rem; font-weight: 400; }
+        .check-details { padding: 0.75rem 0.875rem; }
+        .check-details-list { list-style: none; margin: 0; padding: 0; }
+        .check-detail-item {
+            padding: 0.375rem 0;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .check-detail-item .detail-icon {
+            color: var(--success-color);
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+        }
+        .check-detail-item.finding .detail-icon { color: var(--danger-color); }
+        .check-finding {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--danger-color);
+            padding: 0.625rem 0.875rem;
+            margin: 0.5rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .check-finding.warning { border-left-color: var(--warning-color); }
+        .check-finding .finding-msg { font-weight: 500; font-size: 0.875rem; }
+        .check-finding .finding-suggestion {
+            background: #f0fdf4;
+            padding: 0.5rem 0.625rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #166534;
+        }
+        [data-theme="dark"] .check-finding .finding-suggestion { background: #14532d; color: #bbf7d0; }
+        .metadata-tag {
+            display: inline-block;
+            background: var(--bg-secondary);
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-left: 0.375rem;
+        }
+        .view-toggle-section {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .view-toggle-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg);
+            color: var(--dark-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .view-toggle-btn:hover { border-color: var(--secondary-color); }
+        .view-toggle-btn.active { background: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+        .results-view { display: none; }
+        .results-view.active { display: block; }
+        .skills-summary-bar {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        .skills-summary-bar .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .skills-summary-bar .summary-item strong { color: var(--dark-text); }
+        .skills-summary-bar .summary-item.pass strong { color: var(--success-color); }
+        .skills-summary-bar .summary-item.fail strong { color: var(--danger-color); }
+
+        /* Executive Summary / Top Issues table */
+        .top-issues-section {
+            margin: 1.5rem 0;
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .top-issues-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+        .top-issues-header:hover { background: var(--table-row-hover); }
+        .top-issues-header h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin: 0;
+        }
+        .top-issues-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .top-issues-content.active { max-height: 3000px; }
+        .top-issues-table { width: 100%; border-collapse: collapse; }
+        .top-issues-table th {
+            background: var(--table-header-bg);
+            color: var(--text-secondary);
+            padding: 0.625rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .top-issues-table td {
+            padding: 0.625rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+        .top-issues-table tbody tr:last-child td { border-bottom: none; }
+        .top-issues-table tbody tr { cursor: pointer; }
+        .top-issues-table tbody tr:hover { background: var(--table-row-hover); }
+        .skills-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        .skill-pill {
+            display: inline-block;
+            background: var(--bg-secondary);
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .skill-pill:hover { background: var(--secondary-color); color: white; }
+        /* Pair the skill pill (jumps to finding) with a small quality-score
+           link so the two destinations stay distinct: the issue lives in the
+           main pill, the quality score lives in the trailing ``Q`` chip. */
+        .skill-pill-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+        }
+        .skill-pill-group .skill-pill {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .quality-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.1rem;
+            height: 1.1rem;
+            padding: 0 0.3rem;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-left: 1px solid var(--border-color);
+        }
+        .quality-pill:hover { background: var(--warning-color); color: white; }
+        .top-issues-active-row { background: var(--bg-secondary) !important; outline: 2px solid var(--secondary-color); outline-offset: -2px; }
+
+        /* Contributor Summary */
+        .contributor-section {
+            margin: 1.5rem 0;
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .contributor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+        .contributor-header:hover { background: var(--table-row-hover); }
+        .contributor-header h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin: 0;
+        }
+        .contributor-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .contributor-content.active { max-height: 3000px; }
+        .contributor-table { width: 100%; border-collapse: collapse; }
+        .contributor-table th {
+            background: var(--table-header-bg);
+            color: var(--text-secondary);
+            padding: 0.625rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .contributor-table td {
+            padding: 0.625rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+        .contributor-table tbody tr:last-child td { border-bottom: none; }
+        .contributor-table tbody tr:hover { background: var(--table-row-hover); }
+        .contributor-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        .contributor-item-pill {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .contributor-item-pill.pass { background: #dcfce7; color: #166534; }
+        .contributor-item-pill.fail { background: #fee2e2; color: #991b1b; }
+        [data-theme="dark"] .contributor-item-pill.pass { background: #14532d; color: #86efac; }
+        [data-theme="dark"] .contributor-item-pill.fail { background: #450a0a; color: #fca5a5; }
+        .contributor-item-pill:hover { opacity: 0.8; }
+
+        .skill-filter-banner {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #1e40af;
+            position: sticky; top: 8rem; z-index: 49;
+        }
+        [data-theme="dark"] .skill-filter-banner { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
+        .skill-filter-banner.visible { display: flex; }
+        .skill-filter-banner .clear-filter {
+            margin-left: auto;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 0.3rem 0.875rem;
+            border-radius: 4px;
+            border: 1px solid currentColor;
+            background: transparent;
+            color: inherit;
+            font-size: 0.8rem;
+        }
+        .skill-filter-banner .clear-filter:hover { background: rgba(0,0,0,0.08); }
+        [data-theme="dark"] .skill-filter-banner .clear-filter:hover { background: rgba(255,255,255,0.1); }
+        .count-badge {
+            display: inline-block;
+            background: var(--danger-color);
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            min-width: 1.5rem;
+            text-align: center;
+        }
+        .count-badge.medium-count { background: var(--warning-color); }
+        .count-badge.low-count { background: var(--low-color); }
+
+        /* Severity filter controls */
+        .severity-filter-group {
+            display: flex;
+            gap: 0.375rem;
+            margin-left: auto;
+            align-items: center;
+        }
+        .severity-filter-btn {
+            padding: 0.25rem 0.625rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg);
+            color: var(--dark-text);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .severity-filter-btn:hover { border-color: var(--secondary-color); }
+        .severity-filter-btn.active { background: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+        .severity-filter-btn.active.critical-btn { background: var(--critical-color); border-color: var(--critical-color); }
+        .severity-filter-btn.active.high-btn { background: var(--high-color); border-color: var(--high-color); }
+
+        /* Confidence badge */
+        .confidence-badge {
+            display: inline-block;
+            padding: 0.1rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-left: 0.375rem;
+        }
+        .confidence-badge.high-conf { background: #fee2e2; color: #991b1b; }
+        .confidence-badge.medium-conf { background: #fef3c7; color: #92400e; }
+        .confidence-badge.low-conf { background: #f3f4f6; color: #6b7280; border: 1px dashed #d1d5db; }
+        [data-theme="dark"] .confidence-badge.high-conf { background: #450a0a; color: #fca5a5; }
+        [data-theme="dark"] .confidence-badge.medium-conf { background: #451a03; color: #fcd34d; }
+        [data-theme="dark"] .confidence-badge.low-conf { background: #374151; color: #9ca3af; border-color: #4b5563; }
+
+        /* Low-confidence finding styling */
+        .check-finding.low-confidence {
+            opacity: 0.65;
+            border-left-style: dashed;
+        }
+        .check-finding.low-confidence:hover { opacity: 1; }
+
+        /* Aggregated finding occurrences */
+        .occurrence-badge {
+            display: inline-block;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+        }
+        .lines-list {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Truncatable suggestion text */
+        .finding-suggestion.truncatable {
+            max-height: 2.4em;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        .finding-suggestion.truncatable::after {
+            content: '... Show more';
+            position: absolute;
+            right: 0.625rem;
+            bottom: 0;
+            background: #f0fdf4;
+            padding-left: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        [data-theme="dark"] .finding-suggestion.truncatable::after { background: #14532d; }
+        .finding-suggestion.truncatable.expanded {
+            max-height: none;
+        }
+        .finding-suggestion.truncatable.expanded::after {
+            content: 'Show less';
+            position: relative;
+            display: block;
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+
+        /* Expand/Collapse all button */
+        .bulk-action-btn {
+            padding: 0.3rem 0.625rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .bulk-action-btn:hover { border-color: var(--secondary-color); color: var(--secondary-color); }
+
+        /* Severity breakdown in dashboard */
+        .severity-breakdown {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.375rem;
+            flex-wrap: wrap;
+        }
+        .severity-breakdown-item {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.1rem 0.375rem;
+            border-radius: 3px;
+        }
+        .severity-breakdown-item.sev-critical { background: #fee2e2; color: #991b1b; }
+        .severity-breakdown-item.sev-high { background: #fee2e2; color: #991b1b; }
+        .severity-breakdown-item.sev-medium { background: #fef3c7; color: #92400e; }
+        .severity-breakdown-item.sev-low { background: #f3f4f6; color: #4b5563; }
+        [data-theme="dark"] .severity-breakdown-item.sev-critical,
+        [data-theme="dark"] .severity-breakdown-item.sev-high { background: #450a0a; color: #fca5a5; }
+        [data-theme="dark"] .severity-breakdown-item.sev-medium { background: #451a03; color: #fcd34d; }
+        [data-theme="dark"] .severity-breakdown-item.sev-low { background: #374151; color: #9ca3af; }
+
+        /* Issue count badge in skill header */
+        .issue-count-badge {
+            font-size: 0.7rem;
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+        /* Dedup finding collapsible cards */
+        .dedup-finding-high { border: 1px solid #fca5a5; background: #fef2f2; }
+        .dedup-finding-medium { border: 1px solid #fde68a; background: #fffbeb; }
+        [data-theme="dark"] .dedup-finding-high { border-color: #991b1b; background: #450a0a; }
+        [data-theme="dark"] .dedup-finding-medium { border-color: #92400e; background: #451a03; }
+        .dedup-recommendation {
+            margin-top: 0.75rem; padding: 0.75rem;
+            background: var(--bg-secondary); border-radius: 6px;
+            border-left: 3px solid var(--secondary-color);
+        }
+        .dedup-finding { list-style: none; }
+        .dedup-finding::-webkit-details-marker { display: none; }
+        .dedup-finding > summary { list-style: none; }
+        .dedup-finding > summary::-webkit-details-marker { display: none; }
+        .dedup-finding > summary::marker { display: none; content: ''; }
+        .dedup-finding .toggle-icon {
+            margin-left: auto;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .dedup-finding[open] .toggle-icon { transform: rotate(180deg); }
+        .agent-hero {
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .agent-hero-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .agent-hero-title-block { flex: 1 1 auto; min-width: 0; }
+        .agent-hero-eyebrow {
+            display: inline-block;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+        .agent-hero-title {
+            color: var(--secondary-color);
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0;
+            word-break: break-word;
+        }
+        .agent-hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.4rem;
+            line-height: 1.4;
+            word-break: break-all;
+        }
+        .agent-hero-subtitle a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px dashed var(--border-color); }
+        .agent-hero-subtitle a:hover { color: var(--secondary-color); border-bottom-color: var(--secondary-color); }
+        .agent-hero-meta { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; }
+        .agent-hero-score { font-size: 3rem; line-height: 1; font-weight: 800; text-align: right; }
+        .agent-hero-detail { color: var(--text-secondary); font-size: 0.85rem; text-align: right; margin-top: 0.25rem; }
+        .score-pass { color: var(--success-color); }
+        .score-warn { color: var(--warning-color); }
+        .score-fail { color: var(--danger-color); }
+        /* Tier summary tile cards (one per tier present in the run). */
+        .tier-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.85rem;
+        }
+        .tier-card {
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .tier-card[role="button"]:focus { outline: none; }
+        .tier-card[role="button"]:focus-visible {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+        .tier-card::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: var(--border-color);
+        }
+        .tier-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+        .tier-card.active {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px var(--secondary-color), var(--shadow);
+        }
+        .tier-card.active::before { width: 5px; background: var(--secondary-color); }
+        .tier-card.pass { background: linear-gradient(135deg, rgba(35, 134, 54, 0.08) 0%, var(--bg) 70%); }
+        .tier-card.pass::before { background: var(--success-color); }
+        .tier-card.fail { background: linear-gradient(135deg, rgba(218, 54, 51, 0.10) 0%, var(--bg) 70%); }
+        .tier-card.fail::before { background: var(--danger-color); }
+        .tier-card.warn { background: linear-gradient(135deg, rgba(187, 128, 9, 0.10) 0%, var(--bg) 70%); }
+        .tier-card.warn::before { background: var(--warning-color); }
+        .tier-card.skipped { opacity: 0.7; }
+        .tier-card.skipped::before { background: var(--text-secondary); }
+        .tier-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+        .tier-card-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .tier-card-verdict {
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            letter-spacing: 0.05em;
+        }
+        .tier-card.pass .tier-card-verdict { background: var(--success-color); color: white; }
+        .tier-card.fail .tier-card-verdict { background: var(--danger-color); color: white; }
+        .tier-card.warn .tier-card-verdict { background: var(--warning-color); color: white; }
+        .tier-card.skipped .tier-card-verdict { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .tier-card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .tier-card-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 0.85rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.15rem;
+        }
+        .tier-card-stats strong { color: var(--dark-text); font-weight: 700; }
+        .tier-card-sev {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.15rem;
+        }
+        .tier-card-sev-pill {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: var(--bg);
+        }
+        .tier-card-sev-pill.crit { color: var(--danger-color); border-color: var(--danger-color); }
+        .tier-card-sev-pill.high { color: #d29922; border-color: #d29922; }
+        .tier-card-sev-pill.med { color: var(--warning-color); border-color: var(--warning-color); }
+        .tier-card-sev-pill.low { color: var(--text-secondary); }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .chart-card {
+            background: var(--bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+        .chart-card h3 { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+        .table-scroll { overflow-x: auto; margin: 1rem 0; border-radius: 10px; border: 1px solid var(--border-color); }
+        .table-scroll .summary-table { margin: 0; }
+        .metric-bar-cell { display: flex; align-items: center; gap: 0.6rem; min-width: 120px; }
+        .metric-value { min-width: 2.5rem; font-weight: 700; }
+        .mini-bar { width: 76px; height: 7px; background: var(--bg-tertiary); border-radius: 999px; overflow: hidden; }
+        .mini-bar span { display: block; height: 100%; border-radius: 999px; }
+        @media (max-width: 720px) {
+            .agent-hero-score, .agent-hero-detail { text-align: left; }
+            .agent-hero-top { align-items: flex-start; }
+            .tier-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1 class="header-title">NV-BASE</h1>
+                <div class="header-subtitle-row">
+                    <p class="header-subtitle">NVIDIA Benchmark for Agent Skills Evaluation</p>
+                    
+                </div>
+            </div>
+            <div class="header-meta">
+                <div class="header-controls">
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                        <span id="theme-icon">☀</span><span id="theme-text">Light</span>
+                    </button>
+                    <button class="export-btn" onclick="exportJSON()" title="Export report as JSON">
+                        <span>↓</span><span>Export report as JSON</span>
+                    </button>
+                </div>
+                <p class="header-meta-item"><strong>Target:</strong> <a href="https://github-brandoing/NVIDIA/digital-health-skills/-/tree/chore/rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer" target="_blank" class="header-target-link" title="https://github-brandoing/NVIDIA/digital-health-skills/-/tree/chore/rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer">NVIDIA/digital-health-skills / rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer</a></p>
+                <p class="header-meta-item"><strong>Profile:</strong> <span class="header-profile-badge profile-external">external</span></p>
+                <p class="header-meta-item">Generated: May 28, 2026 at 08:58 PM UTC &middot; NV-BASE v2.11.0</p>
+                <span class="header-status-badge fail">Issues Found</span>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        
+        
+        
+        
+        
+        <section class="agent-hero">
+            <div class="agent-hero-top">
+                <div class="agent-hero-title-block">
+                    <span class="agent-hero-eyebrow">Skill under validation</span>
+                    <h2 class="agent-hero-title">skills/nemo-clinical-data-designer</h2>
+                    <div class="agent-hero-subtitle">
+                        <a href="https://github-brandoing/NVIDIA/digital-health-skills/-/tree/chore/rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer" target="_blank" title="https://github-brandoing/NVIDIA/digital-health-skills/-/tree/chore/rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer">NVIDIA/digital-health-skills / rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer</a>
+                    </div>
+                    
+                </div>
+                <div>
+                    <div class="agent-hero-score score-fail">81.8%</div>
+                    <div class="agent-hero-detail">
+                        <div><strong>Validators:</strong> 9/11 passed</div>
+                        <div><strong>Skills:</strong> 0/1 passed</div>
+                        <div><strong>Issues:</strong> 5</div>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="tier-cards">
+                
+                
+                <div class="tier-card fail active"
+                     role="button"
+                     tabindex="0"
+                     data-target-tab="tier1"
+                     onclick="showTab('tier1')"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showTab('tier1');}"
+                     aria-label="Open Tier 1: Security and Static Validation"
+                     title="Open Tier 1: Security and Static Validation">
+                    <div class="tier-card-head">
+                        <span class="tier-card-label">Tier 1</span>
+                        <span class="tier-card-verdict">FAIL</span>
+                    </div>
+                    <h3 class="tier-card-title">Security &amp; Static Validation</h3>
+                    <div class="tier-card-stats">
+                        <span><strong>8</strong>/9 validators passed</span>
+                        <span><strong>2</strong> issue(s)</span>
+                    </div>
+                    
+                    <div class="tier-card-sev">
+                        
+                        <span class="tier-card-sev-pill high">1 high</span>
+                        
+                        <span class="tier-card-sev-pill low">1 low</span>
+                    </div>
+                    
+                </div>
+                
+                
+                
+                <div class="tier-card fail"
+                     role="button"
+                     tabindex="0"
+                     data-target-tab="tier2"
+                     onclick="showTab('tier2')"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showTab('tier2');}"
+                     aria-label="Open Tier 2: Deduplication"
+                     title="Open Tier 2: Deduplication">
+                    <div class="tier-card-head">
+                        <span class="tier-card-label">Tier 2</span>
+                        <span class="tier-card-verdict">FAIL</span>
+                    </div>
+                    <h3 class="tier-card-title">Deduplication</h3>
+                    <div class="tier-card-stats">
+                        <span><strong>1</strong>/2 checks passed</span>
+                        <span><strong>1</strong> duplicate(s)</span>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </section>
+        
+        <div id="tab-tier1" class="tab-content active">
+        
+        <div class="dashboard">
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-title">Validators Run</h3>
+                <p class="dashboard-card-value">11</p>
+                <p class="dashboard-card-subtitle">Total checks executed</p>
+            </div>
+            <div class="dashboard-card success">
+                <h3 class="dashboard-card-title">Passed</h3>
+                <p class="dashboard-card-value">9</p>
+                <p class="dashboard-card-subtitle">81.8% success rate</p>
+            </div>
+            <div class="dashboard-card danger">
+                <h3 class="dashboard-card-title">Failed</h3>
+                <p class="dashboard-card-value">2</p>
+                <p class="dashboard-card-subtitle">Requires attention</p>
+                
+                <div class="severity-breakdown">
+                    <span class="severity-breakdown-item sev-critical">1 critical</span>
+                    <span class="severity-breakdown-item sev-high">1 high</span>
+                    
+                    <span class="severity-breakdown-item sev-low">1 low</span>
+                </div>
+                
+            </div>
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-title">Overall Status</h3>
+                <p class="dashboard-card-value"><span class="status-badge fail">Failed</span></p>
+                <p class="dashboard-card-subtitle">5 total issues</p>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width: 81.8%"></div></div>
+            </div>
+        </div>
+        <div class="view-toggle-section">
+            <span style="font-size: 0.875rem; color: var(--text-secondary); margin-right: 0.5rem;">View by:</span>
+            <button class="view-toggle-btn active" id="view-skill" onclick="switchView('skill')">By Skill</button>
+            <button class="view-toggle-btn" id="view-validator" onclick="switchView('validator')">By Validator</button>
+        </div>
+
+        
+        <div id="results-by-skill" class="results-view active">
+            
+            <div class="filter-group">
+                <button class="filter-btn active" id="skill-filter-all" onclick="filterSkills('all')">All Skills</button>
+                <button class="filter-btn success" id="skill-filter-pass" onclick="filterSkills('pass')">Passed Only</button>
+                <button class="filter-btn danger" id="skill-filter-fail" onclick="filterSkills('fail')">Failed Only</button>
+                <button class="bulk-action-btn" onclick="toggleAllSkills(true)">Expand All</button>
+                <button class="bulk-action-btn" onclick="toggleAllSkills(false)">Collapse All</button>
+                <div class="severity-filter-group">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Severity:</span>
+                    <button class="severity-filter-btn active" id="sev-filter-all" onclick="filterSeverity('all')">All</button>
+                    <button class="severity-filter-btn critical-btn" id="sev-filter-critical-high" onclick="filterSeverity('critical-high')">Critical+High</button>
+                    <button class="severity-filter-btn" id="sev-filter-medium" onclick="filterSeverity('medium')">Medium</button>
+                    <button class="severity-filter-btn" id="sev-filter-low" onclick="filterSeverity('low')">Low+Info</button>
+                </div>
+            </div>
+            <div class="skills-summary-bar">
+                <div class="summary-item"><span>Total Skills:</span> <strong>1</strong></div>
+                <div class="summary-item pass"><span>Passed:</span> <strong>0</strong></div>
+                <div class="summary-item fail"><span>Failed:</span> <strong>1</strong></div>
+            </div>
+
+            
+            
+            <div class="top-issues-section">
+                <div class="top-issues-header" onclick="toggleTopIssues(this)">
+                    <h3>Top Issues Across All Skills (3 unique issue types)</h3>
+                    <span class="expand-text">▲</span>
+                </div>
+                <div class="top-issues-content active">
+                    <table class="top-issues-table">
+                        <thead>
+                            <tr>
+                                <th>Issue</th>
+                                <th>Category</th>
+                                <th>Severity</th>
+                                <th>Total</th>
+                                <th>Skills Affected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                            <tr data-severity="high" data-affected-skills="nemo-clinical-data-designer" data-issue-key="84d10730eb50964a" onclick="filterToAffectedSkills(this)" title="Click to jump to the first occurrence of this issue">
+                                <td style="font-weight: 500;">Missing top-level heading (# Title) in SKILL.md body</td>
+                                <td><span class="metadata-tag">SCHEMA</span></td>
+                                <td><span class="severity-tag severity-high">HIGH</span></td>
+                                <td><span class="count-badge ">1</span></td>
+                                <td>
+                                    <div class="skills-pills">
+                                        
+                                        <span class="skill-pill-group">
+                                            <span class="skill-pill" onclick="event.stopPropagation(); scrollToFinding('nemo-clinical-data-designer', '84d10730eb50964a')" title="Jump to this issue in nemo-clinical-data-designer">nemo-clinical-data-designer</span>
+                                            <span class="quality-pill" onclick="event.stopPropagation(); scrollToQualityScore('nemo-clinical-data-designer')" title="View quality score for nemo-clinical-data-designer">Q</span>
+                                        </span>
+                                        
+                                        
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <tr data-severity="low" data-affected-skills="nemo-clinical-data-designer" data-issue-key="2f2cfea2df06ae22" onclick="filterToAffectedSkills(this)" title="Click to jump to the first occurrence of this issue">
+                                <td style="font-weight: 500;">Unexpected &#39;workflows&#39; in skill root</td>
+                                <td><span class="metadata-tag">SCHEMA</span></td>
+                                <td><span class="severity-tag severity-low">LOW</span></td>
+                                <td><span class="count-badge low-count">1</span></td>
+                                <td>
+                                    <div class="skills-pills">
+                                        
+                                        <span class="skill-pill-group">
+                                            <span class="skill-pill" onclick="event.stopPropagation(); scrollToFinding('nemo-clinical-data-designer', '2f2cfea2df06ae22')" title="Jump to this issue in nemo-clinical-data-designer">nemo-clinical-data-designer</span>
+                                            <span class="quality-pill" onclick="event.stopPropagation(); scrollToQualityScore('nemo-clinical-data-designer')" title="View quality score for nemo-clinical-data-designer">Q</span>
+                                        </span>
+                                        
+                                        
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <tr data-severity="critical" data-affected-skills="nemo-clinical-data-designer" data-issue-key="581efe1af3b43326" onclick="filterToAffectedSkills(this)" title="Click to jump to the first occurrence of this issue">
+                                <td style="font-weight: 500;">Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.</td>
+                                <td><span class="metadata-tag">INTER_SKILL</span></td>
+                                <td><span class="severity-tag severity-critical">CRITICAL</span></td>
+                                <td><span class="count-badge ">1</span></td>
+                                <td>
+                                    <div class="skills-pills">
+                                        
+                                        <span class="skill-pill-group">
+                                            <span class="skill-pill" onclick="event.stopPropagation(); scrollToFinding('nemo-clinical-data-designer', '581efe1af3b43326')" title="Jump to this issue in nemo-clinical-data-designer">nemo-clinical-data-designer</span>
+                                            <span class="quality-pill" onclick="event.stopPropagation(); scrollToQualityScore('nemo-clinical-data-designer')" title="View quality score for nemo-clinical-data-designer">Q</span>
+                                        </span>
+                                        
+                                        
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+
+            
+            
+            <div class="contributor-section">
+                <div class="contributor-header" onclick="toggleContributors(this)">
+                    <h3>Contributor Summary (1 contributor)</h3>
+                    <span class="expand-text">&#9650;</span>
+                </div>
+                <div class="contributor-content active">
+                    <table class="contributor-table">
+                        <thead>
+                            <tr>
+                                <th>Contributor</th>
+                                <th>Content Items</th>
+                                <th>Passed</th>
+                                <th>Failed</th>
+                                <th>Issues</th>
+                                <th>Items</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                            <tr>
+                                <td style="font-weight: 500;">Voice Eval Flywheel team &lt;brandoing@nvidia.com&gt;</td>
+                                <td>1</td>
+                                <td><span class="status-badge pass" style="font-size: 0.75rem;">0</span></td>
+                                <td>
+                                    
+                                    <span class="status-badge fail" style="font-size: 0.75rem;">1</span>
+                                    
+                                </td>
+                                <td>
+                                    
+                                    <span class="count-badge">3</span>
+                                    
+                                </td>
+                                <td>
+                                    <div class="contributor-items">
+                                        
+                                        <span class="contributor-item-pill fail" onclick="scrollToSkill('nemo-clinical-data-designer')" title="nemo-clinical-data-designer: Failed (3 issues)">nemo-clinical-data-designer</span>
+                                        
+                                        
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+
+            <div id="skill-filter-banner" class="skill-filter-banner">
+                <span id="skill-filter-banner-text">Showing skills affected by: ...</span>
+                <button class="clear-filter" onclick="clearSkillFilter()">Clear filter</button>
+            </div>
+
+            
+            <div class="skill-card" data-skill-status="fail" data-skill-name="nemo-clinical-data-designer">
+                <div class="skill-header" onclick="toggleSkill(this)">
+                    <div class="skill-name">
+                        <span class="status-dot fail"></span>
+                        nemo-clinical-data-designer
+                    </div>
+                    <div class="skill-checks-summary">
+                        
+                        
+                        
+                        
+                        <span class="status-badge pass" title="Quality Score">100.0 (A)</span>
+                        
+                        <span class="status-badge fail">Fail</span>
+                        <span style="color: var(--text-secondary);">11 checks</span>
+                        
+                        <span class="issue-count-badge">3 issues</span>
+                        
+                        <span class="expand-text">▲</span>
+                    </div>
+                </div>
+                <div class="skill-content active">
+                    
+                    <div class="quality-score-block" data-quality-skill-name="nemo-clinical-data-designer" style="background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--success-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <div>
+                                <strong style="font-size: 1.1rem;">Quality Score: 100.0/100</strong>
+                                <span style="margin-left: 0.5rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: white; background: var(--success-color);">A</span>
+                            </div>
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">Type: script-based</span>
+                        </div>
+                        <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th style="text-align: left; padding: 4px 8px;">Dimension</th>
+                                <th style="text-align: right; padding: 4px 8px;">Score</th>
+                                <th style="text-align: right; padding: 4px 8px;">Weight</th>
+                                <th style="text-align: left; padding: 4px 8px; width: 50%;">Bar</th>
+                            </tr>
+                            
+                            <tr>
+                                <td style="padding: 4px 8px; text-transform: capitalize;">correctness</td>
+                                <td style="text-align: right; padding: 4px 8px; font-weight: bold; color: var(--success-color);">100.0</td>
+                                <td style="text-align: right; padding: 4px 8px; color: var(--text-secondary);">35.0%</td>
+                                <td style="padding: 4px 8px;">
+                                    <div style="background: var(--border-color); border-radius: 4px; height: 8px; overflow: hidden;">
+                                        <div style="height: 100%; width: 100.0%; background: var(--success-color); border-radius: 4px;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td style="padding: 4px 8px; text-transform: capitalize;">discoverability</td>
+                                <td style="text-align: right; padding: 4px 8px; font-weight: bold; color: var(--success-color);">100.0</td>
+                                <td style="text-align: right; padding: 4px 8px; color: var(--text-secondary);">25.0%</td>
+                                <td style="padding: 4px 8px;">
+                                    <div style="background: var(--border-color); border-radius: 4px; height: 8px; overflow: hidden;">
+                                        <div style="height: 100%; width: 100.0%; background: var(--success-color); border-radius: 4px;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td style="padding: 4px 8px; text-transform: capitalize;">reliability</td>
+                                <td style="text-align: right; padding: 4px 8px; font-weight: bold; color: var(--success-color);">100.0</td>
+                                <td style="text-align: right; padding: 4px 8px; color: var(--text-secondary);">25.0%</td>
+                                <td style="padding: 4px 8px;">
+                                    <div style="background: var(--border-color); border-radius: 4px; height: 8px; overflow: hidden;">
+                                        <div style="height: 100%; width: 100.0%; background: var(--success-color); border-radius: 4px;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td style="padding: 4px 8px; text-transform: capitalize;">efficiency</td>
+                                <td style="text-align: right; padding: 4px 8px; font-weight: bold; color: var(--success-color);">100.0</td>
+                                <td style="text-align: right; padding: 4px 8px; color: var(--text-secondary);">15.0%</td>
+                                <td style="padding: 4px 8px;">
+                                    <div style="background: var(--border-color); border-radius: 4px; height: 8px; overflow: hidden;">
+                                        <div style="height: 100%; width: 100.0%; background: var(--success-color); border-radius: 4px;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                        </table>
+                        
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                            Tokens: 1833
+                            
+                            (recommended max: &lt;5000)
+                            
+                             | Scripts: 1
+                            
+                             | Error Handling: Yes
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="skill-checks-grid">
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">Context Deduplication</span>
+                                    <span class="check-description">Detect redundant content within a skill directory</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>Collected 8 file(s)</span>
+                                        </li>
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>Extracted 33 chunk(s)</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">HYGIENE</span>
+                                    <span class="check-description">Code Integrity &amp; Hygiene</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>Checking 7 markdown files for dead links</span>
+                                        </li>
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>All relative links valid in 7 markdown file(s)</span>
+                                        </li>
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>No dependency files found (requirements.txt, pyproject.toml)</span>
+                                        </li>
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>No tests found - coverage check skipped</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">Inter-Skill Deduplication</span>
+                                    <span class="check-description">Detect duplicate skills across the catalog</span>
+                                </div>
+                                <span class="status-badge fail">Fail</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    <div class="check-finding critical " data-finding-severity="critical" data-finding-confidence="high" data-issue-key="581efe1af3b43326">
+                                        <div class="finding-msg">
+                                            Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.
+                                            
+                                            
+                                        </div>
+                                        <div class="finding-meta" style="margin-top: 0.375rem;">
+                                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> skills/nemo-clinical-data-designer</span>
+                                            
+                                            <span class="severity-tag severity-critical" style="margin-left: 0.5rem;">CRITICAL</span>
+                                        </div>
+                                        
+                                        <div class="finding-suggestion truncatable" onclick="this.classList.toggle('expanded')"><strong>Fix:</strong> Set MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD (and MILVUS_DB if non-default) in the CI environment. For P4 CI these are sourced from NVIDIA Vault — verify the runAs/AppRole path in nvci_nvbase.sh&#39;s preflight. Tier 2A (intra-skill dedup) still runs without these; only Tier 2B is skipped.</div>
+                                    </div>
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">LICENSE</span>
+                                    <span class="check-description">License Compliance</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    <span style="color: var(--success-color); font-size: 0.8rem;"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> All checks passed</span>
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">PII</span>
+                                    <span class="check-description">PII Detection Scanning</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>Scanning 8 files for PII</span>
+                                        </li>
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>No PII detected in 8 files (emails, SSNs, phone numbers, paths)</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">QUALITY</span>
+                                    <span class="check-description">Quality Score (4-Dimension Analysis)</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>Score: 100.0/100 (Grade: A)</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">SCHEMA</span>
+                                    <span class="check-description">Schema &amp; Repository Governance</span>
+                                </div>
+                                <span class="status-badge fail">Fail</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    <div class="check-finding high " data-finding-severity="high" data-finding-confidence="high" data-issue-key="84d10730eb50964a">
+                                        <div class="finding-msg">
+                                            Missing top-level heading (# Title) in SKILL.md body
+                                            
+                                            
+                                        </div>
+                                        <div class="finding-meta" style="margin-top: 0.375rem;">
+                                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> SKILL.md</span>
+                                            
+                                            <span class="severity-tag severity-high" style="margin-left: 0.5rem;">HIGH</span>
+                                        </div>
+                                        
+                                        <div class="finding-suggestion " ><strong>Fix:</strong> Add a top-level heading after the frontmatter, e.g. &#39;# My Skill&#39;</div>
+                                    </div>
+                                    
+                                    
+                                    <div class="check-finding low " data-finding-severity="low" data-finding-confidence="high" data-issue-key="2f2cfea2df06ae22">
+                                        <div class="finding-msg">
+                                            Unexpected &#39;workflows&#39; in skill root
+                                            
+                                            
+                                        </div>
+                                        <div class="finding-meta" style="margin-top: 0.375rem;">
+                                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> workflows</span>
+                                            
+                                            <span class="severity-tag severity-low" style="margin-left: 0.5rem;">LOW</span>
+                                        </div>
+                                        
+                                        <div class="finding-suggestion " ><strong>Fix:</strong> Consider moving to references/, scripts/, assets/, or evals/ directory</div>
+                                    </div>
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">SCRIPT_LINT</span>
+                                    <span class="check-description">Script Lint (Advisory)</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>All 1 script(s) passed lint checks</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">SECURITY</span>
+                                    <span class="check-description">Security Vulnerability Scanning</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    <span style="color: var(--success-color); font-size: 0.8rem;"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> All checks passed</span>
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">UNICODE</span>
+                                    <span class="check-description">Unicode Smuggling Detection</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>No invisible Unicode characters detected in 8 file(s)</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="check-result">
+                            <div class="check-header">
+                                <div>
+                                    <span class="check-name">VERSION</span>
+                                    <span class="check-description">Semantic Version Validation</span>
+                                </div>
+                                <span class="status-badge pass">Pass</span>
+                            </div>
+                            <div class="check-details">
+                                
+                                    
+                                    
+                                    
+                                    
+                                    <ul class="check-details-list">
+                                        
+                                        <li class="check-detail-item">
+                                            <span class="detail-icon"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg></span>
+                                            <span>No semantic version label present; resource will use commit-hash history (opting back out of an existing label is allowed)</span>
+                                        </li>
+                                        
+                                    </ul>
+                                    
+                                    
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>
+
+        
+        <div id="results-by-validator" class="results-view">
+        <div class="filter-group">
+            <button class="filter-btn active" id="filter-all" onclick="filterValidators('all')">All Validators</button>
+            <button class="filter-btn success" id="filter-pass" onclick="filterValidators('pass')">Passed Only</button>
+            <button class="filter-btn danger" id="filter-fail" onclick="filterValidators('fail')">Failed Only</button>
+        </div>
+        <div class="table-section">
+            <button class="table-toggle active" onclick="toggleTable(this)">
+                <span>Validation Summary</span>
+                <span class="toggle-icon">▼</span>
+            </button>
+            <div class="table-container active">
+                <table class="summary-table">
+                    <thead><tr><th>Validator</th><th>Status</th><th>Files Scanned</th><th>Checks Performed</th><th>Errors</th><th>Warnings</th></tr></thead>
+                    <tbody>
+                        
+                        <tr onclick="scrollToValidator(1)" data-status="pass">
+                            <td class="name-col">SECURITY</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>0</td>
+                            <td>0</td>
+                            <td class="">0</td>
+                            <td class="warning-text">1</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(2)" data-status="fail">
+                            <td class="name-col">SCHEMA</td>
+                            <td><span class="status-badge fail">Fail</span></td>
+                            <td>0</td>
+                            <td>10</td>
+                            <td class="error-text">1</td>
+                            <td class="warning-text">1</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(3)" data-status="pass">
+                            <td class="name-col">VERSION</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>0</td>
+                            <td>1</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(4)" data-status="pass">
+                            <td class="name-col">PII</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>8</td>
+                            <td>2</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(5)" data-status="pass">
+                            <td class="name-col">LICENSE</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>0</td>
+                            <td>0</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(6)" data-status="pass">
+                            <td class="name-col">HYGIENE</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>7</td>
+                            <td>4</td>
+                            <td class="">0</td>
+                            <td class="warning-text">1</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(7)" data-status="pass">
+                            <td class="name-col">UNICODE</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>8</td>
+                            <td>1</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(8)" data-status="pass">
+                            <td class="name-col">QUALITY</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>0</td>
+                            <td>1</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(9)" data-status="pass">
+                            <td class="name-col">SCRIPT_LINT</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>0</td>
+                            <td>1</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(10)" data-status="pass">
+                            <td class="name-col">Context Deduplication</td>
+                            <td><span class="status-badge pass">Pass</span></td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td class="">0</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                        <tr onclick="scrollToValidator(11)" data-status="fail">
+                            <td class="name-col">Inter-Skill Deduplication</td>
+                            <td><span class="status-badge fail">Fail</span></td>
+                            <td>0</td>
+                            <td>1</td>
+                            <td class="error-text">1</td>
+                            <td class="">0</td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="section-header">Detailed Results</div>
+        
+        <div class="validator-card" id="validator-1" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>SECURITY</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Security Vulnerability Scanning</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>All checks passed</span></li>
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-2" data-status="fail">
+            <button class="validator-collapsible active" onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator fail"></span>
+                    <span>SCHEMA</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Schema &amp; Repository Governance</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge fail">Fail</span>
+                    <span class="expand-text">▲ Collapse</span>
+                </div>
+            </button>
+            <div class="validator-content active">
+                
+                <div class="validator-summary">
+                    
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 10 checks performed</span>
+                    <span class="summary-stat error">1 errors (1 high)</span>
+                    <span class="summary-stat warning">1 warnings</span>
+                </div>
+                
+                
+                <div class="findings-list">
+                    
+                    <div class="finding high">
+                        <div class="finding-header">
+                            <span class="finding-message">Missing top-level heading (# Title) in SKILL.md body</span>
+                            <span class="severity-tag severity-high">HIGH</span>
+                        </div>
+                        <div class="finding-meta">
+                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> skills/nemo-clinical-data-designer/SKILL.md</span>
+                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.5 7a4.499 4.499 0 11-8.998 0A4.499 4.499 0 0111.5 7zm-.82 4.74a6 6 0 111.06-1.06l3.04 3.04a.75.75 0 11-1.06 1.06l-3.04-3.04z"/></svg> body_heading</span>
+                        </div>
+                        
+                        <div class="suggestion"><strong>Suggestion:</strong> Add a top-level heading after the frontmatter, e.g. &#39;# My Skill&#39;</div>
+                    </div>
+                    
+                    <div class="finding low">
+                        <div class="finding-header">
+                            <span class="finding-message">Unexpected &#39;workflows&#39; in skill root</span>
+                            <span class="severity-tag severity-low">LOW</span>
+                        </div>
+                        <div class="finding-meta">
+                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> skills/nemo-clinical-data-designer/workflows</span>
+                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.5 7a4.499 4.499 0 11-8.998 0A4.499 4.499 0 0111.5 7zm-.82 4.74a6 6 0 111.06-1.06l3.04 3.04a.75.75 0 11-1.06 1.06l-3.04-3.04z"/></svg> unexpected_file</span>
+                        </div>
+                        
+                        <div class="suggestion"><strong>Suggestion:</strong> Consider moving to references/, scripts/, assets/, or evals/ directory</div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-3" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>VERSION</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Semantic Version Validation</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 1 checks performed</span>
+                    
+                    
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>version_optional: No semantic version label present; resource will use commit-hash history (opting back out of an existing label is allowed) (previous_version=None)</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-4" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>PII</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— PII Detection Scanning</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    <span class="summary-stat"><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> 8 files scanned</span>
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 2 checks performed</span>
+                    
+                    
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>pii_scan_start: Scanning 8 files for PII (file_count=8)</span></li><li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>pii_detection: No PII detected in 8 files (emails, SSNs, phone numbers, paths) (files_scanned=8)</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-5" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>LICENSE</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— License Compliance</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>Tier 1: Found license declaration in frontmatter (SKILL.md)</span></li><li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>License: Apache-2.0 (ALLOWED - permissive)</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-6" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>HYGIENE</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Code Integrity &amp; Hygiene</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    <span class="summary-stat"><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> 7 files scanned</span>
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 4 checks performed</span>
+                    
+                    <span class="summary-stat warning">1 warnings</span>
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>dead_links_scan: Checking 7 markdown files for dead links (file_count=7)</span></li><li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>dead_links: All relative links valid in 7 markdown file(s) (files_checked=7)</span></li><li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>dependencies: No dependency files found (requirements.txt, pyproject.toml)</span></li><li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>test_coverage: No tests found - coverage check skipped</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-7" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>UNICODE</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Unicode Smuggling Detection</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    <span class="summary-stat"><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> 8 files scanned</span>
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 1 checks performed</span>
+                    
+                    
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>unicode_scan: No invisible Unicode characters detected in 8 file(s) (files_scanned=8)</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-8" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>QUALITY</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Quality Score (4-Dimension Analysis)</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 1 checks performed</span>
+                    
+                    
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>quality_score: Score: 100.0/100 (Grade: A) (overall_score=100.0, grade=A, skill_type=script-based)</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-9" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>SCRIPT_LINT</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Script Lint (Advisory)</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 1 checks performed</span>
+                    
+                    
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>lint: All 1 script(s) passed lint checks</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-10" data-status="pass">
+            <button class="validator-collapsible " onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator pass"></span>
+                    <span>Context Deduplication</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Detect redundant content within a skill directory</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge pass">Pass</span>
+                    <span class="expand-text">▼ Expand</span>
+                </div>
+            </button>
+            <div class="validator-content ">
+                
+                <div class="validator-summary">
+                    
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 2 checks performed</span>
+                    
+                    
+                </div>
+                
+                
+                <ul class="success-list">
+                    <li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>file_collection: Collected 8 file(s) (file_count=8)</span></li><li class="success-item"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg><span>chunking: Extracted 33 chunk(s) (chunk_count=33)</span></li>
+                    
+                </ul>
+                
+                
+            </div>
+        </div>
+        
+        <div class="validator-card" id="validator-11" data-status="fail">
+            <button class="validator-collapsible active" onclick="toggleValidator(this)">
+                <div class="collapsible-header">
+                    <span class="status-indicator fail"></span>
+                    <span>Inter-Skill Deduplication</span>
+                    <span style="opacity:0.6;font-weight:400;font-size:0.8rem;margin-left:0.25rem">— Detect duplicate skills across the catalog</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem">
+                    <span class="status-badge fail">Fail</span>
+                    <span class="expand-text">▲ Collapse</span>
+                </div>
+            </button>
+            <div class="validator-content active">
+                
+                <div class="validator-summary">
+                    
+                    <span class="summary-stat"><svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> 1 checks performed</span>
+                    <span class="summary-stat error">1 errors (1 critical)</span>
+                    
+                </div>
+                
+                
+                <div class="findings-list">
+                    
+                    <div class="finding critical">
+                        <div class="finding-header">
+                            <span class="finding-message">Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.</span>
+                            <span class="severity-tag severity-critical">CRITICAL</span>
+                        </div>
+                        <div class="finding-meta">
+                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/><path fill-rule="evenodd" d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"/></svg> skills/nemo-clinical-data-designer</span>
+                            <span><svg class="meta-icon" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.5 7a4.499 4.499 0 11-8.998 0A4.499 4.499 0 0111.5 7zm-.82 4.74a6 6 0 111.06-1.06l3.04 3.04a.75.75 0 11-1.06 1.06l-3.04-3.04z"/></svg> milvus_error</span>
+                        </div>
+                        
+                        <div class="suggestion"><strong>Suggestion:</strong> Set MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD (and MILVUS_DB if non-default) in the CI environment. For P4 CI these are sourced from NVIDIA Vault — verify the runAs/AppRole path in nvci_nvbase.sh&#39;s preflight. Tier 2A (intra-skill dedup) still runs without these; only Tier 2B is skipped.</div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        </div>
+        
+        </div>
+        
+        <div id="tab-tier2" class="tab-content ">
+        
+        
+
+        
+        
+        
+        
+        
+
+        
+        <div class="dashboard">
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-title">Checks Run</h3>
+                <p class="dashboard-card-value">2</p>
+                <p class="dashboard-card-subtitle">Intra-Skill + Inter-Skill</p>
+            </div>
+            <div class="dashboard-card danger">
+                <h3 class="dashboard-card-title">Duplicates Found</h3>
+                <p class="dashboard-card-value">1</p>
+                <p class="dashboard-card-subtitle" style="font-size:0.8rem;">Intra: 0 &nbsp;|&nbsp; Inter: 1</p>
+            </div>
+        </div>
+
+        
+        
+        <div class="nav-tabs" style="margin-top:1rem;">
+            <button class="nav-tab active" onclick="showDedupTab('intra')">
+                Intra-Skill
+                
+            </button>
+            <button class="nav-tab" onclick="showDedupTab('inter')">
+                Inter-Skill
+                <span style="background:var(--danger-color);color:white;border-radius:10px;padding:0 6px;font-size:0.7rem;margin-left:4px;">1</span>
+            </button>
+        </div>
+        
+
+        
+        <div id="dedup-intra" class="dedup-subtab" style="display:block;">
+        
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin:0.75rem 0;">
+                Checks for redundant content <strong>within</strong> the skill directory — copy-pasted sections, repeated guidelines, duplicate paragraphs across files.
+            </p>
+            
+                
+                <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:8px;padding:1rem;margin:0.75rem 0;">
+                    <svg class="success-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> <strong style="color:var(--success-color);">No internal duplicates detected.</strong>
+                    
+                    <ul style="margin:0.5rem 0 0;padding-left:1.25rem;font-size:0.85rem;color:var(--text-secondary);">
+                        <li>Collected 8 file(s)</li><li>Extracted 33 chunk(s)</li>
+                    </ul>
+                    
+                </div>
+                
+                
+            
+        
+        </div>
+
+        
+        <div id="dedup-inter" class="dedup-subtab" style="display:none;">
+        
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin:0.75rem 0;">
+                Checks if this skill duplicates or overlaps with <strong>existing skills</strong> in the catalog via Milvus semantic search + LLM analysis.
+            </p>
+            
+                
+                
+                
+                
+                <details class="dedup-finding dedup-finding-high" style="border-radius:8px;margin:0.75rem 0;" open>
+                    <summary style="padding:1rem;cursor:pointer;display:flex;align-items:center;gap:0.5rem;">
+                        <span class="severity-tag severity-critical" style="font-size:0.7rem;padding:2px 8px;border-radius:4px;">CRITICAL</span>
+                        <strong style="font-size:0.95rem;">INTER_SKILL</strong>
+                        <span style="font-size:0.8rem;color:var(--text-secondary);margin-left:auto;margin-right:0.5rem;">skills/nemo-clinical-data-designer</span>
+                        <span class="toggle-icon">&#9660;</span>
+                    </summary>
+                    <div style="padding:0 1rem 1rem;">
+                        <div style="font-size:0.9rem;line-height:1.5;">Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.</div>
+                        
+                        
+                        <div class="dedup-recommendation">
+                            <strong style="color:var(--secondary-color);font-size:0.85rem;">Recommendation</strong>
+                            <p style="margin:0.25rem 0 0;font-size:0.85rem;line-height:1.5;">Set MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD (and MILVUS_DB if non-default) in the CI environment. For P4 CI these are sourced from NVIDIA Vault — verify the runAs/AppRole path in nvci_nvbase.sh&#39;s preflight. Tier 2A (intra-skill dedup) still runs without these; only Tier 2B is skipped.</p>
+                        </div>
+                        
+                    </div>
+                </details>
+                
+            
+        
+        </div>
+
+        
+
+        
+        </div>
+        
+    </div>
+    <footer>Generated by <strong>NV-BASE</strong> — NVIDIA Benchmark for Agent Skills Evaluation</footer>
+    <button id="backToTop" onclick="scrollToTop()" title="Back to Top">↑ Top</button>
+    <script id="report-data" type="application/json">{
+  "title": "NV-BASE Validation Report",
+  "timestamp": "May 28, 2026 at 08:58 PM UTC",
+  "nv_base_version": "2.11.0",
+  "target_path": "https://github-brandoing/NVIDIA/digital-health-skills/-/tree/chore/rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer",
+  "target_display": "NVIDIA/digital-health-skills / rename-data-designer-and-add-evals/skills/nemo-clinical-data-designer",
+  "summary": {
+    "all_passed": false,
+    "total_validators": 11,
+    "passed_count": 9,
+    "failed_count": 2,
+    "total_issues": 5,
+    "pass_percentage": 81.8,
+    "total_skills": 1,
+    "passed_skills": 0,
+    "failed_skills": 1
+  },
+  "results": [
+    {
+      "validator_name": "SECURITY",
+      "validator_description": "Security Vulnerability Scanning",
+      "passed": true,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 0,
+        "errors": 0,
+        "warnings": 1,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [],
+      "messages": [],
+      "errors": [],
+      "warnings": [
+        "skillspector not installed - skipping security scan. Install with: pip install skillspector"
+      ]
+    },
+    {
+      "validator_name": "SCHEMA",
+      "validator_description": "Schema & Repository Governance",
+      "passed": false,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 10,
+        "errors": 1,
+        "warnings": 1,
+        "critical_count": 0,
+        "high_count": 1,
+        "medium_count": 0,
+        "low_count": 1
+      },
+      "findings": [
+        {
+          "category": "SCHEMA",
+          "severity": "high",
+          "check_name": "body_heading",
+          "message": "Missing top-level heading (# Title) in SKILL.md body",
+          "file_path": "skills/nemo-clinical-data-designer/SKILL.md",
+          "line_number": null,
+          "line_content": null,
+          "suggestion": "Add a top-level heading after the frontmatter, e.g. '# My Skill'",
+          "location": "skills/nemo-clinical-data-designer/SKILL.md"
+        },
+        {
+          "category": "SCHEMA",
+          "severity": "low",
+          "check_name": "unexpected_file",
+          "message": "Unexpected 'workflows' in skill root",
+          "file_path": "skills/nemo-clinical-data-designer/workflows",
+          "line_number": null,
+          "line_content": null,
+          "suggestion": "Consider moving to references/, scripts/, assets/, or evals/ directory",
+          "location": "skills/nemo-clinical-data-designer/workflows"
+        }
+      ],
+      "success_details": [
+        {
+          "check_name": "manifest_exists",
+          "message": "Found skill manifest: SKILL.md",
+          "metadata": {
+            "file_path": "skills/nemo-clinical-data-designer/SKILL.md"
+          }
+        },
+        {
+          "check_name": "frontmatter_valid",
+          "message": "Valid frontmatter for skill 'nemo-clinical-data-designer'",
+          "metadata": {
+            "description_length": 134
+          }
+        },
+        {
+          "check_name": "folder_hierarchy",
+          "message": "Valid general skill structure: skills/nemo-clinical-data-designer/",
+          "metadata": {}
+        },
+        {
+          "check_name": "naming_convention",
+          "message": "Folder name 'nemo-clinical-data-designer' follows kebab-case convention",
+          "metadata": {
+            "name_length": 27
+          }
+        },
+        {
+          "check_name": "line_count",
+          "message": "SKILL.md within line limit (100/500)",
+          "metadata": {
+            "line_count": 100,
+            "limit": 500
+          }
+        },
+        {
+          "check_name": "body_recommended_section",
+          "message": "Found recommended section: '## Instructions' (or '## Usage')",
+          "metadata": {}
+        },
+        {
+          "check_name": "body_recommended_section",
+          "message": "Found recommended section: '## Examples'",
+          "metadata": {}
+        },
+        {
+          "check_name": "optional_files",
+          "message": "Found optional supporting files: scripts, evals, references",
+          "metadata": {
+            "files_found": [
+              "scripts",
+              "evals",
+              "references"
+            ]
+          }
+        },
+        {
+          "check_name": "name_consistency",
+          "message": "Directory name matches frontmatter: 'nemo-clinical-data-designer'",
+          "metadata": {}
+        },
+        {
+          "check_name": "author_format",
+          "message": "Valid author format: Voice Eval Flywheel team <brandoing@nvidia.com>",
+          "metadata": {}
+        }
+      ],
+      "messages": [
+        "[OK] manifest_exists: Found skill manifest: SKILL.md",
+        "[OK] frontmatter_valid: Valid frontmatter for skill 'nemo-clinical-data-designer'",
+        "[OK] folder_hierarchy: Valid general skill structure: skills/nemo-clinical-data-designer/",
+        "[OK] naming_convention: Folder name 'nemo-clinical-data-designer' follows kebab-case convention",
+        "[OK] line_count: SKILL.md within line limit (100/500)",
+        "[OK] body_recommended_section: Found recommended section: '## Instructions' (or '## Usage')",
+        "[OK] body_recommended_section: Found recommended section: '## Examples'",
+        "[OK] optional_files: Found optional supporting files: scripts, evals, references",
+        "[OK] name_consistency: Directory name matches frontmatter: 'nemo-clinical-data-designer'",
+        "[OK] author_format: Valid author format: Voice Eval Flywheel team <brandoing@nvidia.com>"
+      ],
+      "errors": [
+        "[SCHEMA-HIGH] Missing top-level heading (# Title) in SKILL.md body in skills/nemo-clinical-data-designer/SKILL.md"
+      ],
+      "warnings": [
+        "[SCHEMA-LOW] Unexpected 'workflows' in skill root in skills/nemo-clinical-data-designer/workflows"
+      ]
+    },
+    {
+      "validator_name": "VERSION",
+      "validator_description": "Semantic Version Validation",
+      "passed": true,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 1,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "version_optional",
+          "message": "No semantic version label present; resource will use commit-hash history (opting back out of an existing label is allowed)",
+          "metadata": {
+            "previous_version": null
+          }
+        }
+      ],
+      "messages": [
+        "[OK] version_optional: No semantic version label present; resource will use commit-hash history (opting back out of an existing label is allowed)"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "PII",
+      "validator_description": "PII Detection Scanning",
+      "passed": true,
+      "summary": {
+        "files_scanned": 8,
+        "checks_performed": 2,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "pii_scan_start",
+          "message": "Scanning 8 files for PII",
+          "metadata": {
+            "file_count": 8
+          }
+        },
+        {
+          "check_name": "pii_detection",
+          "message": "No PII detected in 8 files (emails, SSNs, phone numbers, paths)",
+          "metadata": {
+            "files_scanned": 8
+          }
+        }
+      ],
+      "messages": [
+        "[OK] pii_scan_start: Scanning 8 files for PII",
+        "[OK] pii_detection: No PII detected in 8 files (emails, SSNs, phone numbers, paths)"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "LICENSE",
+      "validator_description": "License Compliance",
+      "passed": true,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 0,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [],
+      "messages": [
+        "Tier 1: Found license declaration in frontmatter (SKILL.md)",
+        "License: Apache-2.0 (ALLOWED - permissive)"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "HYGIENE",
+      "validator_description": "Code Integrity & Hygiene",
+      "passed": true,
+      "summary": {
+        "files_scanned": 7,
+        "checks_performed": 4,
+        "errors": 0,
+        "warnings": 1,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "dead_links_scan",
+          "message": "Checking 7 markdown files for dead links",
+          "metadata": {
+            "file_count": 7
+          }
+        },
+        {
+          "check_name": "dead_links",
+          "message": "All relative links valid in 7 markdown file(s)",
+          "metadata": {
+            "files_checked": 7
+          }
+        },
+        {
+          "check_name": "dependencies",
+          "message": "No dependency files found (requirements.txt, pyproject.toml)",
+          "metadata": {}
+        },
+        {
+          "check_name": "test_coverage",
+          "message": "No tests found - coverage check skipped",
+          "metadata": {}
+        }
+      ],
+      "messages": [
+        "[OK] dead_links_scan: Checking 7 markdown files for dead links",
+        "[OK] dead_links: All relative links valid in 7 markdown file(s)",
+        "[OK] dependencies: No dependency files found (requirements.txt, pyproject.toml)",
+        "[OK] test_coverage: No tests found - coverage check skipped"
+      ],
+      "errors": [],
+      "warnings": [
+        "Consider adding tests. Minimum coverage: 80%"
+      ]
+    },
+    {
+      "validator_name": "UNICODE",
+      "validator_description": "Unicode Smuggling Detection",
+      "passed": true,
+      "summary": {
+        "files_scanned": 8,
+        "checks_performed": 1,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "unicode_scan",
+          "message": "No invisible Unicode characters detected in 8 file(s)",
+          "metadata": {
+            "files_scanned": 8
+          }
+        }
+      ],
+      "messages": [
+        "[OK] unicode_scan: No invisible Unicode characters detected in 8 file(s)"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "QUALITY",
+      "validator_description": "Quality Score (4-Dimension Analysis)",
+      "passed": true,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 1,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "quality_score",
+          "message": "Score: 100.0/100 (Grade: A)",
+          "metadata": {
+            "overall_score": 100.0,
+            "grade": "A",
+            "skill_type": "script-based"
+          }
+        }
+      ],
+      "messages": [
+        "[OK] quality_score: Score: 100.0/100 (Grade: A)"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "SCRIPT_LINT",
+      "validator_description": "Script Lint (Advisory)",
+      "passed": true,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 1,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "lint",
+          "message": "All 1 script(s) passed lint checks",
+          "metadata": {}
+        }
+      ],
+      "messages": [
+        "[OK] lint: All 1 script(s) passed lint checks"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "Context Deduplication",
+      "validator_description": "Detect redundant content within a skill directory",
+      "passed": true,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 2,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check_name": "file_collection",
+          "message": "Collected 8 file(s)",
+          "metadata": {
+            "file_count": 8
+          }
+        },
+        {
+          "check_name": "chunking",
+          "message": "Extracted 33 chunk(s)",
+          "metadata": {
+            "chunk_count": 33
+          }
+        }
+      ],
+      "messages": [
+        "[OK] file_collection: Collected 8 file(s)",
+        "[OK] chunking: Extracted 33 chunk(s)"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "validator_name": "Inter-Skill Deduplication",
+      "validator_description": "Detect duplicate skills across the catalog",
+      "passed": false,
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 1,
+        "errors": 1,
+        "warnings": 0,
+        "critical_count": 1,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [
+        {
+          "category": "INTER_SKILL",
+          "severity": "critical",
+          "check_name": "milvus_error",
+          "message": "Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.",
+          "file_path": "skills/nemo-clinical-data-designer",
+          "line_number": null,
+          "line_content": null,
+          "suggestion": "Set MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD (and MILVUS_DB if non-default) in the CI environment. For P4 CI these are sourced from NVIDIA Vault \u2014 verify the runAs/AppRole path in nvci_nvbase.sh's preflight. Tier 2A (intra-skill dedup) still runs without these; only Tier 2B is skipped.",
+          "location": "skills/nemo-clinical-data-designer"
+        }
+      ],
+      "success_details": [
+        {
+          "check_name": "skill_parsed",
+          "message": "Parsed skill 'nemo-clinical-data-designer': 134 char description",
+          "metadata": {}
+        }
+      ],
+      "messages": [
+        "[OK] skill_parsed: Parsed skill 'nemo-clinical-data-designer': 134 char description"
+      ],
+      "errors": [
+        "[INTER_SKILL-CRITICAL] Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags. in skills/nemo-clinical-data-designer"
+      ],
+      "warnings": []
+    }
+  ],
+  "skills": {
+    "nemo-clinical-data-designer": {
+      "passed": false,
+      "validators": {
+        "SECURITY": {
+          "passed": true,
+          "description": "Security Vulnerability Scanning",
+          "details": [],
+          "findings": []
+        },
+        "SCHEMA": {
+          "passed": false,
+          "description": "Schema & Repository Governance",
+          "details": [
+            {
+              "check_name": "manifest_exists",
+              "message": "Found skill manifest: SKILL.md",
+              "metadata": {
+                "file_path": "skills/nemo-clinical-data-designer/SKILL.md"
+              }
+            },
+            {
+              "check_name": "frontmatter_valid",
+              "message": "Valid frontmatter for skill 'nemo-clinical-data-designer'",
+              "metadata": {
+                "description_length": 134
+              }
+            },
+            {
+              "check_name": "folder_hierarchy",
+              "message": "Valid general skill structure: skills/nemo-clinical-data-designer/",
+              "metadata": {}
+            },
+            {
+              "check_name": "naming_convention",
+              "message": "Folder name 'nemo-clinical-data-designer' follows kebab-case convention",
+              "metadata": {
+                "name_length": 27
+              }
+            },
+            {
+              "check_name": "line_count",
+              "message": "SKILL.md within line limit (100/500)",
+              "metadata": {
+                "line_count": 100,
+                "limit": 500
+              }
+            },
+            {
+              "check_name": "body_recommended_section",
+              "message": "Found recommended section: '## Instructions' (or '## Usage')",
+              "metadata": {}
+            },
+            {
+              "check_name": "body_recommended_section",
+              "message": "Found recommended section: '## Examples'",
+              "metadata": {}
+            },
+            {
+              "check_name": "optional_files",
+              "message": "Found optional supporting files: scripts, evals, references",
+              "metadata": {
+                "files_found": [
+                  "scripts",
+                  "evals",
+                  "references"
+                ]
+              }
+            },
+            {
+              "check_name": "name_consistency",
+              "message": "Directory name matches frontmatter: 'nemo-clinical-data-designer'",
+              "metadata": {}
+            },
+            {
+              "check_name": "author_format",
+              "message": "Valid author format: Voice Eval Flywheel team <brandoing@nvidia.com>",
+              "metadata": {}
+            }
+          ],
+          "findings": [
+            {
+              "category": "SCHEMA",
+              "severity": "high",
+              "check_name": "body_heading",
+              "message": "Missing top-level heading (# Title) in SKILL.md body",
+              "file_path": "SKILL.md",
+              "line_number": null,
+              "line_content": null,
+              "suggestion": "Add a top-level heading after the frontmatter, e.g. '# My Skill'",
+              "location": "skills/nemo-clinical-data-designer/SKILL.md",
+              "confidence": "high",
+              "metadata": {},
+              "occurrences": 1,
+              "lines": [],
+              "issue_key": "84d10730eb50964a"
+            },
+            {
+              "category": "SCHEMA",
+              "severity": "low",
+              "check_name": "unexpected_file",
+              "message": "Unexpected 'workflows' in skill root",
+              "file_path": "workflows",
+              "line_number": null,
+              "line_content": null,
+              "suggestion": "Consider moving to references/, scripts/, assets/, or evals/ directory",
+              "location": "skills/nemo-clinical-data-designer/workflows",
+              "confidence": "high",
+              "metadata": {},
+              "occurrences": 1,
+              "lines": [],
+              "issue_key": "2f2cfea2df06ae22"
+            }
+          ]
+        },
+        "VERSION": {
+          "passed": true,
+          "description": "Semantic Version Validation",
+          "details": [
+            {
+              "check_name": "version_optional",
+              "message": "No semantic version label present; resource will use commit-hash history (opting back out of an existing label is allowed)",
+              "metadata": {
+                "previous_version": null
+              }
+            }
+          ],
+          "findings": []
+        },
+        "PII": {
+          "passed": true,
+          "description": "PII Detection Scanning",
+          "details": [
+            {
+              "check_name": "pii_scan_start",
+              "message": "Scanning 8 files for PII",
+              "metadata": {
+                "file_count": 8
+              }
+            },
+            {
+              "check_name": "pii_detection",
+              "message": "No PII detected in 8 files (emails, SSNs, phone numbers, paths)",
+              "metadata": {
+                "files_scanned": 8
+              }
+            }
+          ],
+          "findings": []
+        },
+        "LICENSE": {
+          "passed": true,
+          "description": "License Compliance",
+          "details": [],
+          "findings": []
+        },
+        "HYGIENE": {
+          "passed": true,
+          "description": "Code Integrity & Hygiene",
+          "details": [
+            {
+              "check_name": "dead_links_scan",
+              "message": "Checking 7 markdown files for dead links",
+              "metadata": {
+                "file_count": 7
+              }
+            },
+            {
+              "check_name": "dead_links",
+              "message": "All relative links valid in 7 markdown file(s)",
+              "metadata": {
+                "files_checked": 7
+              }
+            },
+            {
+              "check_name": "dependencies",
+              "message": "No dependency files found (requirements.txt, pyproject.toml)",
+              "metadata": {}
+            },
+            {
+              "check_name": "test_coverage",
+              "message": "No tests found - coverage check skipped",
+              "metadata": {}
+            }
+          ],
+          "findings": []
+        },
+        "UNICODE": {
+          "passed": true,
+          "description": "Unicode Smuggling Detection",
+          "details": [
+            {
+              "check_name": "unicode_scan",
+              "message": "No invisible Unicode characters detected in 8 file(s)",
+              "metadata": {
+                "files_scanned": 8
+              }
+            }
+          ],
+          "findings": []
+        },
+        "QUALITY": {
+          "passed": true,
+          "description": "Quality Score (4-Dimension Analysis)",
+          "details": [
+            {
+              "check_name": "quality_score",
+              "message": "Score: 100.0/100 (Grade: A)",
+              "metadata": {
+                "overall_score": 100.0,
+                "grade": "A",
+                "skill_type": "script-based"
+              }
+            }
+          ],
+          "findings": []
+        },
+        "SCRIPT_LINT": {
+          "passed": true,
+          "description": "Script Lint (Advisory)",
+          "details": [
+            {
+              "check_name": "lint",
+              "message": "All 1 script(s) passed lint checks",
+              "metadata": {}
+            }
+          ],
+          "findings": []
+        },
+        "Context Deduplication": {
+          "passed": true,
+          "description": "Detect redundant content within a skill directory",
+          "details": [
+            {
+              "check_name": "file_collection",
+              "message": "Collected 8 file(s)",
+              "metadata": {
+                "file_count": 8
+              }
+            },
+            {
+              "check_name": "chunking",
+              "message": "Extracted 33 chunk(s)",
+              "metadata": {
+                "chunk_count": 33
+              }
+            }
+          ],
+          "findings": []
+        },
+        "Inter-Skill Deduplication": {
+          "passed": false,
+          "description": "Detect duplicate skills across the catalog",
+          "details": [
+            {
+              "check_name": "skill_parsed",
+              "message": "Parsed skill 'nemo-clinical-data-designer': 134 char description",
+              "metadata": {}
+            }
+          ],
+          "findings": [
+            {
+              "category": "INTER_SKILL",
+              "severity": "critical",
+              "check_name": "milvus_error",
+              "message": "Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.",
+              "file_path": "skills/nemo-clinical-data-designer",
+              "line_number": null,
+              "line_content": null,
+              "suggestion": "Set MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD (and MILVUS_DB if non-default) in the CI environment. For P4 CI these are sourced from NVIDIA Vault \u2014 verify the runAs/AppRole path in nvci_nvbase.sh's preflight. Tier 2A (intra-skill dedup) still runs without these; only Tier 2B is skipped.",
+              "location": "skills/nemo-clinical-data-designer",
+              "confidence": "high",
+              "metadata": {},
+              "occurrences": 1,
+              "lines": [],
+              "issue_key": "581efe1af3b43326"
+            }
+          ]
+        }
+      },
+      "issue_count": 3,
+      "quality": {
+        "overall_score": 100.0,
+        "grade": "A",
+        "skill_type": "script-based",
+        "skill_name": "nemo-clinical-data-designer",
+        "dimensions": {
+          "correctness": {
+            "score": 100.0,
+            "weight": 0.35,
+            "issues_count": 0,
+            "issues": []
+          },
+          "discoverability": {
+            "score": 100.0,
+            "weight": 0.25,
+            "issues_count": 0,
+            "issues": []
+          },
+          "reliability": {
+            "score": 100.0,
+            "weight": 0.25,
+            "issues_count": 0,
+            "issues": []
+          },
+          "efficiency": {
+            "score": 100.0,
+            "weight": 0.15,
+            "issues_count": 0,
+            "issues": []
+          }
+        },
+        "metrics": {
+          "total_tokens": 1833,
+          "recommended_max_tokens": 5000,
+          "frontmatter_tokens": 111,
+          "instructions_tokens": 1720,
+          "script_count": 1,
+          "has_examples": false,
+          "has_error_handling": true,
+          "has_frontmatter": true,
+          "has_instructions": true,
+          "has_scripts": true,
+          "has_lib_module": false
+        }
+      }
+    }
+  },
+  "top_issues": [
+    {
+      "message": "Missing top-level heading (# Title) in SKILL.md body",
+      "severity": "high",
+      "total_count": 1,
+      "skills_affected": [
+        "nemo-clinical-data-designer"
+      ],
+      "category": "SCHEMA",
+      "suggestion": "Add a top-level heading after the frontmatter, e.g. '# My Skill'",
+      "issue_key": "84d10730eb50964a"
+    },
+    {
+      "message": "Unexpected 'workflows' in skill root",
+      "severity": "low",
+      "total_count": 1,
+      "skills_affected": [
+        "nemo-clinical-data-designer"
+      ],
+      "category": "SCHEMA",
+      "suggestion": "Consider moving to references/, scripts/, assets/, or evals/ directory",
+      "issue_key": "2f2cfea2df06ae22"
+    },
+    {
+      "message": "Milvus connection failed: Missing required Milvus configuration: MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD. Set these as environment variables or pass via CLI flags.",
+      "severity": "critical",
+      "total_count": 1,
+      "skills_affected": [
+        "nemo-clinical-data-designer"
+      ],
+      "category": "INTER_SKILL",
+      "suggestion": "Set MILVUS_URI, MILVUS_USER, MILVUS_PASSWORD (and MILVUS_DB if non-default) in the CI environment. For P4 CI these are sourced from NVIDIA Vault \u2014 verify the runAs/AppRole path in nvci_nvbase.sh's preflight. Tier 2A (intra-skill dedup) still runs without these; only Tier 2B is skipped.",
+      "issue_key": "581efe1af3b43326"
+    }
+  ],
+  "contributors": [
+    {
+      "author": "Voice Eval Flywheel team <brandoing@nvidia.com>",
+      "items": [
+        {
+          "name": "nemo-clinical-data-designer",
+          "passed": false,
+          "issue_count": 3
+        }
+      ],
+      "total_items": 1,
+      "passed_count": 0,
+      "failed_count": 1,
+      "total_issues": 3
+    }
+  ],
+  "quality_scores": {
+    "nemo-clinical-data-designer": {
+      "overall_score": 100.0,
+      "grade": "A",
+      "skill_type": "script-based",
+      "skill_name": "nemo-clinical-data-designer",
+      "dimensions": {
+        "correctness": {
+          "score": 100.0,
+          "weight": 0.35,
+          "issues_count": 0,
+          "issues": []
+        },
+        "discoverability": {
+          "score": 100.0,
+          "weight": 0.25,
+          "issues_count": 0,
+          "issues": []
+        },
+        "reliability": {
+          "score": 100.0,
+          "weight": 0.25,
+          "issues_count": 0,
+          "issues": []
+        },
+        "efficiency": {
+          "score": 100.0,
+          "weight": 0.15,
+          "issues_count": 0,
+          "issues": []
+        }
+      },
+      "metrics": {
+        "total_tokens": 1833,
+        "recommended_max_tokens": 5000,
+        "frontmatter_tokens": 111,
+        "instructions_tokens": 1720,
+        "script_count": 1,
+        "has_examples": false,
+        "has_error_handling": true,
+        "has_frontmatter": true,
+        "has_instructions": true,
+        "has_scripts": true,
+        "has_lib_module": false
+      }
+    }
+  },
+  "tier3": null
+}</script>
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('nv-base-theme', newTheme);
+            updateThemeButton(newTheme);
+            if (window.rebuildTier3Charts) window.rebuildTier3Charts();
+        }
+        function updateThemeButton(theme) {
+            document.getElementById('theme-icon').textContent = theme === 'dark' ? '☀' : '☾';
+            document.getElementById('theme-text').textContent = theme === 'dark' ? 'Light' : 'Dark';
+        }
+        function initTheme() {
+            const savedTheme = localStorage.getItem('nv-base-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            if (window.rebuildTier3Charts) window.rebuildTier3Charts();
+        }
+        function exportJSON() {
+            const jsonData = document.getElementById('report-data').textContent;
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'nv-base-report.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const tab = document.getElementById('tab-' + tabId);
+            if (tab) tab.classList.add('active');
+            // Tier cards in the hero double as the top-level navigation, so
+            // sync their selected state to whichever tab is now active.
+            document.querySelectorAll('.tier-card[data-target-tab]').forEach(card => {
+                card.classList.toggle('active', card.dataset.targetTab === tabId);
+            });
+            // Keep the legacy ``btn`` arg working for any caller that still
+            // passes a clicked element (e.g. older bookmarks/anchors). The
+            // dedup sub-tabs use their own ``showDedupTab`` handler so we no
+            // longer wipe ``.nav-tab.active`` globally — that would clobber
+            // the Intra/Inter sub-tab selection inside Tier 2.
+            if (btn && btn.classList) {
+                btn.classList.add('active');
+            }
+            if (tab) {
+                tab.scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
+        }
+        function showDedupTab(which) {
+            document.querySelectorAll('.dedup-subtab').forEach(el => el.style.display = 'none');
+            document.getElementById('dedup-' + which).style.display = 'block';
+            const btns = event.target.closest('.nav-tabs').querySelectorAll('.nav-tab');
+            btns.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        function filterValidators(status) {
+            const cards = document.querySelectorAll('.validator-card');
+            const rows = document.querySelectorAll('.summary-table tbody tr');
+            ['all', 'pass', 'fail'].forEach(s => document.getElementById('filter-' + s).classList.remove('active'));
+            document.getElementById('filter-' + status).classList.add('active');
+            let visibleCount = 0;
+            cards.forEach(c => {
+                const show = (status === 'all' || c.getAttribute('data-status') === status);
+                c.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            rows.forEach(r => r.style.display = (status === 'all' || r.getAttribute('data-status') === status) ? '' : 'none');
+            // Show/hide empty state message
+            let emptyMsg = document.getElementById('validator-empty-msg');
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('p');
+                emptyMsg.id = 'validator-empty-msg';
+                emptyMsg.style.cssText = 'color: var(--text-secondary); padding: 1.5rem; text-align: center; font-size: 0.875rem;';
+                const section = document.querySelector('#results-by-validator .section-header');
+                if (section) section.parentNode.insertBefore(emptyMsg, section.nextSibling);
+            }
+            if (visibleCount === 0) {
+                const label = status === 'pass' ? 'passed' : status === 'fail' ? 'failed' : '';
+                emptyMsg.textContent = 'No ' + label + ' validators to display.';
+                emptyMsg.style.display = '';
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+        }
+        function toggleTable(btn) {
+            btn.classList.toggle('active');
+            btn.nextElementSibling.classList.toggle('active');
+        }
+        function toggleValidator(btn) {
+            btn.classList.toggle('active');
+            btn.nextElementSibling.classList.toggle('active');
+            const txt = btn.querySelector('.expand-text');
+            txt.textContent = btn.classList.contains('active') ? '▲ Collapse' : '▼ Expand';
+        }
+        function scrollToValidator(idx) {
+            const v = document.getElementById('validator-' + idx);
+            const btn = v.querySelector('.validator-collapsible');
+            if (!btn.classList.contains('active')) {
+                btn.classList.add('active');
+                btn.nextElementSibling.classList.add('active');
+                btn.querySelector('.expand-text').textContent = '▲ Collapse';
+            }
+            v.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        window.onscroll = function() {
+            document.getElementById('backToTop').style.display = window.scrollY > 300 ? 'flex' : 'none';
+        };
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        function switchView(view) {
+            document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+            document.querySelectorAll('.results-view').forEach(v => v.classList.remove('active'));
+            document.getElementById('results-by-' + view).classList.add('active');
+            clearSkillFilter();
+            filterSeverity('all');
+            filterValidators('all');
+        }
+        function toggleSkill(header) {
+            const content = header.nextElementSibling;
+            const expandText = header.querySelector('.expand-text');
+            const isActive = content.classList.contains('active');
+            content.classList.toggle('active');
+            expandText.textContent = isActive ? '▼' : '▲';
+        }
+        function filterSkills(status) {
+            const cards = document.querySelectorAll('#results-by-skill .skill-card');
+            ['all', 'pass', 'fail'].forEach(s => document.getElementById('skill-filter-' + s).classList.remove('active'));
+            document.getElementById('skill-filter-' + status).classList.add('active');
+            let visibleCount = 0;
+            cards.forEach(c => {
+                const show = (status === 'all' || c.getAttribute('data-skill-status') === status);
+                c.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            // Show/hide empty state message
+            let emptyMsg = document.getElementById('skill-empty-msg');
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('p');
+                emptyMsg.id = 'skill-empty-msg';
+                emptyMsg.style.cssText = 'color: var(--text-secondary); padding: 1.5rem; text-align: center; font-size: 0.875rem;';
+                const lastCard = document.querySelector('#results-by-skill .skill-card:last-of-type');
+                if (lastCard) lastCard.parentNode.insertBefore(emptyMsg, lastCard.nextSibling);
+            }
+            if (visibleCount === 0) {
+                const label = status === 'pass' ? 'passed' : status === 'fail' ? 'failed' : '';
+                emptyMsg.textContent = 'No ' + label + ' skills to display.';
+                emptyMsg.style.display = '';
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+        }
+        function toggleAllSkills(expand) {
+            document.querySelectorAll('#results-by-skill .skill-card .skill-content').forEach(c => {
+                if (expand) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+            document.querySelectorAll('#results-by-skill .skill-card .skill-header .expand-text').forEach(t => {
+                t.textContent = expand ? '▲' : '▼';
+            });
+        }
+        function scrollToSkill(skillName) {
+            const card = document.querySelector('.skill-card[data-skill-name="' + skillName + '"]');
+            if (!card) return;
+            // Make sure it's visible (clear any active filter)
+            card.style.display = '';
+            // Expand it
+            const content = card.querySelector('.skill-content');
+            if (content && !content.classList.contains('active')) {
+                content.classList.add('active');
+                const arrow = card.querySelector('.expand-text');
+                if (arrow) arrow.textContent = '▲';
+            }
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Brief highlight
+            card.style.boxShadow = '0 0 0 3px var(--secondary-color)';
+            setTimeout(() => { card.style.boxShadow = ''; }, 2000);
+        }
+        // Open ``skillName``'s card and return it (or null if missing). Shared by
+        // every "jump into a skill card" entry point so they keep identical
+        // visibility / expansion semantics.
+        function _openSkillCard(skillName) {
+            const card = document.querySelector('.skill-card[data-skill-name="' + skillName + '"]');
+            if (!card) return null;
+            card.style.display = '';
+            const content = card.querySelector('.skill-content');
+            if (content && !content.classList.contains('active')) {
+                content.classList.add('active');
+                const arrow = card.querySelector('.skill-header .expand-text');
+                if (arrow) arrow.textContent = '\u25B2';
+            }
+            return card;
+        }
+        // Deep-link straight to the finding card matching ``issueKey`` inside
+        // ``skillName``. Top-issue rows roll up many findings; this lets the
+        // executive summary land the user on the actual occurrence rather than
+        // dropping them at the top of the skill card (where the quality score
+        // panel is the first thing they see).
+        function scrollToFinding(skillName, issueKey) {
+            const card = _openSkillCard(skillName);
+            if (!card) return;
+            let target = null;
+            if (issueKey) {
+                const findings = card.querySelectorAll('.check-finding[data-issue-key]');
+                for (const f of findings) {
+                    if (f.getAttribute('data-issue-key') === issueKey) { target = f; break; }
+                }
+            }
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.style.boxShadow = '0 0 0 3px var(--secondary-color)';
+                setTimeout(() => { target.style.boxShadow = ''; }, 2000);
+            } else {
+                // Fall back to the card itself (e.g. the issue rolls up a
+                // finding that has been filtered out of the rendered DOM).
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                card.style.boxShadow = '0 0 0 3px var(--secondary-color)';
+                setTimeout(() => { card.style.boxShadow = ''; }, 2000);
+            }
+        }
+        // Dedicated entry point for the quality-score panel so it's a
+        // deliberate click rather than the accidental destination users hit
+        // when they click an issue and land at the top of the skill card.
+        function scrollToQualityScore(skillName) {
+            const card = _openSkillCard(skillName);
+            if (!card) return;
+            const block = card.querySelector('.quality-score-block');
+            if (block) {
+                block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                block.style.boxShadow = '0 0 0 3px var(--warning-color)';
+                setTimeout(() => { block.style.boxShadow = ''; }, 2000);
+            } else {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        function filterToAffectedSkills(row) {
+            const skillsStr = row.getAttribute('data-affected-skills') || '';
+            const affectedSkills = skillsStr.split(',').filter(s => s.length > 0);
+            if (affectedSkills.length === 0) return;
+            const issueName = row.cells[0].textContent.trim();
+            const issueKey = row.getAttribute('data-issue-key') || '';
+            // Highlight the clicked row
+            document.querySelectorAll('.top-issues-table tbody tr').forEach(r => r.classList.remove('top-issues-active-row'));
+            row.classList.add('top-issues-active-row');
+            // Reset skill status filter to "All"
+            ['all', 'pass', 'fail'].forEach(s => document.getElementById('skill-filter-' + s).classList.remove('active'));
+            document.getElementById('skill-filter-all').classList.add('active');
+            // Filter skill cards to show only affected ones
+            const cards = document.querySelectorAll('#results-by-skill .skill-card');
+            cards.forEach(c => {
+                const name = c.getAttribute('data-skill-name');
+                const show = affectedSkills.includes(name);
+                c.style.display = show ? '' : 'none';
+                // Expand affected cards
+                if (show) {
+                    const content = c.querySelector('.skill-content');
+                    if (content && !content.classList.contains('active')) {
+                        content.classList.add('active');
+                        const arrow = c.querySelector('.expand-text');
+                        if (arrow) arrow.textContent = '▲';
+                    }
+                }
+            });
+            // Show filter banner above the skill list
+            const banner = document.getElementById('skill-filter-banner');
+            document.getElementById('skill-filter-banner-text').textContent =
+                'Showing ' + affectedSkills.length + ' skill(s) affected by: ' + issueName;
+            banner.classList.add('visible');
+            // Hide skill empty message if present
+            const emptyMsg = document.getElementById('skill-empty-msg');
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            // Land directly on the actual finding in the first affected skill,
+            // not on the top of the card (which shows the quality score panel
+            // first and was the source of the prior "click on an issue ->
+            // ends up on the quality score" complaint).
+            if (issueKey && affectedSkills.length > 0) {
+                scrollToFinding(affectedSkills[0], issueKey);
+            } else {
+                banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        function clearSkillFilter() {
+            document.querySelectorAll('#results-by-skill .skill-card').forEach(c => c.style.display = '');
+            document.getElementById('skill-filter-banner').classList.remove('visible');
+            document.querySelectorAll('.top-issues-table tbody tr').forEach(r => r.classList.remove('top-issues-active-row'));
+            ['all', 'pass', 'fail'].forEach(s => document.getElementById('skill-filter-' + s).classList.remove('active'));
+            document.getElementById('skill-filter-all').classList.add('active');
+            filterSeverity('all');
+        }
+        function toggleTopIssues(header) {
+            const content = header.nextElementSibling;
+            const expandText = header.querySelector('.expand-text');
+            const isActive = content.classList.contains('active');
+            content.classList.toggle('active');
+            expandText.textContent = isActive ? '\u25BC' : '\u25B2';
+        }
+        function toggleContributors(header) {
+            const content = header.nextElementSibling;
+            const expandText = header.querySelector('.expand-text');
+            const isActive = content.classList.contains('active');
+            content.classList.toggle('active');
+            expandText.textContent = isActive ? '\u25BC' : '\u25B2';
+        }
+        var currentSeverityFilter = 'all';
+        function filterSeverity(level) {
+            currentSeverityFilter = level;
+            ['all', 'critical-high', 'medium', 'low'].forEach(s => document.getElementById('sev-filter-' + s).classList.remove('active'));
+            document.getElementById('sev-filter-' + level).classList.add('active');
+            const findings = document.querySelectorAll('.check-finding[data-finding-severity]');
+            findings.forEach(f => {
+                const sev = f.getAttribute('data-finding-severity');
+                let show = true;
+                if (level === 'critical-high') show = (sev === 'critical' || sev === 'high');
+                else if (level === 'medium') show = (sev === 'medium');
+                else if (level === 'low') show = (sev === 'low' || sev === 'info');
+                f.style.display = show ? '' : 'none';
+            });
+            // Also filter the top issues table rows
+            const issueRows = document.querySelectorAll('.top-issues-table tbody tr[data-severity]');
+            issueRows.forEach(r => {
+                const sev = r.getAttribute('data-severity');
+                let show = true;
+                if (level === 'critical-high') show = (sev === 'critical' || sev === 'high');
+                else if (level === 'medium') show = (sev === 'medium');
+                else if (level === 'low') show = (sev === 'low' || sev === 'info');
+                r.style.display = show ? '' : 'none';
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initTheme);
+    </script>
+</body>
+</html>
