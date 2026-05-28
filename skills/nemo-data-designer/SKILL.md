@@ -56,31 +56,29 @@ A representative Python config — sampler column + LLM column + Pydantic-typed 
 - The skill writes the Python config file but does not invoke the generation pipeline on the user's behalf — the user runs `data-designer preview` and `data-designer run` themselves.
 - LLM columns require network reachability at preview and run time. In sandboxed environments those calls may be blocked; see Troubleshooting for the sandbox-disable handshake.
 
-## Before You Start
-
-Skip workspace exploration entirely. The selected workflow runbook walks you through the Learn step and surfaces every piece of context you need.
-
-## Goal
-
-Author a synthetic dataset config using NeMo Data Designer that satisfies this brief:
+## Brief to satisfy
 
 $ARGUMENTS
 
-## Workflow
+The brief above is what you need to translate into a Data Designer config. Don't open additional workspace files to "look around" — the selected workflow runbook walks you through any context-gathering you actually need (its Learn step). Trust the runbook over instinct here.
 
-Mode selection rule: any user phrasing along the lines of "be opinionated", "you decide", "make reasonable assumptions", "just build it", or "surprise me" routes to **Autopilot**. Everything else defaults to **Interactive**.
+## Mode selection + runbook
 
-Open **only** the runbook for the selected mode and execute it end-to-end:
+A simple heuristic: if the user's framing is opinionated-and-hands-off ("be opinionated", "you decide", "make reasonable assumptions", "just build it", "surprise me", and similar), pick **Autopilot**. For everything else, default to **Interactive** so the user shapes column choices.
 
-- Interactive mode → `workflows/interactive.md`.
-- Autopilot mode → `workflows/autopilot.md`.
+After selecting, read *only* that mode's runbook and execute it linearly:
 
-## Rules
+- Interactive path → `workflows/interactive.md`.
+- Autopilot path → `workflows/autopilot.md`.
 
-- Default to keeping every column in the final output. The two valid reasons to drop a column are (a) explicit user request, or (b) the column exists purely as an intermediate helper for deriving other columns (e.g., a person-object sampler whose fields get extracted into separate columns). When unsure, keep it.
-- Do not raise seed datasets unless the user introduces them first. If the user does supply seed data, read `references/seed-datasets.md` before building the config.
-- For datasets needing person attributes (names, demographics, addresses), consult `references/person-sampling.md`.
-- When a dataset script matching the brief already exists in the workspace, ask the user whether to edit it in place or write a new one — don't pick silently.
+## Authoring rules
+
+A handful of constraints that hold regardless of which mode you're in:
+
+- Output column retention defaults to *keep everything*. Only drop a column when the user explicitly asks, or when the column is a pure intermediate (e.g., a person-object sampler whose fields you extract into discrete columns downstream). Err toward keeping; the user can always trim later.
+- Seed datasets are never suggested unilaterally. Only wire one in when the user volunteers seed data or asks to build off existing records. If they do, consult `references/seed-datasets.md` before configuring the seed source.
+- Person attributes (names, demographics, addresses) require the person-sampling reference — read `references/person-sampling.md` before adding any person columns.
+- If a config script already in the workspace matches the brief, surface the conflict to the user and ask whether to edit it in place or author a new one. Never silently overwrite.
 
 ## Usage Tips and Common Pitfalls
 
@@ -96,7 +94,9 @@ Open **only** the runbook for the selected mode and execute it end-to-end:
 
 ## Output Template
 
-Drop a Python file into the current directory exporting `load_config_builder()` → `DataDesignerConfigBuilder`. Give it a descriptive filename (e.g., `customer_reviews.py`) and use a PEP 723 inline metadata header for its dependencies.
+The deliverable from any successful run of this skill is one Python file placed in the user's working directory. It must export a `load_config_builder()` function that returns a `DataDesignerConfigBuilder` instance. Pick a filename that describes the dataset (`customer_reviews.py`, `medical_term_seeds.py`, etc.) rather than a generic one. Declare runtime dependencies with a PEP 723 inline metadata header so the file is runnable with `data-designer run` out of the box.
+
+Below is the canonical skeleton. Strip the Pydantic model / custom generator / seed-dataset blocks if the brief doesn't call for them — keep this file as small as the task allows.
 
 ```python
 # /// script
