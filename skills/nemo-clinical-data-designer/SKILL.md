@@ -14,6 +14,8 @@ metadata:
     - sampler
 ---
 
+# NeMo Clinical Data Designer
+
 ## Purpose
 
 Produce a synthetic tabular dataset by authoring a NeMo Data Designer config (`data_designer.config`), previewing the output, then committing to a full run. The agent first picks a conversation mode (Interactive vs. Autopilot), drives the user through config construction, and ends at a written-to-disk dataset.
