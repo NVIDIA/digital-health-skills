@@ -92,53 +92,9 @@ A handful of constraints that hold regardless of which mode you're in:
 - **`data-designer: command not found`** → the package isn't installed in this environment. Tell the user, confirm they're on Python ≥ 3.10, and offer to create a venv + run `pip install data-designer` for them — but wait for explicit permission before installing.
 - **Preview fails on network errors** → most likely a sandbox is blocking outbound calls to the LLM endpoint. Ask whether to retry with the sandbox disabled. If that still fails, ask the user to run the command in their own shell.
 
-## Output Template
+## Output deliverable
 
-The deliverable from any successful run of this skill is one Python file placed in the user's working directory. It must export a `load_config_builder()` function that returns a `DataDesignerConfigBuilder` instance. Pick a filename that describes the dataset (`customer_reviews.py`, `medical_term_seeds.py`, etc.) rather than a generic one. Declare runtime dependencies with a PEP 723 inline metadata header so the file is runnable with `data-designer run` out of the box.
+A single Python file in the user's working directory exporting `load_config_builder()` → `DataDesignerConfigBuilder`. Filename should describe the dataset (`customer_reviews.py`, `medical_term_seeds.py`), not be generic. Use a PEP 723 inline metadata dep header so the file is runnable with `data-designer run` directly.
 
-Below is the canonical skeleton. Strip the Pydantic model / custom generator / seed-dataset blocks if the brief doesn't call for them — keep this file as small as the task allows.
-
-```python
-# /// script
-# dependencies = [
-#   "data-designer", # always required
-#   "pydantic", # only if this script imports from pydantic
-#   # add additional dependencies here
-# ]
-# ///
-import data_designer.config as dd
-from pydantic import BaseModel, Field
-
-
-# Use Pydantic models when the output needs to conform to a specific schema
-class MyStructuredOutput(BaseModel):
-    field_one: str = Field(description="...")
-    field_two: int = Field(description="...")
-
-
-# Use custom generators when built-in column types aren't enough
-@dd.custom_column_generator(
-    required_columns=["col_a"],
-    side_effect_columns=["extra_col"],
-)
-def generator_function(row: dict) -> dict:
-    # add custom logic here that depends on "col_a" and update row in place
-    row["name_in_custom_column_config"] = "custom value"
-    row["extra_col"] = "extra value"
-    return row
-
-
-def load_config_builder() -> dd.DataDesignerConfigBuilder:
-    config_builder = dd.DataDesignerConfigBuilder()
-
-    # Seed dataset (only if the user explicitly mentions a seed dataset path)
-    # config_builder.with_seed_dataset(dd.LocalFileSeedSource(path="path/to/seed.parquet"))
-
-    # config_builder.add_column(...)
-    # config_builder.add_processor(...)
-
-    return config_builder
-```
-
-Only include Pydantic models, custom generators, seed datasets, and extra dependencies when the task requires them.
+For the canonical skeleton — Pydantic-typed output, custom column generators, optional seed-dataset wiring — read `references/output-template.md`. Strip blocks from the skeleton when the brief doesn't need them.
 
