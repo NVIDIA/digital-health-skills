@@ -24,36 +24,36 @@ metadata:
 
 # Riva TTS NIM
 
-Two modes: **cloud-hosted** (no GPU, uses build.nvidia.com) or **self-hosted** (your own GPU + Docker).
+Riva TTS NIMs ship in two deployment shapes: cloud-hosted (managed by build.nvidia.com, no local GPU) and self-hosted (your own GPU plus Docker). Pick the one matching the user's constraints below.
 
-Not sure which TTS model to pick? See `riva-model-selection`.
+If model choice isn't settled yet, route to `riva-model-selection` first — selection is out of scope for this skill.
 
-> **Agent:** When walking the user through a multi-step workflow, announce each step before presenting it: **Step N/M — Step Title** (e.g., "**Step 1/4 — Deploy the Container**").
+> **Agent note:** During multi-step walkthroughs, announce each step before presenting its content (e.g. "**Step 1/4 — Deploy the Container**"). This keeps the user oriented in the four-step self-hosted flow.
 
 ---
 
 ## Purpose
 
-Deploy and run NVIDIA Riva TTS (text-to-speech) NIMs for speech synthesis.
-Supports cloud-hosted inference via build.nvidia.com and self-hosted deployment.
-Covers offline synthesis, streaming, voice cloning, and Kubernetes Helm
-deployment.
+Stand up an NVIDIA Riva TTS (text-to-speech) NIM and synthesize speech against it. The skill covers both the build.nvidia.com cloud path and the Docker-based self-hosted path, and walks through offline synthesis, streaming, voice cloning, and Kubernetes (Helm) deployment.
 
 ## Workflow
 
-Choose **Option A** (cloud) for quick testing without a GPU, or **Option B** (self-hosted) for production. Self-hosted follows a 4-step process: deploy container → verify health → list voices → synthesize speech.
+Two routes:
+- **Cloud (Option A)** — fastest path for testing or no-GPU environments.
+- **Self-hosted (Option B)** — for production deployments where you control the GPU. The self-hosted path runs four sequential steps: deploy the container, verify it's healthy, list available voices, then synthesize.
 
 ## Prerequisites
 
-- Complete `riva-nim-setup`: NVIDIA Container Toolkit, `NGC_API_KEY` exported, Docker logged in to `nvcr.io`
-- Cloud-hosted inference: `pip install -U nvidia-riva-client` and a valid `NVIDIA_API_KEY`
-- Not sure which TTS model to use? Run `riva-model-selection` first
+- For self-hosted only: `riva-nim-setup` must be completed first (NVIDIA Container Toolkit installed, `NGC_API_KEY` exported, Docker authenticated to `nvcr.io`).
+- For cloud-hosted: `pip install -U nvidia-riva-client` and a valid `NVIDIA_API_KEY` issued at build.nvidia.com.
+- If the model choice is still open, route to `riva-model-selection` before continuing.
 
 ## Instructions
 
-1. **Pick a path**: cloud synthesis (Option A) or self-hosted NIM (Option B).
-2. **For cloud synthesis (Option A)**: install `nvidia-riva-client`, set `NVIDIA_API_KEY`, run `talk.py` against `grpc.nvcf.nvidia.com:443` with `--use-ssl` and the function ID from the table below.
-3. **For self-hosted (Option B)**: set `CONTAINER_ID` and `NIM_TAGS_SELECTOR` from the TTS support matrix, then follow Steps 1–4 below (deploy container, verify readiness, list voices, synthesize speech).
+Pick the deployment route up-front:
+
+- **Cloud (Option A):** install the Riva Python client, export `NVIDIA_API_KEY`, then invoke `talk.py` against `grpc.nvcf.nvidia.com:443` with `--use-ssl` plus the function ID from the model table just below.
+- **Self-hosted (Option B):** export `CONTAINER_ID` and `NIM_TAGS_SELECTOR` from the TTS support matrix, then walk Steps 1–4 in order (deploy → verify → list voices → synthesize).
 
 
 ## Option A — Cloud-Hosted Inference (build.nvidia.com)
@@ -288,7 +288,9 @@ Substitute `repository` and `NIM_TAGS_SELECTOR` for other models.
 
 ## Examples
 
-**Cloud synthesis — Aria voice:**
+Two end-to-end invocations — one per deployment route. Both use the Magpie Multilingual Aria voice.
+
+**Cloud (Option A) — Magpie Aria via build.nvidia.com:**
 ```bash
 python python-clients/scripts/tts/talk.py \
     --server grpc.nvcf.nvidia.com:443 --use-ssl \
@@ -299,7 +301,7 @@ python python-clients/scripts/tts/talk.py \
     --output audio.wav
 ```
 
-**Self-hosted offline synthesis:**
+**Self-hosted (Option B) — offline synthesis against a local NIM:**
 ```bash
 python3 python-clients/scripts/tts/talk.py \
   --server 0.0.0.0:50051 \
@@ -311,10 +313,10 @@ python3 python-clients/scripts/tts/talk.py \
 
 ## Troubleshooting
 
-- **gRPC 4 MB limit** — if synthesized audio exceeds 4 MB, switch to `--stream` or use the WebSocket client.
-- **HTTP streaming returns raw LPCM** — not a WAV file; use `sox` to convert.
-- **Restricted models** — Magpie TTS Zeroshot and Flow require access approval; the pull will fail with 403 otherwise.
-- **Voice name format** — must match exactly, including case: `Magpie-Multilingual.EN-US.Aria`, not `aria` or `Aria`.
+- **Synthesized audio > 4 MB** → gRPC response cap. Switch to `--stream`, or fall back to the WebSocket client for long-form output.
+- **HTTP streaming output won't open in a media player** → the stream is raw LPCM, not a WAV container. Wrap it with `sox` (see the Streaming Synthesis section above).
+- **`403` on container pull for Zeroshot / Flow** → these are gated TTS models. Request access via NGC before re-pulling.
+- **Voice not found** → voice names are case-sensitive and dot-separated; pass `Magpie-Multilingual.EN-US.Aria` literally, not `aria` or `Aria`.
 
 ## Limitations
 
