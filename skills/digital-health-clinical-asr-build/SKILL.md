@@ -256,3 +256,4 @@ For anything not in this list, identify which upstream skill is implicated and r
 
 - [`references/manifest-schema.md`](references/manifest-schema.md) — NeMo canonical fields + clinical extension; pre-flight schema and audio-existence checks; cross-cycle stability rules
 
+
