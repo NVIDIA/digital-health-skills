@@ -262,3 +262,4 @@ No manifest, audio, or model artifact is produced at this stage — those come a
 ## References
 
 - [`references/dependency-ownership.md`](references/dependency-ownership.md) — boundary between skill-owned and companion-owned responsibilities.
+
