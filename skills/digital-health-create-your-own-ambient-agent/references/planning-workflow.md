@@ -6,10 +6,35 @@ approved feature specs and enforcing approval before implementation.
 ## Phase 3: Derive the Plan
 
 For each selected feature, write `plan.md` then `tasks.md` interactively —
-present each file and wait for approval before writing the next. The selected
-features are always `langgraph-agent` and `fastapi-server`, plus `guardrails`
-when Phase 2(f) enabled it. Repeat the loop for every selected feature before
-proceeding to implementation.
+present each file with an Approval Brief and wait for approval before writing
+the next. The selected features are always `langgraph-agent` and
+`fastapi-server`, plus `guardrails` when Phase 2(f) enabled it. Repeat the loop
+for every selected feature before proceeding to implementation.
+
+### Approval Brief requirement
+
+Before asking for approval for any generated `plan.md` or `tasks.md`, read back
+the file that was just written and provide a short Approval Brief. The brief
+must summarize the actual file contents, not just the conversation or intended
+design.
+
+Use only the items that are relevant to that file:
+
+- **File**: path and one-sentence purpose
+- **What it covers**: main sections, workflows, or implementation areas included
+- **Key choices captured**: important decisions, assumptions, defaults, or
+  user-provided choices
+- **Important details to review**: fields, APIs, data handling, task ordering,
+  constraints, or acceptance criteria that most affect the outcome
+- **Dependencies or sequencing**: anything this file depends on, unlocks, or
+  requires before the next phase
+- **Open questions or risks**: only include if the file leaves something
+  unresolved
+- **Approval request**: ask whether to approve as written or revise before
+  continuing
+
+Keep the brief concise. Do not force every category to appear; omit irrelevant
+items and combine related points when the file is simple.
 
 ### Per-feature loop (repeat for `langgraph-agent`, `fastapi-server`, and `guardrails` if enabled)
 
@@ -28,7 +53,7 @@ structural model.
 4. **API contracts** — request/response schemas for any HTTP interface
 5. **Reference files** — which files in `references/` to copy and how to adapt them
 
-Present the plan and ask:
+Present the plan with an Approval Brief and ask:
 
 > "Here is `specs/<feature>/plan.md` — the technical plan for how we will build
 > this feature. It describes the stack, architecture, and key decisions derived
@@ -52,7 +77,7 @@ structural model.
 3. **Phase N — Validation**: end-to-end verification steps
 4. **Dependencies section**: explicit blocking relationships between phases
 
-Present the task list and ask:
+Present the task list with an Approval Brief and ask:
 
 > "Here is `specs/<feature>/tasks.md` — the ordered task list for this feature.
 > Tasks marked `[P]` can run in parallel. Each task references the user story it

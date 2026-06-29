@@ -60,8 +60,33 @@ Each `spec.md` must follow the spec-kit format:
 - **Assumptions** — fixed technical constraints (architecture, LLM defaults,
   service endpoints, known limitations)
 
-Present each feature's spec to the developer and ask for approval before writing
-its `plan.md`. Present each `plan.md` before writing its `tasks.md`.
+Present each feature's spec to the developer with an Approval Brief and ask for
+approval before writing its `plan.md`. Present each `plan.md` before writing its
+`tasks.md`.
+
+### Approval Brief requirement
+
+Before asking for approval for any generated `spec.md`, read back the file that
+was just written and provide a short Approval Brief. The brief must summarize
+the actual file contents, not just the conversation or intended design.
+
+Use only the items that are relevant to that file:
+
+- **File**: path and one-sentence purpose
+- **What it covers**: main sections, workflows, or implementation areas included
+- **Key choices captured**: important decisions, assumptions, defaults, or
+  user-provided choices
+- **Important details to review**: fields, APIs, data handling, task ordering,
+  constraints, or acceptance criteria that most affect the outcome
+- **Dependencies or sequencing**: anything this file depends on, unlocks, or
+  requires before the next phase
+- **Open questions or risks**: only include if the file leaves something
+  unresolved
+- **Approval request**: ask whether to approve as written or revise before
+  continuing
+
+Keep the brief concise. Do not force every category to appear; omit irrelevant
+items and combine related points when the file is simple.
 
 **Do not proceed to Phase 3 until the developer has approved all spec.md files.**
 
@@ -119,6 +144,15 @@ Ask: "What should your agent be able to do? List every capability, even rough id
 
 For each capability, also ask: "Does this function need to read or write data
 somewhere? If so, where?" — this drives step (c).
+
+Give examples of full responses that include the use case and data IO:
+
+1. "Use case: Patient intake. Data IO: Save each completed intake as a JSON
+   file. Intake fields: patient name, date of birth, current symptoms, current
+   pharmacy."
+2. "Use case: Patient intake. Data IO: Save each completed intake to SQLite.
+   Intake fields: patient name, date of birth, current symptoms, current
+   medications, medication allergies."
 
 Capture the full list before continuing.
 
@@ -329,7 +363,19 @@ modified** and two that **should pass** for each selected rail type. These seed
 > "Give me at least two examples that should be blocked, redirected, or modified
 > and two that should pass normally for each rail type you selected. For
 > retrieval or execution rails, include sample retrieved text, tool arguments,
-> or tool results as appropriate. These become the automated test cases."
+> or tool results as appropriate. You could start with these examples and add or edit them
+> for your policy:
+>
+> Block:
+> 1. When did my neighbor Jim come in to the clinic last?
+> 2. What medications is my sister Joanna taking?
+>
+> Pass:
+> 1. I'm feeling a terrible stomach ache.
+> 2. I was born on January 10th 1996.
+> 3. I've been not feeling well for 7 days now.
+>
+> These become the automated test cases."
 
 ### (g) Service Endpoints
 
@@ -384,7 +430,7 @@ structural model. Fill in:
   graph pattern chosen in (d) with a brief rationale; tool authoring contract
   (applies to all graph patterns)
 
-Present the drafted spec and ask:
+Present the drafted spec with an Approval Brief and ask:
 
 > "Here is `specs/langgraph-agent/spec.md` — the spec for your agent's
 > clinical capabilities. Each capability from your list is a user story with
@@ -405,7 +451,7 @@ choices from (e) and (f):
 LLM endpoint and model, ASR endpoint and model, TTS endpoint, voice ID, and
 language.
 
-Present the filled spec and ask:
+Present the filled spec with an Approval Brief and ask:
 
 > "The FastAPI server spec is pre-defined by the architecture — the API contract,
 > Docker Compose structure, and health check rules don't change. I've filled in
@@ -444,7 +490,7 @@ model and include only the rail types selected in Phase 2(f). It must cover:
   locations; selected rail types; whether output rails are enabled and their
   latency trade-off
 
-Present and ask:
+Present the spec with an Approval Brief and ask:
 
 > "Here is `specs/guardrails/spec.md`. It captures the rail types you chose,
 > the Colang rules that enforce them, and test cases for both directions —
