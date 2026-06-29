@@ -4,22 +4,25 @@ This repository hosts **agent skills** for clinical AI workflows from NVIDIA Dig
 
 ## What's in the repo
 
-Four self-contained agent skills under `skills/`, all following the [agentskills.io specification](https://agentskills.io/specification):
+Self-contained agent skills under `skills/`, all following the [agentskills.io specification](https://agentskills.io/specification):
 
-| Skill slug | Stage | What it does |
-|------------|-------|--------------|
-| `digital-health-clinical-asr-setup` | 1 | Verifies `NVIDIA_API_KEY`, installs Python deps, sets up NGC + Docker for the NeMo training container, smoke-tests the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. Hands off to `/digital-health-clinical-asr-build`. |
-| `digital-health-clinical-asr-build` | 2 | Specialty interview, term curation, two-tier IPA tagging (Merriam-Webster + Magpie G2P), NeMo-format manifest synthesis. Inlines a complete Magpie TTS NVCF recipe and a Merriam-Webster lookup recipe. Hands off to `/digital-health-clinical-asr-eval`. |
-| `digital-health-clinical-asr-eval` | 3 | Transcribes a NeMo manifest via Parakeet/Nemotron ASR, scores WER/CER/KER/SER (pure-Python Levenshtein inline; `jiwer` optional), produces a five-section leaderboard, routes via the post-eval decision tree. Hands off to `/digital-health-clinical-asr-finetune` or back to `/digital-health-clinical-asr-build`. |
-| `digital-health-clinical-asr-finetune` | 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. Returns to `/digital-health-clinical-asr-build` for the next cycle. |
+| Skill slug | Area | What it does |
+|------------|------|--------------|
+| `digital-health-clinical-asr-setup` | Clinical ASR flywheel Stage 1 | Verifies `NVIDIA_API_KEY`, installs Python deps, sets up NGC + Docker for the NeMo training container, smoke-tests the NVCF stack with Magpie TTS + Parakeet/Nemotron ASR. Hands off to `/digital-health-clinical-asr-build`. |
+| `digital-health-clinical-asr-build` | Clinical ASR flywheel Stage 2 | Specialty interview, term curation, two-tier IPA tagging (Merriam-Webster + Magpie G2P), NeMo-format manifest synthesis. Inlines a complete Magpie TTS NVCF recipe and a Merriam-Webster lookup recipe. Hands off to `/digital-health-clinical-asr-eval`. |
+| `digital-health-clinical-asr-eval` | Clinical ASR flywheel Stage 3 | Transcribes a NeMo manifest via Parakeet/Nemotron ASR, scores WER/CER/KER/SER (pure-Python Levenshtein inline; `jiwer` optional), produces a five-section leaderboard, routes via the post-eval decision tree. Hands off to `/digital-health-clinical-asr-finetune` or back to `/digital-health-clinical-asr-build`. |
+| `digital-health-clinical-asr-finetune` | Clinical ASR flywheel Stage 4 | Stock NeMo SFT on Parakeet TDT v2, term-aware train/val split, offline cycle N+1 re-eval, optional Riva NIM deploy. Returns to `/digital-health-clinical-asr-build` for the next cycle. |
+| `digital-health-create-your-own-ambient-agent` | Ambient agents | Builds a custom ambient healthcare voice-agent repository through a spec-driven workflow using Nemotron Voice Agent, FastAPI, LangGraph, Docker Compose, and optional NeMo Guardrails. It has hard approval gates before planning, implementation, and handoff. |
 
-Each skill folder contains `SKILL.md` (workflow guide), optional `references/*.md` (deeper detail loaded on demand), and `evals/evals.json` (trigger / behavior / boundary cases).
+
+Each skill folder contains `SKILL.md` (workflow guide), optional references (deeper detail loa
+ded on demand), scripts, or workflow files loaded on demand, and `evals/evals.json` where evaluation cases are available.
 
 ## Important property: self-containment
 
-These skills are **fully self-contained**. They inline every recipe an agent needs: Magpie TTS SSML synthesis via `riva.client`, Parakeet ASR via the same SDK, Merriam-Webster Medical Dictionary HTTP lookup, MW-respelling-to-IPA conversion, Magpie phoneme live-probe validation, pure-Python WER/CER/KER/SER scoring, and SSML `<phoneme>`/`<sub>` wrapping rules for IPA overrides.
+These skills are **fully self-contained**. They either inline the recipe an agent needs or bundle reference files that the agent must read on demand. For the ASR flywheel, this includes Magpie TTS SSML synthesis via `riva.client`, Parakeet ASR via the same SDK, Merriam-Webster Medical Dictionary HTTP lookup, MW-respelling-to-IPA conversion, Magpie phoneme live-probe validation, pure-Python WER/CER/KER/SER scoring, and SSML `<phoneme>`/`<sub>` wrapping rules for IPA overrides.
 
-**You should not need to look outside this repository** to follow them. If a skill names a sibling NVCARPS skill (e.g., `/read-aloud`, `/transcribe-audio`), treat that as historical context, not a hard dependency — the recipe needed is already inlined in the current `SKILL.md`. If you ever find yourself wanting to invoke a sibling skill that isn't installed, generate the code directly from the inlined recipe instead.
+**You should not need to look outside this repository for skill instructions.** Some workflows intentionally clone or inspect upstream public reference repos during execution, such as the ambient-agent creator's Nemotron Voice Agent, LangChain skill, and NeMo Guardrails references. If a skill names a sibling skill that is not installed, read the bundled fallback reference or generate the code directly from the inlined recipe.
 
 ## Required environment
 
@@ -29,7 +32,7 @@ Set these before invoking the skills:
 |---------|---------|-----------|
 | `NVIDIA_API_KEY` | All stages (Magpie TTS + Parakeet/Nemotron ASR via NVCF) | **Yes** — get one at [build.nvidia.com](https://build.nvidia.com). Free tier is sufficient for benchmark generation. |
 | `DICTIONARY_API_KEY` | `digital-health-clinical-asr-build` (Merriam-Webster lookup) | Optional. If unset, the IPA pipeline falls through to Magpie G2P for un-overridden terms. Free key at [dictionaryapi.com](https://dictionaryapi.com). |
-| `NGC_API_KEY` | `digital-health-clinical-asr-finetune` only (pulls NeMo training container) | Optional. Skip if you're only running stages 1–3. |
+| `NGC_API_KEY` | Self-hosted Riva, NeMo, and `digital-health-clinical-asr-finetune` workflows | Optional unless pulling NVIDIA containers. Skip if you only use hosted APIs. |
 
 ## How to invoke (Claude Code example)
 
@@ -44,12 +47,13 @@ ln -s "$(pwd)/skills/digital-health-clinical-asr-setup"    ~/.claude/skills/
 ln -s "$(pwd)/skills/digital-health-clinical-asr-build"    ~/.claude/skills/
 ln -s "$(pwd)/skills/digital-health-clinical-asr-eval"     ~/.claude/skills/
 ln -s "$(pwd)/skills/digital-health-clinical-asr-finetune" ~/.claude/skills/
+ln -s "$(pwd)/skills/digital-health-create-your-own-ambient-agent" ~/.claude/skills/
 
 # Then in your agent session:
 /digital-health-clinical-asr-setup
 ```
 
-Skills hand off explicitly. Start with `/digital-health-clinical-asr-setup`; each stage tells you which skill comes next.
+Skills hand off explicitly where a workflow is staged. Start the clinical ASR flywheel with `/digital-health-clinical-asr-setup`. Invoke `/digital-health-create-your-own-ambient-agent` directly when creating a custom ambient healthcare voice agent.
 
 ## When NOT to use these skills
 
@@ -57,6 +61,7 @@ Skills hand off explicitly. Start with `/digital-health-clinical-asr-setup`; eac
 - TTS quality work without a benchmarking goal → use a TTS-specific skill
 - Single-pass transcription with no eval → use a basic ASR skill, not the flywheel
 - Non-English clinical ASR → these skills target English (Magpie en-US phoneme set); other locales need a different upstream phoneme set
+- General chatbots or non-healthcare voice demos → do not use `digital-health-create-your-own-ambient-agent`
 
 ## License + security
 
