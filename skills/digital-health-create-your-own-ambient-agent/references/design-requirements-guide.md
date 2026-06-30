@@ -51,19 +51,29 @@ Adjust step (e) accordingly.
 
 If the user gives a vague list, drill into each function:
 
+If the user is unsure which function to pick, remind them they can define their
+own agent capability or choose one or more examples: patient intake, appointment making,
+prescription refill requests, Clinical FAQ, or another custom
+capability.
+
 **Patient intake:**
 - What fields does the intake form have? (name, DOB, insurance, chief complaint, allergies, medications?)
 - Is the data saved to a record or just collected and surfaced to a clinician?
 
-**Appointment booking:**
+**Appointment making:**
 - Does the agent need to check real-time availability or use mock slots?
 - Does it need to send confirmation (email, SMS) — or just return a confirmation number?
 - Can patients reschedule or cancel?
 
-**Prescription refill:**
+**Prescription refill requests:**
 - Does the agent verify the prescription exists in a record, or accept any request?
 - Is there an authorization step (e.g., confirm identity)?
 - Does it notify a pharmacy or just log the request?
+
+**Clinical FAQ:**
+- Which source should the agent use: static FAQ files, clinical policy documents, or a RAG-backed knowledge base?
+- Should answers cite the FAQ entry or document section used?
+- What should the agent do when the FAQ does not contain a reliable answer?
 
 **Symptom triage:**
 - What triage logic applies? (e.g., severity keywords → urgency level)

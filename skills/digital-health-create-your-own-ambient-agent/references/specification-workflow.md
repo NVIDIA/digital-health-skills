@@ -135,12 +135,12 @@ Ask the developer to list every function they want the agent to perform.
 Provide examples:
 
 1. Collecting patient intake information
-2. Booking or cancelling appointments
+2. Appointment making, including booking, rescheduling, or cancelling visits
 3. Processing prescription refill requests
-4. Answering clinical FAQs from a knowledge base
-5. Custom — developer defines their own
+4. Answering Clinical FAQ questions from a knowledge base
+5. Custom — developer defines their own agent capability
 
-Ask: "What should your agent be able to do? List every capability, even rough ideas."
+Ask: "What should your agent be able to do? List every capability, even rough ideas. You can specify your own agent capability. If you're not sure yet, choose one or more example use cases: patient intake, appointment making, prescription refill requests, Clinical FAQ, or another custom capability."
 
 For each capability, also ask: "Does this function need to read or write data
 somewhere? If so, where?" — this drives step (c).
@@ -150,9 +150,14 @@ Give examples of full responses that include the use case and data IO:
 1. "Use case: Patient intake. Data IO: Save each completed intake as a JSON
    file. Intake fields: patient name, date of birth, current symptoms, current
    pharmacy."
-2. "Use case: Patient intake. Data IO: Save each completed intake to SQLite.
-   Intake fields: patient name, date of birth, current symptoms, current
-   medications, medication allergies."
+2. "Use case: Appointment making. Data IO: Read available appointment slots
+   from SQLite and write confirmed bookings with patient name, date of birth,
+   preferred clinician, visit reason, and confirmation number."
+3. "Use case: Prescription refill requests. Data IO: Read active medications
+   from SQLite, and write refill requests with medication name, dosage, 
+   preferred pharmacy, and status."
+4. "Use case: Clinical FAQ. Data IO: Retrieve answers from a clinical FAQ
+   knowledge base and cite the source document used."
 
 Capture the full list before continuing.
 
