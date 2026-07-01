@@ -35,6 +35,8 @@ agent repository structure.
 
 Follow the phases in order. Each phase has a dedicated reference file; read the
 referenced file before doing that phase. Do not skip approval gates.
+When a reference marks developer-facing text as **verbatim**, send that text
+exactly as written instead of summarizing or paraphrasing it.
 
 1. **Prerequisite references**: Read
    `references/prerequisite-references.md`. Clone or verify the reference repos,

@@ -17,6 +17,13 @@ feature-spec creation, guardrails selection, and approval gates before planning.
 
 ## Phase 2: Specify
 
+### Developer-facing prompt fidelity
+
+When this workflow marks a prompt as **verbatim**, send the full prompt exactly
+as written. Do not condense, reword, merge with surrounding context, replace
+the examples, or change the order. You may add only a short transition sentence
+before the verbatim prompt if needed for conversation continuity.
+
 Start by orienting the developer to the spec-kit structure this skill uses:
 
 > "Before we write any code, we capture what to build and how to build it in a
@@ -131,21 +138,14 @@ Store `<output-parent>` — it is used throughout Phases 3 and 4.
 
 ### (b) Agent Functionality
 
-Ask the developer to list every function they want the agent to perform.
-Provide examples:
+Ask the developer to list every function they want the agent to perform. Use
+this prompt **verbatim** as the user-facing question for this step:
 
-1. Collecting patient intake information
-2. Appointment making, including booking, rescheduling, or cancelling visits
-3. Processing prescription refill requests
-4. Answering Clinical FAQ questions from a knowledge base
-5. Custom — developer defines their own agent capability
+```text
+What should your agent be able to do? List every capability, even rough ideas. You can specify your own agent capability. If you're not sure yet, choose one in the following example use cases.
 
-Ask: "What should your agent be able to do? List every capability, even rough ideas. You can specify your own agent capability. If you're not sure yet, choose one or more example use cases: patient intake, appointment making, prescription refill requests, Clinical FAQ, or another custom capability."
 
-For each capability, also ask: "Does this function need to read or write data
-somewhere? If so, where?" — this drives step (c).
-
-Give examples of full responses that include the use case and data IO:
+Here are the examples:
 
 1. "Use case: Patient intake. Data IO: Save each completed intake as a JSON
    file. Intake fields: patient name, date of birth, current symptoms, current
@@ -158,6 +158,7 @@ Give examples of full responses that include the use case and data IO:
    preferred pharmacy, and status."
 4. "Use case: Clinical FAQ. Data IO: Retrieve answers from a clinical FAQ
    knowledge base and cite the source document used."
+```
 
 Capture the full list before continuing.
 
