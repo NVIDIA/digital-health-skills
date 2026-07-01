@@ -1,0 +1,73 @@
+{
+  "skill_name": "digital-health-create-your-own-ambient-agent",
+  "evals": [
+    {
+      "id": "ambient-agent-trigger-intake-bootstrap",
+      "category": "positive-trigger-bootstrap",
+      "prompt": "Use the digital-health-create-your-own-ambient-agent skill to help me build an ambient healthcare voice agent for patient intake. Start the workflow, but do not clone repositories or write files yet.",
+      "expected_output": "The agent activates the digital-health-create-your-own-ambient-agent skill and begins with the prerequisite-reference/bootstrap gate. It explains the dependent reference repos and sub-skills, asks for explicit confirmation before cloning or installing anything, and does not start implementation or create files.",
+      "assertions": [
+        "The agent reads or follows digital-health-create-your-own-ambient-agent/SKILL.md before responding.",
+        "The agent recognizes the requested target as an ambient healthcare voice agent with patient-intake workflow.",
+        "The agent starts at Step 1 / prerequisite references rather than Phase 2 or implementation.",
+        "The agent lists the required reference repos or dependent skills at a high level, including LangGraph/LangChain and Nemotron Voice Agent dependencies.",
+        "The agent asks for explicit confirmation before cloning repositories, installing sub-skills, or writing project files.",
+        "The agent does not generate application source code, Docker Compose files, or specs before the confirmation gate."
+      ]
+    },
+    {
+      "id": "ambient-agent-spec-planning-appointments",
+      "category": "positive-trigger-specification",
+      "prompt": "I want to scaffold an ambient healthcare voice agent that books clinic appointments and can optionally use guardrails. Use the relevant skill to start the spec-driven development flow and tell me what information you need first.",
+      "expected_output": "The agent activates the digital-health-create-your-own-ambient-agent skill, frames the work as spec-driven development, and asks the Phase 2 specification questions needed before writing specs. It should cover output location, use case, tools/data sources, LangGraph graph pattern, model settings, guardrails choice, and service endpoints, while making clear that specs and plans require approval before code generation.",
+      "assertions": [
+        "The agent routes to the digital-health-create-your-own-ambient-agent skill without requiring the user to name it exactly.",
+        "The agent describes or uses the spec-driven sequence: specify, approve, plan, build, validate.",
+        "The agent asks for the core planning inputs before implementation, including healthcare workflow, tools/data sources, graph pattern, model configuration, guardrails, and service endpoints.",
+        "The agent identifies LangGraph as the fixed backend agent framework and Nemotron Voice Agent as the voice frontend.",
+        "The agent preserves approval gates and does not proceed to code generation in the same response.",
+        "The agent does not treat this as a generic chatbot, standalone LangGraph project, or non-healthcare voice demo."
+      ]
+    },
+    {
+      "id": "ambient-agent-trigger-nemotron-fastapi",
+      "category": "positive-trigger-architecture",
+      "prompt": "Set up a Nemotron Voice Agent browser microphone frontend that calls a custom FastAPI /v1/chat/completions backend backed by LangGraph for a clinical documentation assistant. Use the ambient agent skill if applicable.",
+      "expected_output": "The agent activates the digital-health-create-your-own-ambient-agent skill because the request matches the fixed architecture: browser microphone UI, Nemotron Voice Agent frontend, FastAPI OpenAI-compatible endpoint, and LangGraph backend for a healthcare workflow. It should begin by confirming prerequisite reference setup and then gather specification inputs before writing code.",
+      "assertions": [
+        "The agent recognizes Nemotron Voice Agent plus FastAPI /v1/chat/completions plus LangGraph as the skill's target architecture.",
+        "The agent treats clinical documentation as a healthcare workflow that fits the skill scope.",
+        "The agent starts with the prerequisite-reference step or confirms that references are already available before proceeding.",
+        "The agent states that the FastAPI server and LangGraph implementation will be derived from approved specs and plans.",
+        "The agent does not bypass approval gates or immediately generate the full repository.",
+        "The agent does not invoke unrelated deployment-only or generic FastAPI guidance as the primary path."
+      ]
+    },
+    {
+      "id": "ambient-agent-negative-general-hipaa",
+      "category": "negative-trigger-general-healthcare",
+      "prompt": "Give me a concise explanation of HIPAA's Privacy Rule for a training slide. I am not building an app or a voice agent.",
+      "expected_skill": null,
+      "expected_output": "The agent answers the HIPAA training-slide question directly and does not activate digital-health-create-your-own-ambient-agent, because the user explicitly is not building an ambient healthcare voice agent, repo, or Nemotron/LangGraph application.",
+      "assertions": [
+        "The agent does not read or invoke digital-health-create-your-own-ambient-agent/SKILL.md.",
+        "The agent does not ask spec-driven development setup questions.",
+        "The agent does not propose cloning reference repos, installing sub-skills, or scaffolding an app.",
+        "The agent provides a concise content answer appropriate for a training slide."
+      ]
+    },
+    {
+      "id": "ambient-agent-negative-standalone-langgraph",
+      "category": "negative-trigger-standalone-langgraph",
+      "prompt": "Show me a tiny standalone LangGraph example that routes between two toy math tools. No healthcare workflow, no voice UI, and no Docker stack.",
+      "expected_skill": null,
+      "expected_output": "The agent answers with standalone LangGraph guidance or code and does not activate digital-health-create-your-own-ambient-agent, because the request explicitly excludes healthcare, voice UI, and the full ambient-agent Docker architecture.",
+      "assertions": [
+        "The agent does not invoke digital-health-create-your-own-ambient-agent/SKILL.md.",
+        "The agent respects the user's standalone LangGraph scope.",
+        "The agent does not introduce Nemotron Voice Agent, FastAPI /v1/chat/completions, Docker Compose, or healthcare guardrails as required architecture.",
+        "The agent provides a minimal LangGraph-focused answer or asks a LangGraph-specific clarification."
+      ]
+    }
+  ]
+}
