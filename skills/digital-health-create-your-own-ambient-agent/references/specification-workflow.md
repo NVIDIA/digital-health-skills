@@ -112,7 +112,7 @@ Once the developer confirms, ask where the output repo should live — you need
 this now so the Nemotron Voice Agent repo can be cloned parallel to it:
 
 > "Where should we create your agent backend repo? Paste an absolute path, or
-> press Enter to use the current directory. I will create
+> type `default` to use the current directory. I will create
 > `my-custom-ambient-healthcare-agent/` there and clone the Nemotron Voice Agent
 > alongside it."
 
@@ -125,7 +125,7 @@ git clone --recurse-submodules \
 ```
 
 Where `<output-parent>` is the directory the developer chose (or the current
-directory if they pressed Enter). This establishes the sibling layout that the
+directory if they typed `default`). This establishes the sibling layout that the
 docker-compose relies on:
 
 ```
@@ -219,7 +219,7 @@ Present the default and explain alternatives:
 >
 > Do you wish to choose another LLM? You can browse `build.nvidia.com` to find
 > available NVIDIA models, or specify a local NIM or external provider model.
-> Type the model name and base URL, or press Enter to accept the default."
+> Type the model name and base URL, or type `default` to accept the default."
 
 Capture and confirm these four values:
 
@@ -347,7 +347,7 @@ developer wants to use one of them or specify a different model:
 > `https://integrate.api.nvidia.com/v1`. You can also self-host any of them as
 > a local NIM.
 >
-> Press Enter to use the recommended default, choose one of the three by need,
+> Type `default` to use the recommended default, choose one of the three by need,
 > or specify a different model and endpoint if you want to override it."
 
 Capture: model name, endpoint URL (default `https://integrate.api.nvidia.com/v1`).
@@ -398,7 +398,7 @@ enabled from (f), include the guardrails safety model endpoint in the table:
 > | TTS | `grpc.nvcf.nvidia.com:443` | `magpie_tts_ensemble-Magpie-Multilingual` · voice: `Magpie-Multilingual.EN-US.Aria` |
 > | Guardrails safety model _(if enabled)_ | `https://integrate.api.nvidia.com/v1` | _(from step f-ii)_ |
 >
-> All require `NVIDIA_API_KEY`. Type **confirm** to accept the defaults,
+> All require `NVIDIA_API_KEY`. Type `default` to accept the defaults,
 > or specify any endpoint you want to self-host."
 
 Capture overrides (endpoint URL, model name, alternate API key if any).
