@@ -9,14 +9,14 @@ NVIDIA <br>
 ### License/Terms of Use: <br>
 Apache 2.0 <br>
 ## Use Case: <br>
-Developers and engineers building custom ambient healthcare voice agents with NVIDIA Nemotron Voice Agent, LangGraph, and FastAPI through a spec-driven development workflow. <br>
+Developers and engineers building custom ambient healthcare voice agents with spec-driven development workflows using NVIDIA Nemotron Voice Agent, LangGraph, and FastAPI. <br>
 
 ### Deployment Geography for Use: <br>
 Global <br>
 
 ## Requirements / Dependencies: <br>
 **Requires API Key or External Credential:** [Not Specified] <br>
-**Credential Type(s):** [None identified] <br>  
+**Credential Type(s):** [None identified] <br>
 
 Do not include secrets in prompts/logs/output; use least-privilege credentials; rotate keys as appropriate. <br>
 
@@ -25,21 +25,20 @@ Risk: Review before execution as proposals could introduce incorrect or misleadi
 Mitigation: Review and scan skill before deployment. <br>
 
 ## Reference(s): <br>
-- [Prerequisite References](references/prerequisite-references.md) <br>
 - [Specification Workflow](references/specification-workflow.md) <br>
 - [Planning Workflow](references/planning-workflow.md) <br>
 - [Implementation Guide](references/implementation-guide.md) <br>
-- [Validation and Handoff](references/validation-handoff.md) <br>
 - [Design Requirements Guide](references/design-requirements-guide.md) <br>
-- [Workflow Flowchart](references/workflow-flowchart.md) <br>
+- [Validation and Handoff](references/validation-handoff.md) <br>
 - [Output Repo Template](references/output-repo-template.md) <br>
 - [Nemotron Voice Agent Deploy Skill](references/nemotron-voice-agent-deploy-skill.md) <br>
+- [Workflow Flowchart](references/workflow-flowchart.md) <br>
 - [agentskills.io Specification](https://agentskills.io/specification) <br>
 
 
 ## Skill Output: <br>
-**Output Type(s):** [Code, Files, Configuration instructions] <br>
-**Output Format:** [Repository with Python files, Docker Compose YAML, and Markdown documentation] <br>
+**Output Type(s):** [Code, Configuration instructions, Files] <br>
+**Output Format:** [Markdown with inline bash code blocks] <br>
 **Output Parameters:** [1D] <br>
 **Other Properties Related to Output:** [None] <br>
 
@@ -50,7 +49,7 @@ Mitigation: Review and scan skill before deployment. <br>
 
 
 ## Evaluation Tasks: <br>
-Evaluated against 10 evaluation tasks in astra-sandbox environment with NVSkills-Eval external profile. Pass threshold: 50%. Overall verdict: PASS. <br>
+Evaluated against 10 evaluation tasks in astra-sandbox environment with NVSkills-Eval external profile. <br>
 
 ## Evaluation Metrics Used: <br>
 Reported benchmark dimensions: <br>
@@ -74,11 +73,11 @@ Underlying evaluation signals used in this run: <br>
 ## Evaluation Results: <br>
 | Dimension | Num | `claude-code` | `codex` |
 |---|---:|---:|---:|
-| Security | 5 | 100% (+0%) | 100% (+10%) |
-| Correctness | 5 | 100% (+38%) | 97% (+27%) |
-| Discoverability | 5 | 100% (+43%) | 94% (+23%) |
-| Effectiveness | 5 | 98% (+39%) | 98% (+32%) |
-| Efficiency | 5 | 94% (+36%) | 88% (+18%) |
+| Security | 5 | 100% (+0%) | 90% (+0%) |
+| Correctness | 5 | 100% (+46%) | 92% (+27%) |
+| Discoverability | 5 | 100% (+43%) | 92% (+29%) |
+| Effectiveness | 5 | 98% (+43%) | 72% (+7%) |
+| Efficiency | 5 | 94% (+36%) | 85% (+22%) |
 
 ## Skill Version(s): <br>
 1.0.0 (source: frontmatter) <br>

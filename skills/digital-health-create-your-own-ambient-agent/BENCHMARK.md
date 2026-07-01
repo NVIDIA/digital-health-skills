@@ -7,7 +7,7 @@ This benchmark summarizes 3-Tier Evaluation from NVSkills-Eval results for the s
 ## Evaluation Summary
 
 - Skill: `digital-health-create-your-own-ambient-agent`
-- Evaluation date: 2026-06-29
+- Evaluation date: 2026-07-01
 - NVSkills-Eval profile: `external`
 - Environment: `astra-sandbox`
 - Dataset: 10 evaluation tasks
@@ -48,11 +48,11 @@ The benchmark included 10 recorded Tier 3 trials, but the source evaluation data
 
 | Dimension | Num | `claude-code` | `codex` |
 |---|---:|---:|---:|
-| Security | 5 | 100% (+0%) | 100% (+10%) |
-| Correctness | 5 | 100% (+38%) | 97% (+27%) |
-| Discoverability | 5 | 100% (+43%) | 94% (+23%) |
-| Effectiveness | 5 | 98% (+39%) | 98% (+32%) |
-| Efficiency | 5 | 94% (+36%) | 88% (+18%) |
+| Security | 5 | 100% (+0%) | 90% (+0%) |
+| Correctness | 5 | 100% (+46%) | 92% (+27%) |
+| Discoverability | 5 | 100% (+43%) | 92% (+29%) |
+| Effectiveness | 5 | 98% (+43%) | 72% (+7%) |
+| Efficiency | 5 | 94% (+36%) | 85% (+22%) |
 
 Score values show skill-assisted performance. Values in parentheses show uplift versus the no-skill baseline when baseline data is available.
 
