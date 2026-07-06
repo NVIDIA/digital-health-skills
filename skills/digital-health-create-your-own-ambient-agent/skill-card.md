@@ -9,7 +9,7 @@ NVIDIA <br>
 ### License/Terms of Use: <br>
 Apache 2.0 <br>
 ## Use Case: <br>
-Developers and engineers building custom ambient healthcare voice agents with NVIDIA Nemotron Voice Agent, LangGraph, and FastAPI through a spec-driven development workflow. <br>
+Developers and engineers building custom ambient healthcare voice agents with NVIDIA Nemotron Voice Agent, LangGraph, and FastAPI through a guided spec-driven development workflow. <br>
 
 ### Deployment Geography for Use: <br>
 Global <br>
@@ -25,23 +25,20 @@ Risk: Review before execution as proposals could introduce incorrect or misleadi
 Mitigation: Review and scan skill before deployment. <br>
 
 ## Reference(s): <br>
-- [Prerequisite References](references/prerequisite-references.md) <br>
+- [agentskills.io Specification](https://agentskills.io/specification) <br>
 - [Specification Workflow](references/specification-workflow.md) <br>
 - [Planning Workflow](references/planning-workflow.md) <br>
 - [Implementation Guide](references/implementation-guide.md) <br>
-- [Validation and Handoff](references/validation-handoff.md) <br>
 - [Design Requirements Guide](references/design-requirements-guide.md) <br>
-- [Output Repo Template](references/output-repo-template.md) <br>
-- [Nemotron Voice Agent Deploy Skill](references/nemotron-voice-agent-deploy-skill.md) <br>
+- [Validation and Handoff](references/validation-handoff.md) <br>
 - [Workflow Flowchart](references/workflow-flowchart.md) <br>
-- [AgentSkills.io Specification](https://agentskills.io/specification) <br>
 
 
 ## Skill Output: <br>
 **Output Type(s):** [Code, Files, Configuration instructions] <br>
-**Output Format:** [Repository scaffold with Python, YAML, Dockerfile, and Markdown files] <br>
+**Output Format:** [Python, YAML, Markdown, and Dockerfile within a generated repository] <br>
 **Output Parameters:** [1D] <br>
-**Other Properties Related to Output:** [None] <br>
+**Other Properties Related to Output:** [Full-stack Docker Compose application with FastAPI server, LangGraph agent, and NVIDIA Nemotron Voice Agent integration] <br>
 
 ## Evaluation Agents Used: <br>
 - Claude Code (`claude-code`) <br>
@@ -50,7 +47,7 @@ Mitigation: Review and scan skill before deployment. <br>
 
 
 ## Evaluation Tasks: <br>
-Evaluated against 10 evaluation tasks in the astra-sandbox environment using the NVSkills-Eval external profile with 1 attempt per task. <br>
+Evaluated against 10 evaluation tasks in the astra-sandbox environment with NVSkills-Eval external profile. <br>
 
 ## Evaluation Metrics Used: <br>
 Reported benchmark dimensions: <br>
@@ -74,11 +71,11 @@ Underlying evaluation signals used in this run: <br>
 ## Evaluation Results: <br>
 | Dimension | Num | `claude-code` | `codex` |
 |---|---:|---:|---:|
-| Security | 5 | 100% (+0%) | 100% (+10%) |
-| Correctness | 5 | 94% (+32%) | 98% (+32%) |
-| Discoverability | 5 | 100% (+42%) | 94% (+32%) |
-| Effectiveness | 5 | 90% (+30%) | 96% (+32%) |
-| Efficiency | 5 | 94% (+35%) | 87% (+25%) |
+| Security | 5 | 100% (+0%) | 90% (+0%) |
+| Correctness | 5 | 94% (+38%) | 96% (+26%) |
+| Discoverability | 5 | 100% (+45%) | 92% (+28%) |
+| Effectiveness | 5 | 88% (+33%) | 96% (+28%) |
+| Efficiency | 5 | 94% (+38%) | 87% (+24%) |
 
 ## Skill Version(s): <br>
 1.0.0 (source: frontmatter) <br>
