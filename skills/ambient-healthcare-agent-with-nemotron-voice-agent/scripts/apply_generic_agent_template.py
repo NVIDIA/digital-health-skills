@@ -807,10 +807,32 @@ def _set_generic_default_prompt(path: Path, prompt_key: str) -> None:
 
 
 def _copy_database_artifacts(source: Path, generic_dir: Path) -> Path:
+    """Install database support without deleting an existing directory."""
+    source = source.resolve(strict=True)
+    generic_dir = generic_dir.resolve(strict=True)
     target = generic_dir / "ambient_healthcare_appointment_database"
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(source, target)
+    resolved_target = target.resolve(strict=False)
+
+    if target.is_symlink():
+        raise RuntimeError(f"Refusing to replace symlinked database target: {target}")
+    if resolved_target.parent != generic_dir:
+        raise RuntimeError(
+            f"Database target must be a direct child of the Generic example: {target}"
+        )
+    if target.exists() and not target.is_dir():
+        raise RuntimeError(f"Database target exists and is not a directory: {target}")
+    if (
+        source == resolved_target
+        or source.is_relative_to(resolved_target)
+        or resolved_target.is_relative_to(source)
+    ):
+        raise RuntimeError(
+            f"Database source and target must not overlap: {source} -> {target}"
+        )
+
+    # Merge only the known bundled files. This preserves unrelated files from a
+    # prior installation and makes repeated template application idempotent.
+    shutil.copytree(source, target, dirs_exist_ok=True)
     return target
 
 
