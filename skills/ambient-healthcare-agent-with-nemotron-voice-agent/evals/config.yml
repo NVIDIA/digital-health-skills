@@ -8,11 +8,6 @@ harbor:
   max_agents: 2
   timeout_multiplier: 2.0
   agent_runtime_preflight: true
-  agents:
-    codex:
-      model: deepseek-ai/deepseek-v4.1-flash
-    claude-code:
-      model: moonshotai/kimi-k3
 
 skill_workspace:
   mode: isolated

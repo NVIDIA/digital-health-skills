@@ -10,14 +10,16 @@ The publication-facing `evals.json` contains three short P0 cases:
 
 This set covers output quality and positive/negative triggering and requires no staged input files. It is the only dataset intended for the NVCARPS per-PR evaluation gate and must remain within the one-hour runner limit.
 
-## Harnesses and models
+## Harnesses and model selection
 
 Evaluate every selected case with and without the skill on both harnesses:
 
-| Harness | Agent model |
+| Harness | Agent model selection |
 |---|---|
-| Codex | `deepseek-ai/deepseek-v4.1-flash` |
-| Claude Code | `moonshotai/kimi-k3` |
+| Codex | SkillEvaluator-maintained default |
+| Claude Code | SkillEvaluator-maintained default |
+
+Do not pin harness models in `evals/config.yml`. The publication CI selects supported defaults for its current environment.
 
 Use Docker isolation for both harnesses and keep provider credentials only in the evaluator process environment. Set `SKILL_EVAL_JUDGE_MODEL=openai/gpt-oss-20b` for text judging.
 
