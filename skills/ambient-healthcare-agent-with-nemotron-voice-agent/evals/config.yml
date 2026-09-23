@@ -14,3 +14,5 @@ skill_workspace:
 
 grading:
   mode: default_plus_custom
+  custom_metrics:
+    - nva_workflow_contract
