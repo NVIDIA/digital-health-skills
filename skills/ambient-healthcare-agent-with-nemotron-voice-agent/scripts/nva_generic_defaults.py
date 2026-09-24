@@ -522,6 +522,12 @@ def _check_patch_points(
                     bot,
                     errors,
                 )
+            if scenario == "appointment-making" and bot is not None:
+                _check_appointment_welcome_pipeline_shape(
+                    pipeline_path,
+                    bot,
+                    errors,
+                )
 
     shared_pipeline_utils_path = generic_dir.parent / "shared" / "pipeline_utils.py"
     if scenario == "patient-intake" and shared_pipeline_utils_path.is_file():
@@ -576,6 +582,35 @@ def _check_patch_points(
         errors.append(
             f"Could not find examples.{GENERIC_EXAMPLE_KEY}.defaults.prompt in {registry_path}; "
             "the applier would not be able to make the healthcare prompt the browser default."
+        )
+
+
+def _check_appointment_welcome_pipeline_shape(
+    path: Path,
+    bot: ast.AsyncFunctionDef | ast.FunctionDef,
+    errors: list[str],
+) -> None:
+    """Require the shared startup hook used by the fixed appointment greeting."""
+    start_handler = _find_function(bot, "_on_session_start", search_nested=True)
+    session_call = next(
+        (
+            node
+            for node in ast.walk(bot)
+            if isinstance(node, ast.Call)
+            and _call_name(node.func) == "register_session_start_handlers"
+        ),
+        None,
+    )
+    if start_handler is None or not start_handler.body or session_call is None:
+        errors.append(
+            f"{path} has no supported shared session-start hook for the "
+            "deterministic appointment welcome."
+        )
+        return
+    if not any(keyword.arg == "welcome_enabled" for keyword in session_call.keywords):
+        errors.append(
+            f"{path} has no welcome_enabled setting on register_session_start_handlers(); "
+            "the appointment welcome cannot suppress the model-generated intro."
         )
 
 

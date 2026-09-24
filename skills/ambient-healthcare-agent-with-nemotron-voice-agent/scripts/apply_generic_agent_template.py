@@ -281,6 +281,31 @@ PATIENT_INTAKE_WELCOME_BLOCK = """        # BEGIN ambient agent patient intake w
         # END ambient agent patient intake welcome
 """
 
+APPOINTMENT_WELCOME_IMPORT_BLOCK = """# BEGIN ambient agent appointment welcome imports
+from pipecat.frames.frames import LLMFullResponseEndFrame, LLMFullResponseStartFrame, LLMTextFrame
+
+# END ambient agent appointment welcome imports
+"""
+
+APPOINTMENT_WELCOME_BLOCK = """        # BEGIN ambient agent appointment welcome
+        if prompt_key == \"appointment_making_healthcare\" and welcome_enabled:
+            await task.queue_frames(
+                [
+                    LLMFullResponseStartFrame(),
+                    LLMTextFrame(
+                        text=(
+                            \"Hello and welcome to the appointment making agent. \"
+                            \"Let's get started. First, could you please tell me what type \"
+                            \"of appointment you're looking for?\"
+                        )
+                    ),
+                    LLMFullResponseEndFrame(),
+                ]
+            )
+            return
+        # END ambient agent appointment welcome
+"""
+
 APPOINTMENT_HOST_DB_PATH = (
     Path("data") / "appointment-making" / "appointment_schedule.sqlite"
 )
@@ -316,9 +341,23 @@ def main() -> int:
     files = _resolve_files(args)
     generic_dir = args.nva_root / "src" / "examples" / "generic"
     patient_intake_support = bool(files.get("pipeline_support"))
+    prompt_template = _validate_yaml(files["prompt"])
+    appointment_welcome_support = (
+        isinstance(prompt_template, dict)
+        and "appointment_making_healthcare" in prompt_template
+    )
+    if patient_intake_support and appointment_welcome_support:
+        raise RuntimeError(
+            "The appointment and patient-intake pipeline overlays cannot be combined"
+        )
+    scenario = _scenario_label(args)
+    if patient_intake_support:
+        scenario = "patient-intake"
+    elif appointment_welcome_support:
+        scenario = "appointment-making"
     compatibility = check_generic_compatibility(
         args.nva_root,
-        scenario="patient-intake" if patient_intake_support else _scenario_label(args),
+        scenario=scenario,
     )
     if compatibility.get("errors"):
         print(
@@ -356,7 +395,11 @@ def main() -> int:
         handlers_target,
         patient_intake_support=patient_intake_support,
     )
-    _patch_pipeline(pipeline_target, patient_intake_support=patient_intake_support)
+    _patch_pipeline(
+        pipeline_target,
+        patient_intake_support=patient_intake_support,
+        appointment_welcome_support=appointment_welcome_support,
+    )
     _set_generic_default_prompt(registry_target, prompt_keys[0])
     database_target = None
     appointment_database_path = None
@@ -589,7 +632,12 @@ def _patch_tool_handlers(path: Path, *, patient_intake_support: bool = False) ->
     path.write_text(text, encoding="utf-8")
 
 
-def _patch_pipeline(path: Path, *, patient_intake_support: bool = False) -> None:
+def _patch_pipeline(
+    path: Path,
+    *,
+    patient_intake_support: bool = False,
+    appointment_welcome_support: bool = False,
+) -> None:
     text = path.read_text(encoding="utf-8")
     text = _replace_marker_or_after_imports(
         text,
@@ -612,6 +660,14 @@ def _patch_pipeline(path: Path, *, patient_intake_support: bool = False) -> None
         function_name="bot",
         target_names={"prompt_key", "base_system_content"},
     )
+    if appointment_welcome_support:
+        text = _replace_marker_or_after_imports(
+            text,
+            "# BEGIN ambient agent appointment welcome imports",
+            "# END ambient agent appointment welcome imports",
+            APPOINTMENT_WELCOME_IMPORT_BLOCK,
+        )
+        text = _patch_appointment_welcome(text)
     if patient_intake_support:
         text = _replace_marker_or_after_imports(
             text,
@@ -1033,6 +1089,55 @@ def _replace_marker_or_before_assignment(
             f"Could not find assignment to {sorted(target_names)!r} in {function_name}()"
         )
     return _insert_python_block(text, _node_start_offset(text, assignment), replacement)
+
+
+def _patch_appointment_welcome(text: str) -> str:
+    """Queue the fixed appointment greeting and skip the model-generated intro."""
+    marker = "        # BEGIN ambient agent appointment welcome"
+    end_marker = "        # END ambient agent appointment welcome"
+    if marker in text:
+        text = _replace_marker_block(
+            text, marker, end_marker, APPOINTMENT_WELCOME_BLOCK
+        )
+
+    tree = _parse_python(text)
+    bot = _find_function(tree, "bot")
+    if bot is None:
+        raise RuntimeError("Could not find bot() for appointment welcome setup")
+    session_call = _find_call(bot, "register_session_start_handlers")
+    start_handler = _find_function(bot, "_on_session_start", search_nested=True)
+    if session_call is None or start_handler is None or not start_handler.body:
+        raise RuntimeError(
+            "Could not find the shared session-start hook for the appointment welcome"
+        )
+    if marker not in text:
+        text = _insert_python_block(
+            text,
+            _node_end_offset(text, start_handler.body[-1]),
+            APPOINTMENT_WELCOME_BLOCK,
+        )
+
+    tree = _parse_python(text)
+    bot = _find_function(tree, "bot")
+    session_call = _find_call(bot, "register_session_start_handlers") if bot else None
+    keyword = (
+        next(
+            (item for item in session_call.keywords if item.arg == "welcome_enabled"),
+            None,
+        )
+        if session_call
+        else None
+    )
+    if keyword is None:
+        raise RuntimeError(
+            "register_session_start_handlers() has no welcome_enabled keyword to suppress "
+            "the generated LLM welcome for appointment making"
+        )
+    return _replace_node_text(
+        text,
+        keyword.value,
+        'welcome_enabled and prompt_key != "appointment_making_healthcare"',
+    )
 
 
 def _patch_patient_intake_welcome(text: str) -> str:

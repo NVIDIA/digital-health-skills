@@ -44,14 +44,14 @@ class EvalContractTests(unittest.TestCase):
         message = (
             "Choose public NVIDIA endpoints (default), NVA-managed local NIMs, "
             "existing NIM endpoints, or a mixed layout. If using public endpoints, "
-            "set NVIDIA_API_KEY in /workspace/nva-clinic/.env to authenticate access. "
+            f"set NVIDIA_API_KEY in {grader.NVA_ENV_PATH} to authenticate access. "
             "Do not paste the key into chat."
         )
         trajectory = {"steps": [{"source": "agent", "message": message}]}
         self.assertEqual(grader.grade(entry, trajectory)[0], 1.0)
 
         trajectory["steps"][0]["message"] = message.replace(
-            "/workspace/nva-clinic/.env", "the environment file"
+            grader.NVA_ENV_PATH, "the environment file"
         )
         self.assertLess(grader.grade(entry, trajectory)[0], 1.0)
 

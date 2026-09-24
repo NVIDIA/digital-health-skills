@@ -17,6 +17,8 @@ Appointment-making is a two-tool workflow:
 - `find_available_appointments`: read available slots from the demo SQLite schedule.
 - `book_appointment`: write the selected intended booking back to the same SQLite schedule.
 
+At session start, the appointment overlay queues `Hello and welcome to the appointment making agent. Let's get started. First, could you please tell me what type of appointment you're looking for?` directly through the text and TTS path. The shared startup handler's generated LLM intro is disabled for this prompt, so the opening is fixed and emitted once. When welcome messages are disabled, the agent waits for the user to speak.
+
 ### Appointment conversation stages
 
 The prompt defines an explicit state machine:

@@ -28,6 +28,7 @@ WELCOME_CASES = {
 }
 
 TARGET_SKILL = "ambient-healthcare-agent-with-nemotron-voice-agent"
+NVA_ENV_PATH = "/workspace/nva-clinic/.env"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -147,7 +148,7 @@ def grade(entry: dict[str, Any], trajectory: dict[str, Any]) -> tuple[float, str
                 "local nim",
                 "existing nim",
                 "mixed",
-                "/workspace/nva-clinic/.env",
+                NVA_ENV_PATH,
                 "NVIDIA_API_KEY",
             ],
         )

@@ -9,9 +9,9 @@ flowchart TB
     A([Start]) --> W[Deliver the required welcome<br/>verbatim, then stop]
     W --> P[/User provides an existing NVA path<br/>or an exact fresh-clone destination/]
     P --> R[Clone if requested and<br/>validate the checkout markers]
-    R --> E[Create .env from .env.example if absent;<br/>preserve an existing .env]
+    R --> E[Create the environment configuration from its example if absent;<br/>preserve an existing configuration]
     E --> I[Inspect syntax-aware compatibility,<br/>service defaults, catalogs, and deployment skills]
-    I --> M[/User reviews the public-endpoint default<br/>and receives the .env path for NVIDIA_API_KEY;<br/>may select local, existing, or mixed services/]
+    I --> M[/User reviews the public-endpoint default<br/>and receives the configuration path for NVIDIA_API_KEY;<br/>may select local, existing, or mixed services/]
     M --> D{Docker Compose access passes?}
     D -- No --> Z[Report the exact failed gate<br/>and stop]
     D -- Yes --> S[Disclose the resolved live-validation destination<br/>and bundled fictional fixture]

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import sys
 import tempfile
@@ -29,7 +30,9 @@ def _load_applier():
 
 
 class DatabaseArtifactSafetyTests(unittest.TestCase):
-    def test_existing_directory_is_merged_without_deleting_unrelated_files(self) -> None:
+    def test_existing_directory_is_merged_without_deleting_unrelated_files(
+        self,
+    ) -> None:
         applier = _load_applier()
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -72,6 +75,67 @@ class DatabaseArtifactSafetyTests(unittest.TestCase):
 
             self.assertEqual(sentinel.read_text(encoding="utf-8"), "unchanged\n")
             self.assertFalse((outside / "db.py").exists())
+
+
+class AppointmentWelcomeTests(unittest.TestCase):
+    def test_fixed_greeting_is_queued_once_and_replaces_model_intro(self) -> None:
+        applier = _load_applier()
+        source = """async def bot():
+    prompt_key = "appointment_making_healthcare"
+    welcome_enabled = True
+    async def _on_session_start():
+        if True:
+            pass
+    register_session_start_handlers(
+        on_start=_on_session_start,
+        welcome_enabled=welcome_enabled,
+    )
+"""
+
+        patched = applier._patch_appointment_welcome(source)
+        self.assertEqual(patched, applier._patch_appointment_welcome(patched))
+        tree = ast.parse(patched)
+        greeting_calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "LLMTextFrame"
+        ]
+        self.assertEqual(len(greeting_calls), 1)
+        greeting = next(
+            item.value for item in greeting_calls[0].keywords if item.arg == "text"
+        )
+        self.assertEqual(
+            ast.literal_eval(greeting),
+            "Hello and welcome to the appointment making agent. Let's get started. "
+            "First, could you please tell me what type of appointment you're looking for?",
+        )
+        self.assertTrue(
+            any(
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "queue_frames"
+                for node in ast.walk(tree)
+            )
+        )
+
+        session_call = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "register_session_start_handlers"
+        )
+        welcome_keyword = next(
+            item.value
+            for item in session_call.keywords
+            if item.arg == "welcome_enabled"
+        )
+        self.assertEqual(
+            ast.unparse(welcome_keyword),
+            "welcome_enabled and prompt_key != 'appointment_making_healthcare'",
+        )
 
 
 if __name__ == "__main__":

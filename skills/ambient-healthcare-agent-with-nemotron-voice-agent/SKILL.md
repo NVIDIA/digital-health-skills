@@ -62,13 +62,7 @@ test -d "$NVA_ROOT/src/examples/generic"
 
 An invalid path is a hard stop. Do not modify any repository before this check passes.
 
-After the markers pass, create `$NVA_ROOT/.env` from `$NVA_ROOT/.env.example` if `.env` does not already exist:
-
-```bash
-test -f "$NVA_ROOT/.env" || cp "$NVA_ROOT/.env.example" "$NVA_ROOT/.env"
-```
-
-Preserve an existing `.env` and never print its contents. If `.env` is absent and the template is missing, report that setup failure and stop. Do this immediately after validating a fresh clone or an existing checkout, before asking the user to choose hosted services.
+After the markers pass, create `$NVA_ROOT/.env` by copying `$NVA_ROOT/.env.example` when the target does not already exist. Preserve an existing `.env` and never print its contents. If `.env` is absent and the template is missing, report that setup failure and stop. Do this immediately after validating a fresh clone or an existing checkout, before asking the user to choose hosted services.
 
 ### 2. Inspect compatibility and service defaults
 
@@ -126,9 +120,9 @@ python3 "$SKILL_DIR/scripts/apply_generic_agent_template.py" \
 
 Use `references/patient-intake` for patient intake. The applier must preserve current LLM/ASR/TTS defaults, set the scenario prompt as the Generic default, patch only supported insertion points, and remain idempotent.
 
-The applier reruns compatibility with the selected scenario before writing. To inspect that gate separately, pass `--scenario appointment-making`, `--scenario patient-intake`, or `--scenario custom` together with `--check-compatibility`. Scenario checks must cover every scenario-specific hook, including deterministic session startup for patient intake.
+The applier reruns compatibility with the selected scenario before writing. To inspect that gate separately, pass `--scenario appointment-making`, `--scenario patient-intake`, or `--scenario custom` together with `--check-compatibility`. Scenario checks must cover every scenario-specific hook, including deterministic session startup for both examples.
 
-Appointment making installs SQLite support, initializes `data/appointment-making/appointment_schedule.sqlite`, and creates or merges `docker-compose.override.yml`; it must not edit the base Compose file. Patient intake collects name, date of birth, symptoms, current medications, and preferred pharmacy, and installs deterministic turn/speech guards plus generated unit tests. Preserve its shared conversation state, earliest-missing-field question, exactly-once direct tool responses, one-time welcome, silent empty tool transitions, interruption forwarding, and interruptible welcome. These are code-backed safety invariants, not prompt-only suggestions. Read `references/example-design-choices.md` when implementation detail is needed.
+Appointment making installs SQLite support, initializes `data/appointment-making/appointment_schedule.sqlite`, and creates or merges `docker-compose.override.yml`; it must not edit the base Compose file. It also queues the exact fixed opening greeting once at session start and suppresses the model-generated intro. Patient intake collects name, date of birth, symptoms, current medications, and preferred pharmacy, and installs deterministic turn/speech guards plus generated unit tests. Preserve its shared conversation state, earliest-missing-field question, exactly-once direct tool responses, one-time welcome, silent empty tool transitions, interruption forwarding, and interruptible welcome. These are code-backed safety invariants, not prompt-only suggestions. Read `references/example-design-choices.md` when implementation detail is needed.
 
 ### 6. Design a custom workflow
 
