@@ -9,7 +9,7 @@ NVIDIA <br>
 ### License/Terms of Use: <br>
 CC-BY-4.0 AND Apache-2.0 <br>
 ## Use Case: <br>
-Developers and engineers who customize NVIDIA Nemotron Voice Agent for healthcare appointment scheduling, patient intake, or custom tool-calling voice workflows without building a separate backend. <br>
+Developers and engineers customizing NVIDIA Nemotron Voice Agent for healthcare voice workflows such as appointment scheduling, patient intake, or custom tool-calling scenarios. <br>
 
 ### Deployment Geography for Use: <br>
 Global <br>
@@ -25,16 +25,16 @@ Risk: Review before execution as proposals could introduce incorrect or misleadi
 Mitigation: Review and scan skill before deployment. <br>
 
 ## Reference(s): <br>
-- [Nemotron Voice Agent Blueprint](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent) <br>
-- [User Experience Flowchart](references/user-experience-flowchart.md) <br>
+- [NVIDIA Nemotron Voice Agent Blueprint](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent) <br>
 - [Deployment Modes](references/deployment-modes.md) <br>
 - [Example Design Choices](references/example-design-choices.md) <br>
+- [User Experience Flowchart](references/user-experience-flowchart.md) <br>
 - [Custom Workflow Guide](references/custom/guide.md) <br>
 
 
 ## Skill Output: <br>
 **Output Type(s):** [Shell commands, Configuration instructions, Code] <br>
-**Output Format:** [Markdown with inline bash code blocks] <br>
+**Output Format:** [Markdown with inline bash and Python code blocks] <br>
 **Output Parameters:** [1D] <br>
 **Other Properties Related to Output:** [None] <br>
 
@@ -45,23 +45,23 @@ Mitigation: Review and scan skill before deployment. <br>
 
 
 ## Evaluation Tasks: <br>
-3 evaluation tasks (2 positive, 1 negative), each run 3 times in isolated sandbox pods. <br>
+4 evaluation tasks (3 positive, 1 negative), 3 attempts per task, each in an isolated sandbox pod. Dataset digest: sha256:d8ae4021cef430b548b0c29cac10d8517b49a7c5910f714f06a474939295ff30. <br>
 
 ## Evaluation Metrics Used: <br>
 Reported benchmark dimensions: <br>
-- Security: Whether the skill avoids unsafe operations, secret leakage, and unauthorized access. <br>
-- Correctness: Final-answer correctness against the reference answer. <br>
-- Discoverability: Whether the expected skill was selected and the workflow executed. <br>
-- Effectiveness: Equal-weight mean of goal completion and expected workflow adherence. <br>
-- Efficiency: Tool-call productivity (50%) and token efficiency (50%). <br>
+- Security: Checks for unsafe operations, secret leakage, and unauthorized access. <br>
+- Correctness: Checks final-answer correctness against the reference answer. <br>
+- Discoverability: Checks whether the expected skill was selected, decoys were avoided, and the workflow executed. <br>
+- Effectiveness: Equal-weight mean of goal completion (goal_accuracy) and expected workflow adherence (behavior_check). <br>
+- Efficiency: 50% tool-call productivity and 50% token efficiency measuring actual uncached prompt plus completion usage. <br>
 
 Underlying evaluation signals used in this run: <br>
-- `security`: Checks for unsafe operations, secret leakage, and unauthorized access. <br>
+- `security`: Detects unsafe operations, secret leakage, and unauthorized access. <br>
 - `accuracy`: Final-answer correctness against the reference answer. <br>
 - `skill_execution`: Whether the expected skill was selected, decoys were avoided, and the workflow executed. <br>
 - `goal_accuracy`: Whether the user's goal was achieved. <br>
 - `behavior_check`: Whether the expected workflow behavior was followed. <br>
-- `skill_efficiency`: Tool-call productivity. <br>
+- `skill_efficiency`: Tool-call productivity (routing scored under Discoverability). <br>
 - `token_efficiency`: Actual uncached prompt plus completion token usage. <br>
 
 
@@ -69,12 +69,12 @@ Underlying evaluation signals used in this run: <br>
 ## Evaluation Results: <br>
 | Measure | Claude Code (Baseline → Skill Uplift) | Codex (Baseline → Skill Uplift) |
 |---|---:|---:|
-| Overall | 90.3% | 85.2% |
-| Security | 100.0% → 100.0% (±0.0 pts) | 100.0% → 100.0% (±0.0 pts) |
-| Correctness | 32.0% → 93.3% (+61.3 pts) | 32.0% → 93.3% (+61.3 pts) |
-| Discoverability | 100.0% | 47.5% |
-| Effectiveness | 58.3% → 72.8% (+14.5 pts) | 43.3% → 87.8% (+44.5 pts) |
-| Efficiency | 85.2% | 97.2% |
+| Overall | 90.3% | 88.3% |
+| Security | 100.0% → 100.0% (±0.0 points) | 100.0% → 100.0% (±0.0 points) |
+| Correctness | 14.3% → 85.0% (+70.7 points) | 33.3% → 95.0% (+61.7 points) |
+| Discoverability | 100.0% | 61.7% |
+| Effectiveness | 50.0% → 82.9% (+32.9 points) | 34.3% → 88.3% (+54.0 points) |
+| Efficiency | 83.5% | 96.7% |
 
 ## Skill Version(s): <br>
 1.0.0 (source: frontmatter) <br>

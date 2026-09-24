@@ -9,11 +9,11 @@ Recommended for publication based on the completed evaluation evidence in this r
 ## Evaluation Metadata
 
 - Skill: `ambient-healthcare-agent-with-nemotron-voice-agent`
-- Evaluation date: 2026-09-23
+- Evaluation date: 2026-09-24
 - Evaluator version: `1.5.6`
 - Agents: Claude Code (`aws/anthropic/bedrock-claude-opus-4-8`), Codex (`openai/openai/gpt-5.5`)
-- Tasks: 3 evaluation tasks (2 positive, 1 negative)
-- Dataset digest: `sha256:eb7ef96d2ac7d17a63c22d8ae2662442bb5192275788b9e4a6753a3a34ce2d49` (skill-evaluator-dataset-snapshot/1)
+- Tasks: 4 evaluation tasks (3 positive, 1 negative)
+- Dataset digest: `sha256:d8ae4021cef430b548b0c29cac10d8517b49a7c5910f714f06a474939295ff30` (skill-evaluator-dataset-snapshot/1)
 - Attempts per task: 3
 - Environment: `k8s-sandbox`
 - Tier 2 evidence: required for publication
@@ -35,12 +35,12 @@ The three-tier evaluation checks whether the skill:
 
 | Measure | Claude Code (Baseline → Skill Uplift) | Codex (Baseline → Skill Uplift) |
 |---|---:|---:|
-| Overall | 90.3% — baseline ran, but no comparable score was available; uplift unavailable | 85.2% — baseline ran, but no comparable score was available; uplift unavailable |
+| Overall | 90.3% — baseline ran, but no comparable score was available; uplift unavailable | 88.3% — baseline ran, but no comparable score was available; uplift unavailable |
 | Security | 100.0% → 100.0% (±0.0 points) | 100.0% → 100.0% (±0.0 points) |
-| Correctness | 32.0% → 93.3% (+61.3 points) | 32.0% → 93.3% (+61.3 points) |
-| Discoverability | 100.0% — baseline ran, but no comparable score was available; uplift unavailable | 47.5% — baseline ran, but no comparable score was available; uplift unavailable |
-| Effectiveness | 58.3% → 72.8% (+14.5 points) | 43.3% → 87.8% (+44.5 points) |
-| Efficiency | 85.2% — baseline ran, but no comparable score was available; uplift unavailable | 97.2% — baseline ran, but no comparable score was available; uplift unavailable |
+| Correctness | 14.3% → 85.0% (+70.7 points) | 33.3% → 95.0% (+61.7 points) |
+| Discoverability | 100.0% — baseline ran, but no comparable score was available; uplift unavailable | 61.7% — baseline ran, but no comparable score was available; uplift unavailable |
+| Effectiveness | 50.0% → 82.9% (+32.9 points) | 34.3% → 88.3% (+54.0 points) |
+| Efficiency | 83.5% — baseline ran, but no comparable score was available; uplift unavailable | 96.7% — baseline ran, but no comparable score was available; uplift unavailable |
 
 **How to read this table:** baseline is the same task attempted without the target skill. Scores are rounded to one decimal; threshold-adjacent values use additional precision so their displayed band matches the verdict. Uplift is derived from those displayed scores and shown in percentage points.
 
@@ -54,15 +54,17 @@ Actual Tier 3 execution usage is reported for every observed agent/case pair and
 
 | Agent | Dataset case | With skill | Without skill | Delta | Change | Coverage |
 |---|---|---:|---:|---:|---:|---|
-| claude-code | All cases | 270,117 | 211,867 | N/A | N/A | skill 3/3; base 5/5 |
-| claude-code | nva-ambient-explicit-welcome | 63,319 | 87,963 | N/A | N/A | skill 1/1; base 3/3 |
-| claude-code | nva-ambient-negative-ordinary-deploy | 104,936 | 94,106 | +10,830 | +11.51% | skill 1/1; base 1/1 |
-| claude-code | nva-ambient-scenario-disclosure | 101,862 | 29,798 | +72,064 | +241.84% | skill 1/1; base 1/1 |
-| codex | All cases | 83,158 | 110,106 | N/A | N/A | skill 3/3; base 5/5 |
-| codex | nva-ambient-explicit-welcome | 16,292 | 39,860 | N/A | N/A | skill 1/1; base 3/3 |
-| codex | nva-ambient-negative-ordinary-deploy | 37,197 | 39,999 | -2,802 | -7.01% | skill 1/1; base 1/1 |
-| codex | nva-ambient-scenario-disclosure | 29,669 | 30,247 | -578 | -1.91% | skill 1/1; base 1/1 |
-| ALL AGENTS | Dataset aggregate | 353,275 | 321,973 | N/A | N/A | skill 6/6; base 10/10 |
+| claude-code | All cases | 416,038 | 491,598 | N/A | N/A | skill 4/4; base 7/7 |
+| claude-code | nva-ambient-explicit-welcome | 63,708 | 58,594 | N/A | N/A | skill 1/1; base 2/2 |
+| claude-code | nva-ambient-negative-ordinary-deploy | 106,016 | 93,771 | +12,245 | +13.06% | skill 1/1; base 1/1 |
+| claude-code | nva-ambient-public-endpoint-env-disclosure | 143,933 | 248,890 | -104,957 | -42.17% | skill 1/1; base 1/1 |
+| claude-code | nva-ambient-scenario-disclosure | 102,381 | 90,343 | N/A | N/A | skill 1/1; base 3/3 |
+| codex | All cases | 152,390 | 272,051 | N/A | N/A | skill 4/4; base 9/9 |
+| codex | nva-ambient-explicit-welcome | 16,493 | 39,885 | N/A | N/A | skill 1/1; base 3/3 |
+| codex | nva-ambient-negative-ordinary-deploy | 58,304 | 36,126 | +22,178 | +61.39% | skill 1/1; base 1/1 |
+| codex | nva-ambient-public-endpoint-env-disclosure | 47,903 | 168,827 | N/A | N/A | skill 1/1; base 3/3 |
+| codex | nva-ambient-scenario-disclosure | 29,690 | 27,213 | N/A | N/A | skill 1/1; base 2/2 |
+| ALL AGENTS | Dataset aggregate | 568,428 | 763,649 | N/A | N/A | skill 8/8; base 16/16 |
 
 Prompt tokens include cached reads, so total tokens are `prompt + completion` (cached is not added twice). The Efficiency score uses `(prompt - cached) + completion`. N/A means the relevant trajectory counters were not available; coverage is never estimated.
 
@@ -70,21 +72,36 @@ Prompt tokens include cached reads, so total tokens are `prompt + completion` (c
 
 | Tier | Purpose | Status | Evidence |
 |---|---|---|---|
-| Tier 1 | Static validation | **PASSED WITH OBSERVATIONS** | 11 validator(s); 40 finding(s) |
+| Tier 1 | Static validation | **PASSED WITH OBSERVATIONS** | 11 validator(s); 43 finding(s) |
 | Tier 2 | Semantic deduplication | **PASSED** | 2 validator(s); 0 finding(s) |
-| Tier 3 | Live agent evaluation | **PASS** | 2 agent(s); 3 task(s) |
+| Tier 3 | Live agent evaluation | **PASS** | 2 agent(s); 4 task(s) |
 
 ## Findings and Observations
 
 <details>
 <summary>Show detailed findings and successful checks</summary>
 
-- **MEDIUM** SCHEMA/frontmatter_field_placement: Root field 'tags' is ignored; use 'metadata.tags' (`skills/ambient-healthcare-agent-with-nemotron-voice-agent/SKILL.md`)
-- **MEDIUM** SCHEMA/frontmatter_field_placement: Root field 'version' is ignored; use 'metadata.version' (`skills/ambient-healthcare-agent-with-nemotron-voice-agent/SKILL.md`)
-- **MEDIUM** SECURITY/Unknown (SQP-2): When a schema mismatch or stale data is detected, init_db() silently moves the existing database aside and unlinks the o (`references/appointment-making/database/db.py:126`)
-- **MEDIUM** SECURITY/Unknown (SQP-2): The `book_appointment` function accepts and persists Protected Health Information (PHI) — specifically patient_name, dat (`references/appointment-making/tools.yaml:76`)
-- **MEDIUM** SECURITY/Unknown (SQP-3): The 'User-Facing Date Rule' mandates that every user-facing calendar date be rendered with an abbreviated English month  (`references/custom/generic-implementation.md:39`)
-- 35 additional finding(s) are available in the full evaluation artifacts.
+- **MEDIUM** SECURITY/Skill Enumeration (AS3): Agent Snooping: skills/ambient-healthcare-agent-with-nemotron-voice-agent/SKILL.md (`BENCHMARK.md:82`)
+- **MEDIUM** SECURITY/Skill Enumeration (AS3): Agent Snooping: skills/ambient-healthcare-agent-with-nemotron-voice-agent/SKILL.md (`BENCHMARK.md:83`)
+- **MEDIUM** SECURITY/subprocess module call (AST4): Dangerous Code Execution:         completed = subprocess.run(
+            ["git", "-C", str(nva_root), *args],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            tex (`scripts/nva_generic_defaults.py:466`)
+- **MEDIUM** SECURITY/subprocess module call (AST4): Dangerous Code Execution:         completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        ) (`scripts/verify_docker_compose_access.py:67`)
+- **MEDIUM** SECURITY/subprocess module call (AST4): Dangerous Code Execution:         subprocess.run(
+            ["docker", "compose", "-f", str(compose_file), "down", "--remove-orphans", "--volumes"],
+            capture_output=True,
+            text=True,
+            timeout (`scripts/verify_docker_compose_access.py:103`)
+- 38 additional finding(s) are available in the full evaluation artifacts.
 
 </details>
 
