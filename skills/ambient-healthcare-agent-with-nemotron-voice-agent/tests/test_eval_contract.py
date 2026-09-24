@@ -30,13 +30,30 @@ class EvalContractTests(unittest.TestCase):
         documented = section.split("```text", 1)[1].split("```", 1)[0].strip()
         self.assertEqual(documented, grader.WELCOME)
 
-    def test_eval_dataset_has_three_unique_smoke_cases(self) -> None:
+    def test_eval_dataset_has_four_unique_smoke_cases(self) -> None:
         dataset = json.loads((SKILL_DIR / "evals" / "evals.json").read_text(encoding="utf-8"))
         cases = dataset["evals"]
         self.assertEqual(dataset["skill_name"], "ambient-healthcare-agent-with-nemotron-voice-agent")
-        self.assertEqual(len(cases), 3)
-        self.assertEqual(len({case["id"] for case in cases}), 3)
+        self.assertEqual(len(cases), 4)
+        self.assertEqual(len({case["id"] for case in cases}), 4)
         self.assertEqual(sum(case.get("expected_skill") is None for case in cases), 1)
+
+    def test_runtime_disclosure_requires_env_path_and_key_instruction(self) -> None:
+        grader = _load_grader()
+        entry = {"id": "nva-ambient-public-endpoint-env-disclosure"}
+        message = (
+            "Choose public NVIDIA endpoints (default), NVA-managed local NIMs, "
+            "existing NIM endpoints, or a mixed layout. If using public endpoints, "
+            "set NVIDIA_API_KEY in /workspace/nva-clinic/.env to authenticate access. "
+            "Do not paste the key into chat."
+        )
+        trajectory = {"steps": [{"source": "agent", "message": message}]}
+        self.assertEqual(grader.grade(entry, trajectory)[0], 1.0)
+
+        trajectory["steps"][0]["message"] = message.replace(
+            "/workspace/nva-clinic/.env", "the environment file"
+        )
+        self.assertLess(grader.grade(entry, trajectory)[0], 1.0)
 
     def test_welcome_grader_allows_only_target_skill_loader(self) -> None:
         grader = _load_grader()

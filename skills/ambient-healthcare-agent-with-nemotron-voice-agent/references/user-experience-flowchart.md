@@ -9,13 +9,12 @@ flowchart TB
     A([Start]) --> W[Deliver the required welcome<br/>verbatim, then stop]
     W --> P[/User provides an existing NVA path<br/>or an exact fresh-clone destination/]
     P --> R[Clone if requested and<br/>validate the checkout markers]
-    R --> I[Inspect syntax-aware compatibility,<br/>service defaults, catalogs, and deployment skills]
-    I --> M[/User reviews the public-endpoint default<br/>and may select local, existing, or mixed services;<br/>credentials remain outside chat/]
-    M --> D[Verify Docker Compose access]
-    D --> U[Start the unmodified Generic recipe<br/>with one documented profile]
-    U --> H{App and selected LLM,<br/>ASR, and TTS healthy?}
-    H -- No --> Z[Report the exact failed gate<br/>and stop]
-    H -- Yes --> S[Disclose the resolved live-validation destination<br/>and bundled fictional fixture]
+    R --> E[Create .env from .env.example if absent;<br/>preserve an existing .env]
+    E --> I[Inspect syntax-aware compatibility,<br/>service defaults, catalogs, and deployment skills]
+    I --> M[/User reviews the public-endpoint default<br/>and receives the .env path for NVIDIA_API_KEY;<br/>may select local, existing, or mixed services/]
+    M --> D{Docker Compose access passes?}
+    D -- No --> Z[Report the exact failed gate<br/>and stop]
+    D -- Yes --> S[Disclose the resolved live-validation destination<br/>and bundled fictional fixture]
     S --> Q[/User selects appointment making,<br/>patient intake, or a custom workflow/]
     Q -- Preset --> P1[Load the selected bundled overlay<br/>and its expected histories]
     Q -- Custom workflow --> C1[Define the goal; required, optional, and sensitive fields;<br/>tool preconditions, inputs, reads, writes, and results;<br/>and expected histories]
@@ -24,14 +23,16 @@ flowchart TB
     P1 --> O
     C2 -- Approve --> O[Run scenario-aware compatibility preflight<br/>and apply the idempotent overlay]
     O --> T[Run static and scenario tests]
-    T --> L[Run only the authorized live expected histories]
+    T --> K{Selected runtime credentials<br/>and endpoints configured?}
+    K -- No --> Z
+    K -- Yes --> B[Build and start or restart the customized Generic recipe<br/>with one documented profile]
+    B --> H2{App and all selected<br/>services healthy?}
+    H2 -- No --> Z
+    H2 -- Yes --> L[Run only the authorized live expected histories]
     L --> G{Deterministic and semantic<br/>checks pass?}
     G -- No --> X[Correct the prompt, tool, handler,<br/>or expected artifact]
     X --> T
-    G -- Yes --> B[Build or restart the selected recipe]
-    B --> H2{App and all selected<br/>services healthy?}
-    H2 -- No --> Z
-    H2 -- Yes --> V{Real microphone-to-ASR-to-LLM/tool-to-TTS<br/>round trip passes?}
+    G -- Yes --> V{Real microphone-to-ASR-to-LLM/tool-to-TTS<br/>round trip passes?}
     V -- No --> Z
     V -- Yes --> J([Handoff the running UI<br/>with exact validation evidence])
 ```

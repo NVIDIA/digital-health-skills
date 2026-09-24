@@ -1,13 +1,6 @@
 ---
 name: ambient-healthcare-agent-with-nemotron-voice-agent
 description: Customize NVIDIA Nemotron Voice Agent's Generic Pipecat example for healthcare appointment, five-field patient intake, or custom tool-calling workflows without a separate backend.
-version: "1.0.0"
-tags:
-  - ambient-healthcare
-  - nemotron-voice-agent
-  - pipecat
-  - tool-calling
-  - healthcare
 license: CC-BY-4.0 AND Apache-2.0
 allowed-tools: Read Grep Glob Edit Write Bash Env WebFetch
 metadata:
@@ -69,6 +62,14 @@ test -d "$NVA_ROOT/src/examples/generic"
 
 An invalid path is a hard stop. Do not modify any repository before this check passes.
 
+After the markers pass, create `$NVA_ROOT/.env` from `$NVA_ROOT/.env.example` if `.env` does not already exist:
+
+```bash
+test -f "$NVA_ROOT/.env" || cp "$NVA_ROOT/.env.example" "$NVA_ROOT/.env"
+```
+
+Preserve an existing `.env` and never print its contents. If `.env` is absent and the template is missing, report that setup failure and stop. Do this immediately after validating a fresh clone or an existing checkout, before asking the user to choose hosted services.
+
 ### 2. Inspect compatibility and service defaults
 
 Run:
@@ -82,9 +83,9 @@ Stop on compatibility errors. Report the inspected prompt plus the LLM, ASR, and
 
 The preflight checks Python structure and required capabilities rather than an NVA version number or one exact source string. It also discovers deployment skills from both `skills/*/SKILL.md` and `.agents/skills/*/SKILL.md`. A passing check is not permission to guess through an unknown layout: stop when syntax or a required semantic hook is ambiguous.
 
-### 3. Select the runtime and pass the base deployment gates
+### 3. Select the runtime and verify setup access
 
-Explain that the default is the compatible public NVIDIA AI Endpoint entries in the NVA cloud catalog. Before any inference, let the user choose public NVIDIA endpoints, NVA-managed local NIMs, existing NIM endpoints, or a mixed layout. Never silently fall back to public endpoints after opt-out. When asking the user to configure `NVIDIA_API_KEY`, explain that the key is needed to authenticate to and utilize public NVIDIA AI Endpoints. Direct the user to configure credentials using the public NVA deployment documentation, never ask them to paste a secret into chat, and state:
+Explain that the default is the compatible public NVIDIA AI Endpoint entries in the NVA cloud catalog. Before any inference, let the user choose public NVIDIA endpoints, NVA-managed local NIMs, existing NIM endpoints, or a mixed layout. Never silently fall back to public endpoints after opt-out. In the same message as these choices, give the user the actual absolute path to `$NVA_ROOT/.env` and tell them to fill in its `NVIDIA_API_KEY=` entry if they choose public NVIDIA AI Endpoints. Explain that the key authenticates access to those endpoints. Direct the user to the public NVA deployment documentation for credential setup; never ask them to paste a secret into chat or display the file contents. State:
 
 ```text
 The NVIDIA_API_KEY is required to utilize public NVIDIA AI Endpoints. With this key configured, I will be running live tests while customizing and standing up a Nemotron Voice Agent application.
@@ -93,14 +94,13 @@ The NVIDIA_API_KEY is required to utilize public NVIDIA AI Endpoints. With this 
 Before applying a healthcare overlay:
 
 1. Run `python3 "$SKILL_DIR/scripts/verify_docker_compose_access.py"` and require all checks to pass. If Docker Compose access is blocked by session permissions, report the observed failure, ask the user to grant the required access via `/permissions`, and stop until the user requests a retry.
-2. Start the unmodified Generic recipe for the selected runtime using the public NVA deployment commands.
-3. Require its documented app and selected LLM/ASR/TTS health checks to pass. This authenticated service check is the credential/endpoint gate.
+2. Use the public NVA deployment instructions to identify one recipe and the selected runtime's credential and endpoint requirements. Do not start the unmodified Generic recipe or run inference at this stage.
 
-If repository compatibility, Docker startup, authentication, or any selected service fails, report the exact failed gate and stop. Do not bypass it, change runtime modes, apply an overlay, or claim success.
+If repository compatibility or Docker Compose access fails, report the exact failed gate and stop before applying an overlay. Missing credentials or unavailable endpoints do not prevent overlay and static validation, but they block the later authenticated service checks, live validation, and handoff. Do not change runtime modes silently or claim the app is ready.
 
 ### 4. Obtain informed scenario selection
 
-After all base gates pass, restate the resolved runtime and services, then ask exactly:
+After checkout compatibility and Docker Compose access pass, restate the resolved runtime and services, then ask exactly:
 
 ```text
 What type of voice agent application would you like to create? We have two example default use cases, appointment making and patient intake, or you could tell me your own use case.
@@ -136,9 +136,11 @@ For `customize your own use case`, first ask what the conversation should accomp
 
 Use `references/custom/guide.md` and its templates. Present the proposed expected-conversation artifact, resolved destination, and data fields to the user. Do not implement or transmit it until the user approves that exact artifact and destination.
 
-### 7. Validate, restart, and test voice
+### 7. Validate, start, and test voice
 
-Run static and scenario tests before a live call. For an approved preset or custom fixture, export the selected endpoint credential in the process environment without displaying it, then run:
+Run static and scenario tests after applying the overlay. Check the selected runtime's credentials, then start the customized NVA recipe using its public deployment instructions; build when the source changes require it. Require the app and selected LLM/ASR/TTS health and authentication checks to pass. If a credential, startup, or service check fails, report the exact failed gate and stop before live validation. Never start the unmodified Generic recipe.
+
+For an approved preset or custom fixture, export the selected endpoint credential in the process environment without displaying it, then run:
 
 ```bash
 python3 "$SKILL_DIR/scripts/run_expected_conversation.py" \
@@ -147,7 +149,7 @@ python3 "$SKILL_DIR/scripts/run_expected_conversation.py" \
 
 The runner checks tool timing, arguments, status, and result identifiers. Review the actual assistant message for semantic alignment with `expected_next_message_content`; do not claim success if a deterministic or semantic check fails.
 
-Restart the selected NVA recipe using its public deployment instructions. Verify every selected service and complete one real microphone-to-ASR-to-LLM/tool-to-TTS round trip. Preset handoff is blocked until static tests, approved live histories, service health, and voice validation pass.
+After any validation-driven change, rebuild or restart the selected recipe as directed by the public NVA documentation and recheck its services. Complete one real microphone-to-ASR-to-LLM/tool-to-TTS round trip. Preset handoff is blocked until static tests, approved live histories, service health, and voice validation pass.
 
 ### 8. Handoff
 

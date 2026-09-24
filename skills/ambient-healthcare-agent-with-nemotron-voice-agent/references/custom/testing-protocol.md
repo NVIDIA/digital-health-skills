@@ -127,20 +127,23 @@ This proves that prompt mistakes cannot turn a missing preference into an
 unbounded search, that `any time` is rejected, and that spoken result sets stay
 small.
 
-## Runtime Credential and Endpoint Gate
+## Post-Overlay Runtime Credential and Endpoint Gate
 
-Use `references/deployment-modes.md` after the user sees the public-endpoint
-default and chooses a runtime mode:
+Use `references/deployment-modes.md` after applying the overlay and passing
+static checks. Check the selected mode's credentials before starting the
+customized app, then verify it and its services:
 
 - Public NVIDIA AI Endpoints: require authenticated health checks from the
-  unmodified Generic deployment and each selected service.
+  customized Generic deployment and each selected service.
 - NVA-managed local NIMs: use the public NVA deployment workflow's NGC, image-access,
   Hugging Face, and hardware preflights; do not make an unrelated public
   inference request.
 - Existing NIM endpoints: verify the configured LLM, ASR, and TTS endpoints and
   credentials without printing secrets.
 
-Do not continue when the selected mode's credential or endpoint gate fails.
+Missing credentials or unavailable endpoints do not prevent overlay and static
+validation. Do not start the customized app without the selected credentials,
+or run live histories or claim a ready app when a credential or endpoint gate fails.
 
 ## Setup Docker Gate
 

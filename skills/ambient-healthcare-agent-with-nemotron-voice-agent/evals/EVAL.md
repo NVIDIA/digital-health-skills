@@ -6,6 +6,7 @@ The publication-facing `evals.json` contains three short P0 cases:
 
 - `nva-ambient-explicit-welcome` checks explicit activation, the exact welcome, and the no-action boundary.
 - `nva-ambient-scenario-disclosure` checks the three workflow choices, endpoint disclosure, fictional-data disclosure, and the wait-for-selection boundary.
+- `nva-ambient-public-endpoint-env-disclosure` checks that runtime choices include the public default and give the user the checkout `.env` path and `NVIDIA_API_KEY` instruction in the same message.
 - `nva-ambient-negative-ordinary-deploy` checks that ordinary NVA deployment guidance does not activate this healthcare customization skill.
 
 This set covers output quality and positive/negative triggering and requires no staged input files. It is the only dataset intended for the NVCARPS per-PR evaluation gate and must remain within the one-hour runner limit.

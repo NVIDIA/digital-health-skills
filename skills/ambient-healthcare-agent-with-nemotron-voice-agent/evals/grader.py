@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -111,12 +112,12 @@ def grade(entry: dict[str, Any], trajectory: dict[str, Any]) -> tuple[float, str
         reports_failure = "nvidia_api_key" in normalized.lower() and any(
             word in normalized.lower() for word in ("fail", "missing", "required")
         )
-        stopped = not any(
-            token in tool_blob
-            for token in ("docker", "apply_generic_agent_template", "run_expected_conversation")
+        stopped = (
+            "run_expected_conversation" not in tool_blob
+            and re.search(r"docker(?:-compose|\s+compose).*?\bup\b", tool_blob) is None
         )
         score = (float(reports_failure) + float(stopped)) / 2.0
-        return score, f"reports_credential_failure={reports_failure}; stopped_downstream={stopped}"
+        return score, f"reports_credential_failure={reports_failure}; no_app_start_or_live_test={stopped}"
 
     if case_id == "nva-ambient-scenario-disclosure":
         disclosed = _contains_all(
@@ -137,6 +138,29 @@ def grade(entry: dict[str, Any], trajectory: dict[str, Any]) -> tuple[float, str
         idle = not operational_tool_calls
         score = (float(disclosed) + float(idle)) / 2.0
         return score, f"complete_endpoint_data_disclosure={disclosed}; no_operational_tool_calls={idle}"
+
+    if case_id == "nva-ambient-public-endpoint-env-disclosure":
+        choices_and_path = _contains_all(
+            normalized,
+            [
+                "public",
+                "local nim",
+                "existing nim",
+                "mixed",
+                "/workspace/nva-clinic/.env",
+                "NVIDIA_API_KEY",
+            ],
+        )
+        key_instruction = any(word in normalized.lower() for word in ("fill", "set", "enter"))
+        key_purpose = any(word in normalized.lower() for word in ("authenticate", "access", "utilize"))
+        no_secret_request = "paste" not in normalized.lower() or "do not paste" in normalized.lower()
+        idle = not operational_tool_calls
+        score = sum((choices_and_path, key_instruction, key_purpose, no_secret_request, idle)) / 5.0
+        return score, (
+            f"choices_and_path={choices_and_path}; key_instruction={key_instruction}; "
+            f"key_purpose={key_purpose}; no_secret_request={no_secret_request}; "
+            f"no_operational_tool_calls={idle}"
+        )
 
     if case_id == "nva-ambient-negative-ordinary-deploy":
         no_welcome = WELCOME not in normalized
