@@ -1,8 +1,7 @@
 ---
 name: nemo-clinical-data-designer
 license: "Apache-2.0"
-description: "Use when generating synthetic tabular datasets via Data Designer — sampler columns, LLM columns, custom generators. Not for ASR audio."
-argument-hint: [describe the dataset you want to generate]
+description: Use when generating synthetic tabular datasets via Data Designer — sampler columns, LLM columns, custom generators. Not for ASR audio. The argument is a description of the dataset to generate.
 metadata:
   author: "Voice Eval Flywheel team <brandoing@nvidia.com>"
   tags:
